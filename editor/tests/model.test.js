@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),M=require('../ui/model.js');let count=0;const test=(name,f)=>{f();count++;console.log('OK '+name);};
+test('blank template validates',()=>assert.deepEqual(M.validate(M.createBlankProject()),[]));
+test('template validates',()=>assert.deepEqual(M.validate(M.createProject()),[]));
+test('undo / redo preserves full project',()=>{let h=new M.History(M.createProject()),before=M.clone(h.project);h.project.scenes[0].base[10]=3;h.commit(before);assert(h.undo());assert.deepEqual(h.project,before);assert(h.redo());assert.equal(h.project.scenes[0].base[10],3);});
+test('brush edits group into one history entry',()=>{let h=new M.History(M.createProject()),b=M.clone(h.project);h.project.scenes[0].base[100]=3;h.project.scenes[0].base[101]=3;h.commit(b);assert.equal(h.undoStack.length,1);});
+test('no-op edits keep history clean',()=>{let h=new M.History(M.createProject());assert(!h.commit(M.clone(h.project)));});
+test('fill stays inside connected region',()=>{let p=[0,0,1,0,1,1,0,0,1];M.fill(p,3,3,0,0,2);assert.deepEqual(p,[2,2,1,2,1,1,2,2,1]);});
+test('flip and rotate retain pixels',()=>{assert.deepEqual(M.transform([1,2,3,4],2,2,'flipX'),[2,1,4,3]);assert.deepEqual(M.transform([1,2,3,4],2,2,'rotate'),[3,1,4,2]);assert.throws(()=>M.transform([1,2,3,4,5,6],2,3,'rotate'));});
+test('pixel round trip',()=>assert.deepEqual(M.decode(M.pixelString([0,1,255,16])),[0,1,255,16]));
+test('blocked spawn is rejected',()=>{let p=M.createProject();p.scenes[0].spawn={x:8,y:8};assert(M.validate(p).some(e=>e.includes('Spawn')));});
+test('missing exit target rejected',()=>{let p=M.createProject();p.scenes[0].portals[0].target='missing';assert(M.validate(p).some(e=>e.includes('exit')));});
+test('blocked exit arrival rejected',()=>{let p=M.createProject();p.scenes[0].portals[0].arrival={x:8,y:8};assert(M.validate(p).some(e=>e.includes('exit')));});
+test('unknown sprite and tile rejected',()=>{let p=M.createProject();p.scenes[0].objects[0].sprite='unknown';p.scenes[0].base[0]=100;assert(M.validate(p).length>=2);});
+test('invalid animation and palette rejected',()=>{let p=M.createProject();p.animations[0].frames[0].ms=0;p.tiles[0].pixels='ff'.repeat(256);assert(M.validate(p).length>=2);});
+test('partial project rejected safely',()=>assert(M.validate({format:'lota-studio',version:1}).length));
+test('asset collider bounds checked',()=>{let p=M.createProject();p.sprites[0].collider.w=100;assert(M.validate(p).length);});
+const p=M.createProject();p.id='studio-test';fs.writeFileSync(process.argv[2]||'/tmp/studio-test.lota',JSON.stringify(p));console.log(count+' model tests passed');

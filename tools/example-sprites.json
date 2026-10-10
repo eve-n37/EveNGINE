@@ -1,0 +1,16 @@
+{
+  "robot": {
+    "file": "robot.png",
+    "offset": [
+      -8,
+      -23
+    ]
+  },
+  "prism": {
+    "file": "prism.png",
+    "offset": [
+      0,
+      -18
+    ]
+  }
+}

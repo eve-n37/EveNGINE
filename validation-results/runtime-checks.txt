@@ -1,0 +1,23 @@
+OK fixed-step walking speed
+OK direction follows movement
+OK running speed
+OK running animation cadence
+OK wall collision uses shared engine body
+OK painted collision stops player
+OK exit transitions to destination
+OK exit arrival preserved
+OK collectible behaviour
+OK collectible only awarded once
+OK atomic progress save
+OK save reload restores progress
+OK painted water slows movement
+OK sign interaction
+OK authored attack frame plays
+OK attack direction held until clip completes
+OK attack completes once
+OK debug view toggle
+OK shared software renderer produces frame
+OK invalid saved position rejected without mutation
+OK test fixture format
+OK unsupported project rejected
+22 runtime checks passed

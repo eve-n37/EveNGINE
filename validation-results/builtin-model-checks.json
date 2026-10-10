@@ -1,0 +1,28 @@
+{
+  "count": 23,
+  "checks": [
+    "catalog has 48 tiles, 62 sprites and eight stamps",
+    "whole library fits a fresh project and validates",
+    "built-in imports preserve exact RGBA pixels",
+    "reimport keeps edited built-in artwork",
+    "object imports include alternate state dependencies",
+    "stamp imports include required tiles only",
+    "overflow import is atomic",
+    "palette overflow is atomic",
+    "asset ID conflict is rejected",
+    "explorer changes all four walk clips in order",
+    "built-in solid and water flags can paint together",
+    "automatic flags are opt-in",
+    "fill flags follow only the connected original region",
+    "inventory icons prevent asset deletion",
+    "alternate sprites prevent asset deletion",
+    "item definitions, keyed doors and rewards validate",
+    "unknown key and chest rewards rejected",
+    "NPC pages are bounded and nonempty",
+    "switches target doors on their own map",
+    "duplicate switch links and incompatible door rules rejected",
+    "built-in NPC defaults include dialogue",
+    "built-in chest and lever defaults use current definitions",
+    "old projects remain valid without inventory or interactions"
+  ]
+}

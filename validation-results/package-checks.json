@@ -1,0 +1,83 @@
+{
+  "count": 54,
+  "checks": [
+    "bundle executable present/executable",
+    "EveNGINE-Studio universal Mach-O",
+    "EveNGINE-Studio ARM64 + x86_64",
+    "64-bit slice header",
+    "64-bit slice header",
+    "Mac 12 deployment target",
+    "SDL framework resolves",
+    "framework version symlink preserved",
+    "bundle executable present/executable",
+    "Game universal Mach-O",
+    "Game ARM64 + x86_64",
+    "64-bit slice header",
+    "64-bit slice header",
+    "Mac 12 deployment target",
+    "SDL framework resolves",
+    "framework version symlink preserved",
+    "bundle executable present/executable",
+    "Game universal Mach-O",
+    "Game ARM64 + x86_64",
+    "64-bit slice header",
+    "64-bit slice header",
+    "Mac 12 deployment target",
+    "SDL framework resolves",
+    "framework version symlink preserved",
+    "packaged model.js matches tested source",
+    "packaged editor.js matches tested source",
+    "packaged features.js matches tested source",
+    "packaged sample-audio.js matches tested source",
+    "packaged builtins-data.js matches tested source",
+    "packaged demo-project.js matches tested source",
+    "packaged interactions-editor.js matches tested source",
+    "packaged style.css matches tested source",
+    "packaged index.html matches tested source",
+    "font resource present",
+    "font resource present",
+    "font resource present",
+    "Runtime universal Mach-O",
+    "Runtime ARM64 + x86_64",
+    "64-bit slice header",
+    "64-bit slice header",
+    "runtime relocatable framework path",
+    "runtime uses system C++ library",
+    "sample export contains exact project",
+    "interaction export contains exact project",
+    "liblota_core.a universal Mach-O",
+    "liblota_core.a ARM64 + x86_64",
+    "liblota_platform.a universal Mach-O",
+    "liblota_platform.a ARM64 + x86_64",
+    "liblota_studio.a universal Mach-O",
+    "liblota_studio.a ARM64 + x86_64",
+    "installed audio header matches source",
+    "installed platform header matches source",
+    "installed Studio header matches source",
+    "installed CMake version is 0.6.0"
+  ],
+  "runtime_dependencies": [
+    {
+      "cpu": "0x1000007",
+      "links": [
+        "@rpath/SDL3.framework/Versions/A/SDL3",
+        "/usr/lib/libc++.1.dylib",
+        "/usr/lib/libSystem.B.dylib"
+      ],
+      "rpaths": [
+        "@executable_path/../Frameworks"
+      ]
+    },
+    {
+      "cpu": "0x100000c",
+      "links": [
+        "@rpath/SDL3.framework/Versions/A/SDL3",
+        "/usr/lib/libc++.1.dylib",
+        "/usr/lib/libSystem.B.dylib"
+      ],
+      "rpaths": [
+        "@executable_path/../Frameworks"
+      ]
+    }
+  ]
+}

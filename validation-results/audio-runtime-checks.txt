@@ -1,0 +1,21 @@
+OK embedded WAV assets load
+OK music PCM rate and frame count
+OK collect sound emitted once
+OK collected item cannot repeat sound
+OK attack sound is edge triggered
+OK sign sound is edge triggered
+OK exit emits sound after transition
+OK maps sharing music preserve clip identity
+OK map without music stops track
+OK pending audio events are bounded
+OK bad RIFF extent rejected
+OK float WAV rejected
+OK bad sample alignment rejected
+OK truncated samples rejected
+OK stereo WAV supported
+OK malformed base64 rejected
+OK unknown audio cue reference rejected
+OK unknown map music rejected
+OK out-of-range gain rejected
+OK bad stamp metadata rejected
+20 audio runtime checks passed

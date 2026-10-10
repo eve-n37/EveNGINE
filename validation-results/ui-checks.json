@@ -1,0 +1,25 @@
+{
+  "checks": [
+    "template loaded",
+    "map brush paints terrain",
+    "undo restores terrain",
+    "redo restores edit",
+    "collision painted",
+    "map inspector applies",
+    "pixel pencil changes sprite",
+    "sprite flip works",
+    "PNG import preserves a new colour",
+    "PNG export preserves pixels",
+    "animation duration editable",
+    "timeline duplicates frame",
+    "timeline removes frame",
+    "GUI creates map",
+    "edited project validates",
+    "autosave includes edits",
+    "save preserves GUI changes",
+    "open preserves data",
+    "recovery restores edited project"
+  ],
+  "count": 19,
+  "page_errors": []
+}

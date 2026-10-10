@@ -1,0 +1,10 @@
+@PACKAGE_INIT@
+# The original package/targets remain available for source compatibility.
+include("${CMAKE_CURRENT_LIST_DIR}/../LotAEngine/LotAEngineConfig.cmake")
+foreach(component Core Platform Studio)
+  if(NOT TARGET EveNGINE::${component})
+    add_library(EveNGINE::${component} INTERFACE IMPORTED)
+    set_target_properties(EveNGINE::${component} PROPERTIES INTERFACE_LINK_LIBRARIES "LotA::${component}")
+  endif()
+endforeach()
+check_required_components(EveNGINE)

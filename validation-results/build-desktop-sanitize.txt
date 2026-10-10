@@ -1,0 +1,53 @@
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /workspace/scratch/5e79a63f37c3/build-v06/desktop-sanitize
+[  5%] Building CXX object engine/CMakeFiles/lota_core.dir/src/core.cpp.o
+[ 11%] Linking CXX static library liblota_core.a
+[ 11%] Built target lota_core
+[ 16%] Building CXX object engine/CMakeFiles/lota_studio.dir/src/studio.cpp.o
+[ 22%] Building CXX object engine/CMakeFiles/lota_platform.dir/src/platform/sdl.cpp.o
+[ 27%] Linking CXX static library liblota_platform.a
+[ 27%] Built target lota_platform
+[ 33%] Building CXX object CMakeFiles/my-game.dir/starter/main.cpp.o
+[ 38%] Linking CXX executable my-game
+[ 38%] Built target my-game
+[ 44%] Linking CXX static library liblota_studio.a
+[ 44%] Built target lota_studio
+[ 50%] Building CXX object CMakeFiles/evengine-audio-tests.dir/editor/tests/audio_runtime_test.cpp.o
+[ 55%] Building CXX object CMakeFiles/lota-studio-tests.dir/editor/tests/runtime_test.cpp.o
+[ 61%] Building CXX object CMakeFiles/lota-studio-runtime.dir/editor/runtime/main.cpp.o
+[ 66%] Building CXX object CMakeFiles/evengine-audio-platform-tests.dir/editor/tests/audio_platform_test.cpp.o
+[ 72%] Linking CXX executable evengine-audio-platform-tests
+[ 72%] Built target evengine-audio-platform-tests
+[ 77%] Building CXX object CMakeFiles/evengine-interaction-tests.dir/editor/tests/interactions_runtime_test.cpp.o
+[ 83%] Linking CXX executable lota-studio-runtime
+[ 88%] Linking CXX executable lota-studio-tests
+[ 88%] Built target lota-studio-runtime
+[ 88%] Built target lota-studio-tests
+[ 94%] Linking CXX executable evengine-audio-tests
+[ 94%] Built target evengine-audio-tests
+[100%] Linking CXX executable evengine-interaction-tests
+[100%] Built target evengine-interaction-tests
+Test project /workspace/scratch/5e79a63f37c3/build-v06/desktop-sanitize
+    Start 1: starter-smoke
+1/6 Test #1: starter-smoke ....................   Passed    0.03 sec
+    Start 2: studio-template-validation
+2/6 Test #2: studio-template-validation .......   Passed    0.07 sec
+    Start 3: studio-runtime-regression
+3/6 Test #3: studio-runtime-regression ........   Passed    0.21 sec
+    Start 4: studio-audio-regression
+4/6 Test #4: studio-audio-regression ..........   Passed    0.33 sec
+    Start 5: studio-audio-platform
+5/6 Test #5: studio-audio-platform ............   Passed    0.65 sec
+    Start 6: studio-interactions
+6/6 Test #6: studio-interactions ..............   Passed    0.26 sec
+
+100% tests passed out of 6
+
+Total Test time (real) =   1.55 sec

@@ -1,0 +1,27 @@
+{
+  "count": 22,
+  "checks": [
+    "sheet slices row-major frames and preserves alpha",
+    "margins and spacing produce exact cells",
+    "bad grid rejects without project mutation",
+    "palette overflow rejects whole sheet",
+    "asset limit prevents partial imports",
+    "asset deletion rejects used sprites and tiles",
+    "unused tile removal remaps higher tile indexes",
+    "four-layer region copies tile IDs and exact flags",
+    "region pastes across maps with correct references",
+    "paste clips to map bounds",
+    "one-layer clear leaves all other layers intact",
+    "rectangular stamp rotation preserves cell order",
+    "stamp-only tile references prevent asset deletion",
+    "invalid stamp references and IDs are rejected",
+    "PCM WAV parser exposes source frames and duration",
+    "stereo PCM WAV accepts aligned two-channel samples",
+    "bad RIFF length and sample format are rejected",
+    "malformed base64 is rejected before decoding",
+    "audio assignments validate and survive serialization",
+    "unknown map music or event sounds are rejected",
+    "bad sound bytes and out-of-range gains are rejected",
+    "older projects without optional v0.5 fields validate"
+  ]
+}

@@ -1,0 +1,34 @@
+OK demo includes inventory and expanded assets
+OK inventory begins empty
+OK NPC opens first page
+OK dialogue pauses movement
+OK E advances dialogue page
+OK last page closes dialogue
+OK Space dismisses without attacking
+OK locked door explains missing key
+OK closed door blocks its passage
+OK chest awards one key
+OK opened chest cannot duplicate reward
+OK opened chest uses alternate art
+OK door opens and consumes one key
+OK opened door clears collision
+OK opened door uses alternate art
+OK player walks through opened passage
+OK switch-only gate resists manual use
+OK switch opens linked gate
+OK latched switch does not repeat cue
+OK pickup can award item quantities
+OK pickup is one-time
+OK Q/I action opens bag
+OK bag pauses world movement
+OK Escape closes bag before quitting
+OK interaction save written atomically
+OK save accepts a position inside an opened door
+OK save restores inventory and object states
+OK inventory fixture present
+OK corrupt inventory rejects without partial mutation
+OK legacy progress saves still load
+OK inventory cap prevents silent item loss
+OK reward chest works across maps
+OK dialogue and inventory render through native Canvas
+33 interaction checks passed

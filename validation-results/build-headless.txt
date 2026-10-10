@@ -1,0 +1,25 @@
+[ 12%] Built target lota_core
+[ 25%] Built target lota_platform
+[ 37%] Built target lota_studio
+[ 50%] Built target lota-studio-runtime
+[ 75%] Built target lota-studio-tests
+[ 75%] Built target my-game
+[ 87%] Built target evengine-audio-tests
+[ 93%] Building CXX object CMakeFiles/evengine-interaction-tests.dir/editor/tests/interactions_runtime_test.cpp.o
+[100%] Linking CXX executable evengine-interaction-tests
+[100%] Built target evengine-interaction-tests
+Test project /workspace/scratch/5e79a63f37c3/build-v06
+    Start 1: starter-smoke
+1/5 Test #1: starter-smoke ....................   Passed    0.01 sec
+    Start 2: studio-template-validation
+2/5 Test #2: studio-template-validation .......   Passed    0.01 sec
+    Start 3: studio-runtime-regression
+3/5 Test #3: studio-runtime-regression ........   Passed    0.02 sec
+    Start 4: studio-audio-regression
+4/5 Test #4: studio-audio-regression ..........   Passed    0.02 sec
+    Start 5: studio-interactions
+5/5 Test #5: studio-interactions ..............   Passed    0.03 sec
+
+100% tests passed out of 5
+
+Total Test time (real) =   0.08 sec

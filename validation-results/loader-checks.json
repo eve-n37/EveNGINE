@@ -1,0 +1,14 @@
+{
+  "count": 9,
+  "checks": [
+    "Keys-and-Gates.eve loads",
+    "Mosslight.eve loads",
+    "Mosslight.lota loads",
+    "GUI v06-ui-authored.eve loads",
+    "GUI v06-ui-edited.eve loads",
+    "unknown reward rejected",
+    "unknown gate target rejected",
+    "empty NPC pages rejected",
+    "inconsistent door rules rejected"
+  ]
+}

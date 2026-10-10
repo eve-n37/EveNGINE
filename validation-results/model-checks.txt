@@ -1,0 +1,16 @@
+OK blank template validates
+OK template validates
+OK undo / redo preserves full project
+OK brush edits group into one history entry
+OK no-op edits keep history clean
+OK fill stays inside connected region
+OK flip and rotate retain pixels
+OK pixel round trip
+OK blocked spawn is rejected
+OK missing exit target rejected
+OK blocked exit arrival rejected
+OK unknown sprite and tile rejected
+OK invalid animation and palette rejected
+OK partial project rejected safely
+OK asset collider bounds checked
+15 model tests passed

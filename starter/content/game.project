@@ -1,0 +1,12 @@
+id sdk-starter
+title "EveNGINE SDK - Your Next Game"
+mode explore
+atlas atlas.ppm
+start workshop
+tile . 0 0 0
+tile # 16 0 1
+tile = 32 0 0
+sprite player 0 32 16 24 3 17 10 7
+sprite crystal 16 32 16 18 0 0 0 0
+sprite shadow 32 32 16 6 0 0 0 0
+scene workshop workshop.scene

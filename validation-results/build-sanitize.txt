@@ -1,0 +1,42 @@
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /workspace/scratch/5e79a63f37c3/build-v06/sanitize
+[  6%] Building CXX object engine/CMakeFiles/lota_core.dir/src/core.cpp.o
+[ 12%] Linking CXX static library liblota_core.a
+[ 12%] Built target lota_core
+[ 18%] Building CXX object engine/CMakeFiles/lota_studio.dir/src/studio.cpp.o
+[ 25%] Building CXX object engine/CMakeFiles/lota_platform.dir/src/platform/headless.cpp.o
+[ 31%] Linking CXX static library liblota_platform.a
+[ 31%] Built target lota_platform
+[ 37%] Building CXX object CMakeFiles/my-game.dir/starter/main.cpp.o
+[ 43%] Linking CXX executable my-game
+[ 43%] Built target my-game
+[ 50%] Linking CXX static library liblota_studio.a
+[ 50%] Built target lota_studio
+[ 56%] Building CXX object CMakeFiles/lota-studio-runtime.dir/editor/runtime/main.cpp.o
+[ 62%] Building CXX object CMakeFiles/lota-studio-tests.dir/editor/tests/runtime_test.cpp.o
+[ 75%] Building CXX object CMakeFiles/evengine-interaction-tests.dir/editor/tests/interactions_runtime_test.cpp.o
+[ 75%] Building CXX object CMakeFiles/evengine-audio-tests.dir/editor/tests/audio_runtime_test.cpp.o
+[ 81%] Linking CXX executable lota-studio-runtime
+[ 81%] Built target lota-studio-runtime
+[ 87%] Linking CXX executable lota-studio-tests
+[ 87%] Built target lota-studio-tests
+[ 93%] Linking CXX executable evengine-interaction-tests
+[100%] Linking CXX executable evengine-audio-tests
+[100%] Built target evengine-interaction-tests
+[100%] Built target evengine-audio-tests
+Test project /workspace/scratch/5e79a63f37c3/build-v06/sanitize
+    Start 1: starter-smoke
+1/5 Test #1: starter-smoke ....................   Passed    0.03 sec
+    Start 2: studio-template-validation
+2/5 Test #2: studio-template-validation .......   Passed    0.06 sec
+    Start 3: studio-runtime-regression
+3/5 Test #3: studio-runtime-regression ........   Passed    0.22 sec
+    Start 4: studio-audio-regression
+4/5 Test #4: studio-audio-regression ..........   Passed    0.36 sec
+    Start 5: studio-interactions
+5/5 Test #5: studio-interactions ..............   Passed    0.24 sec
+
+100% tests passed out of 5
+
+Total Test time (real) =   0.91 sec

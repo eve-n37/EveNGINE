@@ -1,0 +1,31 @@
+{
+  "count": 25,
+  "checks": [
+    "built-in catalog displays all artwork and stamps",
+    "catalog filters asset packs",
+    "catalog filters reusable stamps",
+    "whole library imports and validates",
+    "library import undoes as one action",
+    "redo restores bundled assets",
+    "explorer preset assigns four walking clips",
+    "GUI creates inventory definition",
+    "chest placement uses current item and open sprite",
+    "chest reward quantity editable",
+    "keyed door can consume a key",
+    "lever preset links to an existing door",
+    "door rename updates switch links",
+    "linked door deletion is protected",
+    "protected deletion explains references",
+    "assigned item cannot be deleted",
+    "NPC preset starts with editable dialogue",
+    "NPC speaker and pages persist",
+    "overlong dialogue is rejected without replacing pages",
+    "tile brush can apply water defaults",
+    "solid tile defaults replace water flag",
+    "undo restores terrain and both flags",
+    "authored interactions validate",
+    "save and reopen preserve item and interaction fields",
+    "New offers the interaction demo"
+  ],
+  "page_errors": []
+}

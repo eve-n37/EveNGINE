@@ -1,0 +1,13 @@
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+if(@LOTA_DESKTOP@)
+  if(APPLE AND EXISTS "${PACKAGE_PREFIX_DIR}/Frameworks/SDL3.framework/SDL3" AND NOT TARGET SDL3::SDL3)
+    add_library(SDL3::SDL3 INTERFACE IMPORTED)
+    set_target_properties(SDL3::SDL3 PROPERTIES
+      INTERFACE_LINK_OPTIONS "-F${PACKAGE_PREFIX_DIR}/Frameworks;SHELL:-framework SDL3;-Wl,-rpath,${PACKAGE_PREFIX_DIR}/Frameworks;-Wl,-rpath,@executable_path/../Frameworks")
+  else()
+    find_dependency(SDL3 3.2 CONFIG)
+  endif()
+endif()
+include("${CMAKE_CURRENT_LIST_DIR}/LotAEngineTargets.cmake")
+check_required_components(LotAEngine)
