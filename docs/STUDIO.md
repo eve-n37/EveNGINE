@@ -123,3 +123,8 @@ Autosave writes recovery data after edits. **Recover autosave** restores the las
 This release adds original built-in artwork and basic inventory/interactions alongside reusable asset/map workflows and audio. Existing `.project` / `.scene` SDK content and the RPG's baked `world.json` are not editable `.eve` projects yet. The original C++ starter remains included; the existing Legend of the Ancients build is unchanged. Quest tracking, branching dialogue, shops, equipment, RPG data and UI layout editing are future modules. A full visual scripting system and 3DS export are outside this release.
 
 Existing `.lota` and `.lota-object` files still open. New saves use `.eve` and `.eve-object`. The compatible data format and project IDs are preserved.
+
+
+## v0.7.0 dialogue and quests
+
+Use the new Quests and Dialogue tabs to author story content. Choose the Keeper’s Errand template for a complete playable example. See [STORY.md](STORY.md) for authoring, controls, objectives, rewards, and save compatibility.

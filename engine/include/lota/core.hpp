@@ -43,6 +43,7 @@ enum class Action {
   Two,
   Three,
   Clear,
+  Journal,
   Count
 };
 struct Input {

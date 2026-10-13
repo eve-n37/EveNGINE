@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-14",
+  "build": "universal macOS 12+",
+  "execution": "Apple Silicon",
+  "intelExecution": "untested",
+  "modelChecks": 91,
+  "storyRuntimeChecks": 37,
+  "storyLoaderChecks": 13,
+  "desktopSuites": 7,
+  "headlessSuites": 7,
+  "browserSavedProjectNativeValidation": "passed",
+  "packageResourceEquality": "passed"
+}

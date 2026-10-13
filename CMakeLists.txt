@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(EveNGINESDK VERSION 0.6.0 LANGUAGES CXX)
+project(EveNGINESDK VERSION 0.7.0 LANGUAGES CXX)
 set(LOTA_GAME OFF CACHE BOOL "" FORCE)
 set(LOTA_SAMPLES OFF CACHE BOOL "" FORCE)
 set(LOTA_TESTS OFF CACHE BOOL "" FORCE)
@@ -24,12 +24,13 @@ if(APPLE)
   target_link_libraries(LotAStudio PRIVATE "-framework Cocoa" "-framework WebKit")
   set_target_properties(LotAStudio PROPERTIES OUTPUT_NAME "EveNGINE-Studio" MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/editor/native/Info.plist")
   add_dependencies(LotAStudio lota-studio-runtime)
-  add_custom_command(TARGET LotAStudio POST_BUILD
+  add_custom_target(evengine-studio-resources ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/editor/ui" "$<TARGET_BUNDLE_DIR:LotAStudio>/Contents/Resources/ui"
     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/editor/native/Studio.icns" "$<TARGET_BUNDLE_DIR:LotAStudio>/Contents/Resources/Studio.icns"
     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/editor/examples/font.pam" "$<TARGET_BUNDLE_DIR:LotAStudio>/Contents/Resources/font.pam"
     COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:lota-studio-runtime>" "$<TARGET_BUNDLE_DIR:LotAStudio>/Contents/Resources/Runtime"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/engine/vendor/SDL3.framework" "$<TARGET_BUNDLE_DIR:LotAStudio>/Contents/Frameworks/SDL3.framework")
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/engine/vendor/SDL3.framework" "$<TARGET_BUNDLE_DIR:LotAStudio>/Contents/Frameworks/SDL3.framework"
+    DEPENDS LotAStudio lota-studio-runtime)
 endif()
 
 add_executable(evengine-audio-tests editor/tests/audio_runtime_test.cpp)
@@ -45,3 +46,12 @@ endif()
 add_executable(evengine-interaction-tests editor/tests/interactions_runtime_test.cpp)
 target_link_libraries(evengine-interaction-tests PRIVATE EveNGINE::Studio)
 add_test(NAME studio-interactions COMMAND evengine-interaction-tests "${CMAKE_CURRENT_SOURCE_DIR}/editor/examples/Keys-and-Gates.eve" "${CMAKE_CURRENT_BINARY_DIR}")
+
+add_executable(evengine-story-tests editor/tests/story_runtime_test.cpp)
+target_link_libraries(evengine-story-tests PRIVATE EveNGINE::Studio)
+add_test(NAME studio-story COMMAND evengine-story-tests "${CMAKE_CURRENT_SOURCE_DIR}/editor/examples/Keepers-Errand.eve" "${CMAKE_CURRENT_BINARY_DIR}")
+
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if(Python3_Interpreter_FOUND)
+ add_test(NAME studio-story-loader COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/editor/tests/story_loader_test.py" "$<TARGET_FILE:lota-studio-runtime>" "${CMAKE_CURRENT_SOURCE_DIR}/editor/examples/Keepers-Errand.eve")
+endif()

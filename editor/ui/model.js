@@ -47,7 +47,7 @@ function validate(p){let errors=[],bad=s=>errors.push(s),finite=x=>typeof x==='n
  let objectIds=new Set();for(let o of s.objects){if(!ident(o.id)||objectIds.has(o.id))bad('Duplicate/invalid object ID.');objectIds.add(o.id);if(!p.sprites.some(a=>a.id===o.sprite)||!['decoration','collectible','sign','npc','chest','door','switch'].includes(o.kind)||!inMap(s,o.x,o.y)||typeof o.text!=='string'||o.text.length>180)bad('Invalid object in '+s.title);}
  for(let e of s.portals){let target=scenes.get(e.target);if(!ident(e.id)||!target||!['x','y','w','h'].every(k=>finite(e[k]))||e.w<=0||e.h<=0||e.x<0||e.y<0||e.x+e.w>s.width*16||e.y+e.h>s.height*16||!e.arrival||!inMap(target,e.arrival.x,e.arrival.y)||rectBlocked(target,e.arrival.x,e.arrival.y))bad('Invalid or blocked exit in '+s.title);}}
  if(!Array.isArray(p.animations)||p.animations.length>64)bad('Invalid animation list.');else {let keys=new Set();for(let a of p.animations){let key=a.state+'-'+a.direction;if(keys.has(key)||!ident(a.id)||!['south','north','east','west'].includes(a.direction)||!['walk','idle','attack'].includes(a.state)||!Array.isArray(a.frames)||a.frames.length<1||a.frames.length>64||a.frames.some(f=>!p.sprites.some(s=>s.id===f.sprite)||!Number.isInteger(f.ms)||f.ms<16||f.ms>5000))bad('Invalid animation '+a.id);keys.add(key);}for(let d of ['south','north','east','west'])if(!keys.has('walk-'+d))bad('Missing '+d+' walking animation.');}
- validateExtras(p,bad);validateInteractions(p,bad);
+ validateExtras(p,bad);validateInteractions(p,bad);validateStory(p,bad);
  if(!p.player||!finite(p.player.speed)||p.player.speed<1||p.player.speed>512||!finite(p.player.runMultiplier)||p.player.runMultiplier<1||p.player.runMultiplier>4)bad('Invalid movement speed.');return errors;
 }
 class History{constructor(p){this.project=clone(p);this.undoStack=[];this.redoStack=[];}commit(before){if(JSON.stringify(before)===JSON.stringify(this.project))return false;this.undoStack.push(before);if(this.undoStack.length>60)this.undoStack.shift();this.redoStack=[];this.trim();return true;}trim(){let bytes=0;for(let i=this.undoStack.length-1;i>=0;i--){bytes+=JSON.stringify(this.undoStack[i]).length;if(bytes>64*1024*1024){this.undoStack.splice(0,i+1);break;}}}undo(){if(!this.undoStack.length)return false;this.redoStack.push(clone(this.project));this.project=this.undoStack.pop();return true;}redo(){if(!this.redoStack.length)return false;this.undoStack.push(clone(this.project));this.project=this.redoStack.pop();return true;}}
@@ -114,7 +114,7 @@ function validateInteractions(p,bad){
   for(let key of ['consumeKey','switchOnly'])if(o[key]!==undefined&&typeof o[key]!=='boolean')bad('Invalid interaction toggle.');
   if(o.kind==='chest'&&!itemIds.has(o.item))bad('Choose a reward item for chest '+o.id);
   if(o.kind==='door'&&o.switchOnly&&o.requiredItem)bad('Switch-only doors cannot also require an item.');
-  if(o.kind==='npc'&&(!Array.isArray(o.pages)||o.pages.length<1||o.pages.length>16||o.pages.some(v=>typeof v!=='string'||v.length<1||v.length>180)||typeof o.speaker!=='string'||o.speaker.length>40))bad('NPC dialogue requires 1–16 pages, at most 180 characters each.');
+  if(o.kind==='npc'&&!o.dialogue&&(!Array.isArray(o.pages)||o.pages.length<1||o.pages.length>16||o.pages.some(v=>typeof v!=='string'||v.length<1||v.length>180)||typeof o.speaker!=='string'||o.speaker.length>40))bad('NPC dialogue requires 1–16 pages, at most 180 characters each.');
   if(o.kind==='switch'&&(!Array.isArray(o.targets)||o.targets.length<1||o.targets.length>32||new Set(o.targets).size!==o.targets.length||o.targets.some(id=>!s.objects.some(target=>target.id===id&&target.kind==='door'))))bad('Switch '+o.id+' must target 1–32 doors on the same map.');
  }
 }
@@ -144,5 +144,42 @@ function paintTerrain(p,s,k,x,y,mode,value,auto){let indices=[];if(mode==='fill'
  for(let i of indices){s[k][i]=value;if(auto&&k==='base'){let a=p.tiles[value];s.collision[i]=a.solid?1:0;s.water[i]=a.water?1:0;}}
 }
 
-const api={clone,blank,pixelString,decode,createProject,createBlankProject,validate,History,fill,transform,wavInfo,base64Bytes,importSheet,assetUsage,deleteAsset,copyRegion,pasteRegion,clearRegion,transformStamp,validateStamp,validateInteractions,importBuiltins,objectDefaults,paintTerrain};if(typeof module!=='undefined')module.exports=api;root.LotaModel=api;
+
+function validateStory(p,bad){
+ const ident=v=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,64}$/.test(v),text=(v,n,empty=false)=>typeof v==='string'&&v.length<=n&&(empty||v.length>0),quantity=v=>v===undefined||Number.isInteger(v)&&v>=1&&v<=99;
+ const objects=new Map(p.scenes.flatMap(s=>(s.objects||[]).map(o=>[s.id+':'+o.id,o]))),items=new Set((Array.isArray(p.items)?p.items:[]).map(i=>i.id)),quests=p.quests===undefined?[]:p.quests,ids=new Set();
+ if(!Array.isArray(quests)||quests.length>64){bad('Use at most 64 quests.');return;}
+ for(let q of quests){
+  if(!q||!ident(q.id)||ids.has(q.id)){bad('Quest IDs must be unique.');continue;}ids.add(q.id);
+  if(!text(q.name,40)||!text(q.description,180,true))bad('Quest names allow 40 characters; descriptions allow 180.');
+  if(!Array.isArray(q.objectives)||q.objectives.length<1||q.objectives.length>8){bad('Each quest needs 1–8 objectives.');continue;}
+  let seen=new Set();for(let o of q.objectives){if(!o||!text(o.target,129)||!quantity(o.quantity)){bad('Invalid quest objective.');continue;}let key=o.type+':'+o.target;if(seen.has(key))bad('Duplicate quest objective.');seen.add(key);let target=objects.get(o.target);
+   if(o.type==='item'){if(!items.has(o.target))bad('Unknown quest item: '+o.target);}
+   else if(o.type==='visit'){if(!p.scenes.some(s=>s.id===o.target)||(o.quantity||1)!==1)bad('Unknown quest map or invalid visit quantity.');}
+   else if(o.type==='talk'){if(target?.kind!=='npc'||(o.quantity||1)!==1)bad('Talk objectives must reference an NPC.');}
+   else if(o.type==='activate'){if(!['chest','door','switch'].includes(target?.kind)||(o.quantity||1)!==1)bad('Activation objectives must reference a chest, door or switch.');}
+   else bad('Unknown quest objective type.');
+  }
+  if(q.rewardItem!==undefined&&(typeof q.rewardItem!=='string'||q.rewardItem&&!items.has(q.rewardItem)))bad('Unknown quest reward item.');if(!quantity(q.rewardQuantity))bad('Quest reward quantities must be 1–99.');
+ }
+ for(let s of p.scenes)for(let o of s.objects||[])if(o.dialogue!==undefined){let d=o.dialogue;
+  if(o.kind!=='npc'||!d||!ident(d.start)||!Array.isArray(d.nodes)||d.nodes.length<1||d.nodes.length>64){bad('Dialogue trees need an NPC, a start node and 1–64 nodes.');continue;}
+  if(!text(o.speaker,40,true))bad('Dialogue speaker allows 40 characters.');let nodes=new Map();
+  for(let node of d.nodes){if(!node||!ident(node.id)||nodes.has(node.id)){bad('Dialogue node IDs must be unique.');continue;}nodes.set(node.id,node);if(!text(node.text,180))bad('Dialogue text must be 1–180 characters.');if(!Array.isArray(node.choices)||node.choices.length>3){bad('Use at most three choices per dialogue node.');continue;}
+   for(let c of node.choices){if(!c||!text(c.text,40)||typeof c.next!=='string'||c.next&&!ident(c.next)){bad('Invalid dialogue choice or destination.');continue;}
+    if(['action','quest','conditionQuest','conditionState','requiredItem'].some(k=>c[k]!==undefined&&typeof c[k]!=='string'))bad('Dialogue action and condition fields must be text.');
+    if(c.action? !['accept','complete'].includes(c.action)||!ids.has(c.quest):!!c.quest)bad('Choose an existing quest for a dialogue action.');
+    if(c.conditionQuest? !ids.has(c.conditionQuest)||!['available','active','ready','completed'].includes(c.conditionState):!!c.conditionState)bad('Invalid dialogue quest condition.');
+    if(c.requiredItem!==undefined&&(typeof c.requiredItem!=='string'||c.requiredItem&&!items.has(c.requiredItem)))bad('Unknown choice requirement item.');if(!quantity(c.quantity))bad('Choice quantities must be 1–99.');
+   }
+  }
+  if(!nodes.has(d.start))bad('Missing starting dialogue node.');for(let node of nodes.values())for(let c of (Array.isArray(node.choices)?node.choices:[]))if(c?.next&&!nodes.has(c.next))bad('Missing dialogue destination: '+c.next);
+  let reached=new Set(),pending=[d.start];while(pending.length){let id=pending.pop();if(reached.has(id)||!nodes.has(id))continue;reached.add(id);for(let c of (Array.isArray(nodes.get(id).choices)?nodes.get(id).choices:[]))if(c?.next)pending.push(c.next);}if(reached.size!==nodes.size)bad('Every dialogue node must be reachable from the start.');
+ }
+}
+function storyItemUsed(p,id){return (p.quests||[]).some(q=>q.rewardItem===id||q.objectives.some(o=>o.type==='item'&&o.target===id))||p.scenes.some(s=>s.objects.some(o=>o.dialogue?.nodes.some(n=>n.choices.some(c=>c.requiredItem===id))));}
+function storyObjectUsed(p,key){return (p.quests||[]).some(q=>q.objectives.some(o=>['talk','activate'].includes(o.type)&&o.target===key));}
+function renameStoryObject(p,scene,oldId,newId){for(let q of p.quests||[])for(let o of q.objectives)if(['talk','activate'].includes(o.type)&&o.target===scene+':'+oldId)o.target=scene+':'+newId;}
+
+const api={validateStory,storyItemUsed,storyObjectUsed,renameStoryObject,clone,blank,pixelString,decode,createProject,createBlankProject,validate,History,fill,transform,wavInfo,base64Bytes,importSheet,assetUsage,deleteAsset,copyRegion,pasteRegion,clearRegion,transformStamp,validateStamp,validateInteractions,importBuiltins,objectDefaults,paintTerrain};if(typeof module!=='undefined')module.exports=api;root.LotaModel=api;
 })(typeof window!=='undefined'?window:globalThis);

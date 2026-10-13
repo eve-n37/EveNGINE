@@ -1,3 +1,19 @@
+# EveNGINE v0.7.0 development validation
+
+October 14, 2026: a fresh universal Mac build succeeded with Apple Clang 21, CMake 4.4.4, and a macOS 12 deployment target. Apple Silicon execution passed all seven CTest suites in both desktop and headless configurations. Intel slices compiled; Intel execution remains untested.
+
+- 91 editor model checks passed: 15 original, 22 sheet/stamp/audio, 23 built-in asset/interaction, and 31 story checks.
+- 37 new native story runtime checks passed, covering acceptance, conditional branches, input, journal pause, all four objectives, item consumption, reward capacity, one-time rewards, progress persistence, corrupt-save atomicity, stale-objective protection, v0.6 saves, and native rendering.
+- 13 native story-loader checks passed for malformed quests, nodes, conditions, references, and quantities.
+- Browser checks exercised the story template, quest naming and undo, quest/node creation and undo, dialogue controls, validation, and file saving. The saved browser-authored project also passed native runtime validation.
+- The packaged editor UI and runtime were byte-compared to the tested source and binary. Studio, the runtime, and the standalone demo contain arm64 and x86_64 slices. Native dialogue/journal previews were rendered and visually checked.
+
+Run the model checks with `node editor/tests/run-model-tests.js`. Build with CMake and run `ctest --test-dir build --output-on-failure` for native checks. The story-loader suite is registered when Python is available.
+
+This is a development test build. The new AppKit editor launch, native file-dialog workflow, and a freshly exported game's full manual playthrough still need hands-on testing. Apps are unsigned and not notarized. Existing projects and v0.6 progress load; new v0.7 progress cannot load in v0.6. See docs/STORY.md for save and objective-editing limits.
+
+## Archived v0.6.0 evidence
+
 # EveNGINE v0.6.0 validation
 
 Built from the included sources. The editor, native runtime, starter and three SDK libraries were compiled and linked for Apple Silicon and Intel Mac and combined into universal binaries. Automated native Mac launch and audible playback were unavailable in the build environment. After delivery, the project owner reported that everything works on Mac; the owner’s Apple Silicon platform is confirmed. Intel execution remains untested.

@@ -58,6 +58,8 @@ class SDLPlatform final : public Platform {
     case SDL_SCANCODE_DELETE:
     case SDL_SCANCODE_BACKSPACE:
       return int(Action::Clear);
+    case SDL_SCANCODE_J:
+      return int(Action::Journal);
     case SDL_SCANCODE_I:
     case SDL_SCANCODE_Q:
       return int(Action::Menu);

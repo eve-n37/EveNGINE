@@ -1,0 +1,37 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),M=require('../ui/model.js');
+const fixture=JSON.parse(fs.readFileSync(__dirname+'/../examples/Keepers-Errand.eve'));let checks=0;
+function test(name,fn){fn();console.log('OK '+name);checks++;}
+function invalid(fn){let p=M.clone(fixture);fn(p);assert(M.validate(p).length);}
+const npc=p=>p.scenes[0].objects.find(o=>o.id==='keeper'),quest=p=>p.quests[0];
+test('story demo validates',()=>assert.deepEqual(M.validate(fixture),[]));
+test('legacy projects need no quests',()=>assert.deepEqual(M.validate(M.createProject()),[]));
+test('dialogue trees can replace pages',()=>{let p=M.clone(fixture);delete npc(p).pages;assert.deepEqual(M.validate(p),[]);});
+test('unknown quest action target rejected',()=>invalid(p=>npc(p).dialogue.nodes[0].choices[0].quest='missing'));
+test('unsupported quest action rejected',()=>invalid(p=>npc(p).dialogue.nodes[0].choices[0].action='skip'));
+test('invalid quest condition rejected',()=>invalid(p=>npc(p).dialogue.nodes[0].choices[0].conditionState='broken'));
+test('condition without quest rejected',()=>invalid(p=>{npc(p).dialogue.nodes[0].choices[0].conditionQuest='';}));
+test('missing dialogue destination rejected',()=>invalid(p=>npc(p).dialogue.nodes[0].choices[0].next='missing'));
+test('missing start node rejected',()=>invalid(p=>npc(p).dialogue.start='missing'));
+test('duplicate node IDs rejected',()=>invalid(p=>npc(p).dialogue.nodes.push(M.clone(npc(p).dialogue.nodes[0]))));
+test('unreachable nodes rejected',()=>invalid(p=>npc(p).dialogue.nodes.push({id:'unused',text:'Unused',choices:[]})));
+test('cycles remain valid',()=>{let p=M.clone(fixture);npc(p).dialogue.nodes[4].choices[0].next='greeting';assert.deepEqual(M.validate(p),[]);});
+test('more than three choices rejected',()=>invalid(p=>npc(p).dialogue.nodes[0].choices.push({text:'Extra',next:''})));
+test('malformed choice list rejects without crashing',()=>invalid(p=>npc(p).dialogue.nodes[0].choices={}));
+test('invalid action field type rejected',()=>invalid(p=>npc(p).dialogue.nodes[0].choices[0].action=0));
+test('overlong text rejected',()=>invalid(p=>npc(p).dialogue.nodes[0].text='x'.repeat(181)));
+test('unknown quest item rejected',()=>invalid(p=>quest(p).objectives[3].target='missing'));
+test('talk objective needs NPC',()=>invalid(p=>quest(p).objectives[2].target='meadow:key-door'));
+test('activation objective needs activatable object',()=>invalid(p=>quest(p).objectives[0].target='meadow:keeper'));
+test('visit objective needs existing map',()=>invalid(p=>quest(p).objectives[1].target='missing'));
+test('duplicate objectives rejected',()=>invalid(p=>quest(p).objectives.push(M.clone(quest(p).objectives[0]))));
+test('fractional objective quantity rejected',()=>invalid(p=>quest(p).objectives[3].quantity=1.5));
+test('empty quests rejected',()=>invalid(p=>quest(p).objectives=[]));
+test('unknown reward rejected',()=>invalid(p=>quest(p).rewardItem='missing'));
+test('duplicate quest IDs rejected',()=>invalid(p=>p.quests.push(M.clone(p.quests[0]))));
+test('quest item references protect deletion',()=>assert(M.storyItemUsed(fixture,'trail-bread')&&M.storyItemUsed(fixture,'gold-coin')));
+test('choice item references protect deletion',()=>{let p=M.clone(fixture);npc(p).dialogue.nodes[0].choices[0].requiredItem='bronze-key';assert(M.storyItemUsed(p,'bronze-key'));});
+test('quest object references protect deletion',()=>assert(M.storyObjectUsed(fixture,'grove:merchant')));
+test('NPC rename updates quest references',()=>{let p=M.clone(fixture);M.renameStoryObject(p,'grove','merchant','trader');p.scenes[1].objects.find(o=>o.id==='merchant').id='trader';assert.deepEqual(M.validate(p),[]);assert.equal(quest(p).objectives[2].target,'grove:trader');});
+test('undo restores dialogue and quest edits together',()=>{let h=new M.History(fixture),before=M.clone(h.project);h.project.quests[0].name='Edited';npc(h.project).dialogue.nodes[0].choices[0].text='Edited';h.commit(before);assert(h.undo());assert.deepEqual(h.project,fixture);assert(h.redo());assert.equal(h.project.quests[0].name,'Edited');});
+test('saved project retains story data',()=>assert.deepEqual(JSON.parse(JSON.stringify(fixture)).quests,fixture.quests));
+console.log(checks+' story model checks passed');

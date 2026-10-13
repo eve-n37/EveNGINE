@@ -1,4 +1,6 @@
-# EveNGINE 0.6.0 — EveNGINE Studio
+# EveNGINE 0.7.0 — EveNGINE Studio
+
+**v0.7.0 development build:** branching dialogue, quests, and a journal. See [the story guide](docs/STORY.md) and [changelog](CHANGELOG.md). The published GitHub release below remains v0.6.0.
 
 A reusable 2D C++ engine with a separate GUI authoring app. Requires macOS 12 or later; universal Apple Silicon / Intel binaries are included. Normal editing and app export do not require a terminal, Python, Xcode or a compiler.
 
@@ -26,6 +28,7 @@ If macOS blocks a downloaded development app, use Finder's Open action or the ap
 
 ## Included
 
+- Story tools: branching conversations, conditional choices, four quest objective types, one-time rewards, and a saved journal. Try **New → Story demo · the keeper’s errand**.
 - Built-in assets: 110 original pixel-art tiles/sprites, seven packs, eight map stamps and a four-direction explorer preset.
 - Interactions: NPC dialogue, inventory items, pickups, reward chests, keyed doors and linked latch switches, with saved progress.
 - Asset browser: name/ID/group search, type and group filters, artwork inspection, duplicate and reference-aware deletion.
@@ -44,7 +47,7 @@ The editor uses macOS AppKit and its built-in WebKit view. Exported games contai
 
 ## Project scope
 
-Studio projects use a new editable `.eve` format. It does **not** import the current LotA RPG's baked world atlas or Godot scenes. The existing LotA game remains unchanged. Migrating its maps, RPG rules and UI into Studio is a follow-up task. The generic runtime supports exploration, collectibles, dialogue, inventory, chests, doors and switches. Quests, branching dialogue, shops, RPG data and UI layout editors are future modules. 3DS authoring/export remains paused.
+Studio projects use a new editable `.eve` format. It does **not** import the current LotA RPG's baked world atlas or Godot scenes. The existing LotA game remains unchanged. Migrating its maps, RPG rules and UI into Studio is a follow-up task. The generic runtime supports exploration, collectibles, dialogue, inventory, chests, doors and switches. Shops, RPG data and UI layout editors are future modules. Quests and branching dialogue are optional v0.7.0 features. 3DS authoring/export remains paused.
 
 ## Build from source
 
@@ -67,7 +70,7 @@ A Linux desktop build needs SDL3 3.2+ installed. The native GUI in this mileston
 
 ## Reuse the SDK
 
-In the downloaded SDK, point `CMAKE_PREFIX_PATH` to its `macOS` directory and use:
+For the published v0.6.0 SDK, point `CMAKE_PREFIX_PATH` to its `macOS` directory and use:
 
 ```cmake
 find_package(EveNGINE 0.6 CONFIG REQUIRED)
@@ -76,6 +79,8 @@ target_link_libraries(my-game PRIVATE EveNGINE::Core EveNGINE::Platform EveNGINE
 ```
 
 `EveNGINE::Studio` is an optional, data-driven exploration module. Its public API is in `include/evengine/studio.hpp`. Other genres can link only the core/platform targets and define their own rules. The original C++ starter remains available under `starter` and in `macOS/EveNGINE-SDK-Starter.app`.
+
+For a v0.7.0 SDK built from this source, run `cmake --install build --prefix sdk`, point `CMAKE_PREFIX_PATH` to `sdk`, and request `find_package(EveNGINE 0.7 CONFIG REQUIRED)`.
 
 See `VALIDATION.md` for the checks and their limits. Third-party notices are in `third_party`.
 
