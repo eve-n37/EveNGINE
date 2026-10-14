@@ -90,4 +90,4 @@ See VALIDATION-RC3.md for current checks and remaining manual validation.
 
 ## Dragging placed assets
 
-In Maps → Map editor, choose **Select / Move**, then drag a placed object or exit. The object keeps the offset where you grabbed it. Hold Shift to snap its position to 16-pixel tiles. Escape cancels a drag; Undo reverses the whole move. Locked groups cannot be moved, and objects stay within the map. This moves individual placed objects; terrain is edited with the Brush or Region tools.
+In Maps → Map editor, choose **Select / Move**, then drag a placed object or exit. The object keeps the offset where you grabbed it. Enable **Snap to grid** to snap dragged positions to 16-pixel tiles, or hold Shift for temporary snapping. The Grid checkbox only controls the visible grid. Escape cancels a drag; Undo reverses the whole move. Locked groups cannot be moved, and objects stay within the map. This moves individual placed objects; terrain is edited with the Brush or Region tools.
