@@ -45,10 +45,6 @@ If macOS blocks a downloaded development app, use Finder's Open action or the ap
 
 The editor uses macOS AppKit and its built-in WebKit view. Exported games contain the native engine, SDL3 and their project data. They do not contain the editor or require a browser.
 
-## Project scope
-
-Studio projects use a new editable `.eve` format. It does **not** import the current LotA RPG's baked world atlas or Godot scenes. The existing LotA game remains unchanged. Migrating its maps, RPG rules and UI into Studio is a follow-up task. The generic runtime supports exploration, collectibles, dialogue, inventory, chests, doors and switches. Shops, RPG data and UI layout editors are future modules. Quests and branching dialogue are optional v0.7.0 features. 3DS authoring/export remains paused.
-
 ## Build from source
 
 On Mac, install Xcode Command Line Tools and CMake, then:
