@@ -19,7 +19,9 @@ class SDLPlatform final : public Platform {
   SDL_Gamepad *gamepad = nullptr;
   std::array<bool, size_t(Action::Count)> keyboard{}, controller{};
   bool running = true;
-  static int mapping(SDL_Scancode code) {
+  bool customInput=false, padActive=false;std::string rawKey;std::map<Action,std::string> configuredKeys,configuredButtons;
+  int mapping(SDL_Scancode code) {
+    if(customInput){switch(code){case SDL_SCANCODE_LEFT:return int(Action::Left);case SDL_SCANCODE_RIGHT:return int(Action::Right);case SDL_SCANCODE_UP:return int(Action::Up);case SDL_SCANCODE_DOWN:return int(Action::Down);case SDL_SCANCODE_RETURN:return int(Action::Interact);case SDL_SCANCODE_ESCAPE:return int(Action::Pause);default:break;}for(auto& binding:configuredKeys)if(SDL_GetScancodeFromName(binding.second.c_str())==code)return int(binding.first);return -1;}
     switch (code) {
     case SDL_SCANCODE_A:
     case SDL_SCANCODE_LEFT:
@@ -134,6 +136,10 @@ public:
     SDL_free(pads);
   }
   ~SDLPlatform() override { cleanup(); }
+  void configureInput(const std::map<Action,std::string>& keys,const std::map<Action,std::string>& buttons) override{customInput=true;configuredKeys=keys;configuredButtons=buttons;}
+  std::string takeKeyPress() override{auto key=rawKey;rawKey.clear();return key;}
+  bool usingGamepad() const override{return padActive;}
+  bool setFullscreen(bool enabled) override{return SDL_SetWindowFullscreen(window,enabled);}
   bool poll(Input &input) override {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -142,12 +148,13 @@ public:
       if (event.type == SDL_EVENT_WINDOW_FOCUS_LOST)
         keyboard.fill(false);
       if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP) {
-        int i = mapping(event.key.scancode);
+        if(event.type==SDL_EVENT_KEY_DOWN&&!event.key.repeat){rawKey=SDL_GetScancodeName(event.key.scancode);padActive=false;}int i = mapping(event.key.scancode);
         // Query actual keys below, so releasing one binding doesn't cancel
         // another.
         if (i >= 0 && event.type == SDL_EVENT_KEY_DOWN && !event.key.repeat)
           input.pressed[size_t(i)] = true;
       }
+      if(event.type==SDL_EVENT_GAMEPAD_BUTTON_DOWN)padActive=true;
       if (event.type == SDL_EVENT_GAMEPAD_ADDED && !gamepad)
         gamepad = SDL_OpenGamepad(event.gdevice.which);
       if (event.type == SDL_EVENT_GAMEPAD_REMOVED && gamepad &&
@@ -180,6 +187,8 @@ public:
       controller[size_t(Action::Right)] |= x > 10000;
       controller[size_t(Action::Up)] |= y < -10000;
       controller[size_t(Action::Down)] |= y > 10000;
+      if(std::abs(x)>10000||std::abs(y)>10000)padActive=true;
+      if(customInput){for(auto& b:configuredButtons)if(!b.second.empty()){const std::map<std::string,SDL_GamepadButton> names={{"south",SDL_GAMEPAD_BUTTON_SOUTH},{"east",SDL_GAMEPAD_BUTTON_EAST},{"west",SDL_GAMEPAD_BUTTON_WEST},{"north",SDL_GAMEPAD_BUTTON_NORTH},{"leftshoulder",SDL_GAMEPAD_BUTTON_LEFT_SHOULDER},{"rightshoulder",SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER},{"back",SDL_GAMEPAD_BUTTON_BACK},{"start",SDL_GAMEPAD_BUTTON_START},{"leftstick",SDL_GAMEPAD_BUTTON_LEFT_STICK},{"rightstick",SDL_GAMEPAD_BUTTON_RIGHT_STICK}};auto value=names.find(b.second);if(value!=names.end())button(b.first,value->second);}}else{
       button(Action::Run, SDL_GAMEPAD_BUTTON_NORTH);
       button(Action::Interact, SDL_GAMEPAD_BUTTON_SOUTH);
       button(Action::Attack, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
@@ -190,6 +199,7 @@ public:
       button(Action::Quit, SDL_GAMEPAD_BUTTON_START);
       controller[size_t(Action::Quit)] |=
           SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_EAST);
+      }
     }
     for (size_t i = 0; i < keyboard.size(); ++i)
       input.set(Action(i), keyboard[i] || controller[i]);

@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.0.0 RC1 — combined v0.7/v0.8 candidate
+
+- Customizable title screens and pause menus with New, Continue, Save, Load, Settings, Return to title, and Quit.
+- Visible save/load feedback and unsaved-progress confirmation before menu exit or loading.
+- Player music/effects volume, fullscreen, controls reference, and persisted keyboard rebinding.
+- Named keyboard and gamepad actions, controller menu/dialogue navigation, and prompts that follow the active device and assignments.
+- Events triggered by map entry, area entry, or object interaction; item/quest/flag conditions; ordered message, dialogue, item, quest, activation, map-change, flag, and sound actions.
+- Saved one-time events and story flags; item reward preflight prevents partial reward sequences when a bag is full.
+- Optional dialogue portraits, speaker colors, and typewriter reveal with confirm-to-reveal behavior.
+- Four-neighbor autotile rules with 16 editable patterns and baked runtime terrain.
+- Per-map object groups with editor visibility, locking, and atomic movement.
+- Interactive world overview with map thumbnails, exit connections, draggable arrangement, and map navigation.
+- Dedicated authoring workspaces and a complete Release Candidate demo.
+- Save format 4 retains event state and reads existing formats 2 and 3.
+- Virtual-controller regression coverage caught and fixed a button-name mismatch in the bundled SDL library.
+
 ## 0.7.0 — development build
 
 - Game Appearance workspace with PNG icon import, sprite-to-icon creation, pixel painting, fill, erasing, previews, and PNG export.

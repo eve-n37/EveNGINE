@@ -1,0 +1,5 @@
+build-rc1/EveNGINE-Studio.app/Contents/MacOS/EveNGINE-Studio: x86_64 arm64
+build-rc1/EveNGINE-Studio.app/Contents/Resources/Runtime: x86_64 arm64
+build-rc1/export-checks/Release-Candidate.app/Contents/MacOS/Game: x86_64 arm64
+build-rc1/EveNGINE-Studio.app/Contents/Frameworks/SDL3.framework/SDL3: x86_64 arm64
+Version, minimum macOS, current UI resources, and both runtime copies match.

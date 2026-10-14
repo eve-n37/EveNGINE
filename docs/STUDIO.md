@@ -104,7 +104,7 @@ Project settings edit the title, walking speed and running multiplier.
 
 **Playtest** validates again in C++ and launches the selected map with its spawn. The playable window uses exactly the project currently in the workspace, even before saving. Unsaved playtest content is held in a temporary folder.
 
-Controls: WASD or arrows to move, Shift to run, E to interact/advance dialogue, Q or I to open the bag (A/D changes bag pages), Space to play attack animations or dismiss dialogue, F3 to show collision, water, feet, exits, coordinates and frame interval, F5 to save progress, F9 to reload, Escape closes dialogue/bag first, then closes the game. Progress saves include inventory, collected pickups, opened chests/doors and latched switches, and are kept separately by project ID. Close the playtest when done; closing the editor also closes its active playtests.
+Controls: WASD or arrows to move, Shift to run, E to interact/advance dialogue, Q to open the bag (A/D changes bag pages), Space to play attack animations or dismiss dialogue, F3 to show collision, water, feet, exits, coordinates and frame interval, F5 to save progress, F9 to reload, Escape closes dialogue/bag first, then opens the pause menu. Progress saves include inventory, collected pickups, opened chests/doors and latched switches, and are kept separately by project ID. Close the playtest when done; closing the editor also closes its active playtests.
 
 **Export app** validates through the same C++ loader, asks where to save and produces a standalone universal Mac `.app`. The app contains project data, packed-at-load artwork, the native runtime, font and SDL3 framework. A compiler is not required. Export replaces an existing app only after the native save dialog's replacement confirmation; the new package is staged before committing. Exported games target macOS 12+ and can be launched without the editor.
 
@@ -133,3 +133,7 @@ Use the new Quests and Dialogue tabs to author story content. Choose the Keeperâ
 ## Game icons and UI colors
 
 Use the Game appearance tab to draw or import an app icon and edit the gameâ€™s UI colors. Native Mac exports include the icon automatically. See [APPEARANCE.md](APPEARANCE.md) for controls, presets, import limits, and the appearance demo.
+
+## Release candidate menus, events, and map tools
+
+See [the release candidate guide](RELEASE-CANDIDATE.md) for title screens, player settings, controls, event sequences, dialogue presentation, autotiles, groups, and the world overview. New projects can use **Release candidate demo** to try them together.

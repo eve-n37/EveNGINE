@@ -1,6 +1,6 @@
-# EveNGINE 0.7.0 — EveNGINE Studio
+# EveNGINE 1.0.0 RC1 — EveNGINE Studio
 
-**v0.7.0 development build:** branching dialogue, quests, a journal, game icons, and editable UI colors. See [the appearance guide](docs/APPEARANCE.md), [the story guide](docs/STORY.md) and [changelog](CHANGELOG.md). The published GitHub release below remains v0.6.0.
+**v1.0.0 release candidate 1:** the combined v0.7/v0.8 feature set: dialogue and quests, game icons and UI colors, menus and player settings, events, controls, portraits, autotiles, object groups, and world overview. See [the RC guide](docs/RELEASE-CANDIDATE.md) and [changelog](CHANGELOG.md). This is a local candidate; the published GitHub release remains v0.6.0.
 
 A reusable 2D C++ engine with a separate GUI authoring app. Requires macOS 12 or later; universal Apple Silicon / Intel binaries are included. Normal editing and app export do not require a terminal, Python, Xcode or a compiler.
 
@@ -80,7 +80,7 @@ target_link_libraries(my-game PRIVATE EveNGINE::Core EveNGINE::Platform EveNGINE
 
 `EveNGINE::Studio` is an optional, data-driven exploration module. Its public API is in `include/evengine/studio.hpp`. Other genres can link only the core/platform targets and define their own rules. The original C++ starter remains available under `starter` and in `macOS/EveNGINE-SDK-Starter.app`.
 
-For a v0.7.0 SDK built from this source, run `cmake --install build --prefix sdk`, point `CMAKE_PREFIX_PATH` to `sdk`, and request `find_package(EveNGINE 0.7 CONFIG REQUIRED)`.
+For a v1.0.0 SDK built from this source, run `cmake --install build --prefix sdk`, point `CMAKE_PREFIX_PATH` to `sdk`, and request `find_package(EveNGINE 1.0 CONFIG REQUIRED)`.
 
 See `VALIDATION.md` for the checks and their limits. Third-party notices are in `third_party`.
 

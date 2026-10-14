@@ -1,0 +1,172 @@
+OK blank template validates
+OK template validates
+OK undo / redo preserves full project
+OK brush edits group into one history entry
+OK no-op edits keep history clean
+OK fill stays inside connected region
+OK flip and rotate retain pixels
+OK pixel round trip
+OK blocked spawn is rejected
+OK missing exit target rejected
+OK blocked exit arrival rejected
+OK unknown sprite and tile rejected
+OK invalid animation and palette rejected
+OK partial project rejected safely
+OK asset collider bounds checked
+15 model tests passed
+{
+  "count": 22,
+  "checks": [
+    "sheet slices row-major frames and preserves alpha",
+    "margins and spacing produce exact cells",
+    "bad grid rejects without project mutation",
+    "palette overflow rejects whole sheet",
+    "asset limit prevents partial imports",
+    "asset deletion rejects used sprites and tiles",
+    "unused tile removal remaps higher tile indexes",
+    "four-layer region copies tile IDs and exact flags",
+    "region pastes across maps with correct references",
+    "paste clips to map bounds",
+    "one-layer clear leaves all other layers intact",
+    "rectangular stamp rotation preserves cell order",
+    "stamp-only tile references prevent asset deletion",
+    "invalid stamp references and IDs are rejected",
+    "PCM WAV parser exposes source frames and duration",
+    "stereo PCM WAV accepts aligned two-channel samples",
+    "bad RIFF length and sample format are rejected",
+    "malformed base64 is rejected before decoding",
+    "audio assignments validate and survive serialization",
+    "unknown map music or event sounds are rejected",
+    "bad sound bytes and out-of-range gains are rejected",
+    "older projects without optional v0.5 fields validate"
+  ]
+}
+{
+  "count": 23,
+  "checks": [
+    "catalog has 48 tiles, 62 sprites and eight stamps",
+    "whole library fits a fresh project and validates",
+    "built-in imports preserve exact RGBA pixels",
+    "reimport keeps edited built-in artwork",
+    "object imports include alternate state dependencies",
+    "stamp imports include required tiles only",
+    "overflow import is atomic",
+    "palette overflow is atomic",
+    "asset ID conflict is rejected",
+    "explorer changes all four walk clips in order",
+    "built-in solid and water flags can paint together",
+    "automatic flags are opt-in",
+    "fill flags follow only the connected original region",
+    "inventory icons prevent asset deletion",
+    "alternate sprites prevent asset deletion",
+    "item definitions, keyed doors and rewards validate",
+    "unknown key and chest rewards rejected",
+    "NPC pages are bounded and nonempty",
+    "switches target doors on their own map",
+    "duplicate switch links and incompatible door rules rejected",
+    "built-in NPC defaults include dialogue",
+    "built-in chest and lever defaults use current definitions",
+    "old projects remain valid without inventory or interactions"
+  ]
+}
+OK story demo validates
+OK legacy projects need no quests
+OK dialogue trees can replace pages
+OK unknown quest action target rejected
+OK unsupported quest action rejected
+OK invalid quest condition rejected
+OK condition without quest rejected
+OK missing dialogue destination rejected
+OK missing start node rejected
+OK duplicate node IDs rejected
+OK unreachable nodes rejected
+OK cycles remain valid
+OK more than three choices rejected
+OK malformed choice list rejects without crashing
+OK invalid action field type rejected
+OK overlong text rejected
+OK unknown quest item rejected
+OK talk objective needs NPC
+OK activation objective needs activatable object
+OK visit objective needs existing map
+OK duplicate objectives rejected
+OK fractional objective quantity rejected
+OK empty quests rejected
+OK unknown reward rejected
+OK duplicate quest IDs rejected
+OK quest item references protect deletion
+OK choice item references protect deletion
+OK quest object references protect deletion
+OK NPC rename updates quest references
+OK undo restores dialogue and quest edits together
+OK saved project retains story data
+31 story model checks passed
+OK legacy projects use appearance defaults
+OK complete UI theme validates
+OK partial UI theme validates
+OK malformed color rejects
+OK alpha in RGB color rejects
+OK unknown role rejects
+OK opacity above one rejects
+OK negative opacity rejects
+OK null theme rejects
+OK new icon has square transparent pixels
+OK pencil paints RGBA and erase clears alpha
+OK painting outside the icon is harmless
+OK fill changes only the connected region
+OK no-op painting is not a new edit
+OK sprite artwork maps exact colors independently of palette
+OK bad dimensions rejects
+OK fractional size rejects
+OK truncated pixels rejects
+OK invalid hex rejects
+OK null icon rejects
+OK icon and theme survive serialization
+OK undo restores icon strokes and theme changes
+22 appearance model checks passed
+OK RC demo validates
+OK legacy project defaults still validate
+OK unknown event trigger rejects
+OK missing event map rejects
+OK missing interaction trigger rejects
+OK out-of-map trigger area rejects
+OK fractional area rejects
+OK empty event actions reject
+OK unknown action rejects
+OK unknown reward rejects
+OK invalid reward quantity rejects
+OK unknown flag condition rejects
+OK nonboolean flag rejects
+OK duplicate event IDs reject
+OK duplicate flags reject
+OK unknown quest condition rejects
+OK wrong dialogue target rejects
+OK blocked map change rejects
+OK unknown event sound rejects
+OK duplicate default keyboard keys reject
+OK reserved Escape rejects
+OK unsupported keyboard key rejects
+OK duplicate controller buttons reject
+OK swapped keys and gamepad buttons validate
+OK missing portrait rejects
+OK invalid speaker color rejects
+OK typewriter rate bounds checked
+OK missing title artwork rejects
+OK autotile must have sixteen masks
+OK unknown autotile tile rejects
+OK unknown autotile annotation rejects
+OK autotile grid dimensions checked
+OK unknown object group rejects
+OK duplicate groups reject
+OK bad world coordinates reject
+OK neighbor masks join and refresh adjacent terrain
+OK autotile fill stays within annotation region
+OK group moves are atomic at map bounds
+OK locked group rejects movement
+OK event item references protect deletion
+OK renaming object updates event trigger and actions
+OK autotile tiles and portraits protect artwork deletion
+OK undo restores release features as a unit
+OK normal paint clears even identical autotile artwork
+OK base stamp replaces autotile annotations
+45 RC model checks passed

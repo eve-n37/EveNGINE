@@ -16,6 +16,10 @@ public:
     // Sound samples are queued during playSound and may be released afterwards.
     virtual void setMusic(const AudioClip* clip, float volume) {}
     virtual void playSound(const AudioClip& clip, float volume) {}
+    virtual void configureInput(const std::map<Action,std::string>& keys,const std::map<Action,std::string>& buttons) {}
+    virtual std::string takeKeyPress() { return {}; }
+    virtual bool usingGamepad() const { return false; }
+    virtual bool setFullscreen(bool enabled) { return false; }
     virtual bool audioAvailable() const { return false; }
     virtual std::string savePath(const std::string& project) = 0;
     virtual void idle() = 0;

@@ -18,12 +18,16 @@ struct StudioChoice {
 };
 struct StudioDialogueNode { std::string text; std::vector<StudioChoice> choices; };
 struct StudioInteraction {
- std::string kind,openSprite,item,requiredItem,speaker;
+ std::string kind,openSprite,item,requiredItem,speaker,portrait;
+ Color speakerColor;bool customSpeakerColor=false;
  int quantity=1; bool consumeKey=false,switchOnly=false;
  std::vector<std::string> pages,targets;
  std::string dialogueStart;
  std::map<std::string,StudioDialogueNode> nodes;
 };
+struct StudioCondition { std::string kind,target,state;int quantity=1;bool value=true; };
+struct StudioEventAction { std::string type,target,text;int quantity=1;bool value=true;Vec2 arrival; };
+struct StudioEvent { std::string id,name,trigger,scene,object;Rect area;bool once=true;std::vector<StudioCondition> conditions;std::vector<StudioEventAction> actions; };
 class StudioGame {
 public:
  Project project; Atlas atlas;
@@ -66,6 +70,32 @@ public:
  std::string visibleSprite(const Object& object) const;
  bool giveItem(const std::string& item,int quantity);
  void interact(const Object& object);
+ std::string projectPath,progressPath,preferencesPath,frontend="playing",settingsReturn="title",confirmAction,pendingBinding;
+ std::string titleArtwork,titleLabel,subtitle,menuNew="New game",menuContinue="Continue",menuSettings="Settings",menuQuit="Quit";
+ int menuIndex=0;bool canContinue=false,progressDirty=false,fullscreen=false,frontendStarted=false,controllerMode=false,eventBlocked=false;
+ float userMusic=1,userEffects=1,typewriterSpeed=0,dialogueTime=0;
+ std::map<Action,std::string> keyBindings,buttonBindings;
+ std::map<std::string,bool> flagDefaults,flags;
+ std::vector<StudioEvent> events;std::set<std::string> firedEvents,insideTriggers;
+ std::string eventScene;
+ void loadReleaseFeatures(const Json& project);
+ void beginSession(const std::string& savePath,bool playtest=false);
+ void startNewGame();
+ bool updateFrontend(const Input& input);
+ void drawFrontend(Canvas& canvas) const;
+ std::vector<std::string> menuOptions() const;
+ void saveProgress();void loadProgress();
+ void savePreferences();void loadPreferences();
+ bool captureBinding(const std::string& key);
+ std::string controlLabel(Action action) const;
+ bool runEvents(const std::string& trigger,const std::string& target);
+ bool fireEvent(const StudioEvent& event);
+ void updateTriggers();
+ std::string dialogueText() const;
+ bool dialogueRevealed() const;
+ std::string revealText(const std::string& text) const;
+ Color speakerTint() const;
+ void drawPortrait(Canvas& canvas,int x,int y) const;
  explicit StudioGame(const std::string &path);
  void update(const Input &input,float dt);
  Canvas draw() const;
