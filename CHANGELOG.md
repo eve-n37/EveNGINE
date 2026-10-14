@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 RC2 — editor navigation cleanup
+
+- Reorganized the 14 workspace tabs into five main sections: Maps, Artwork, Story, Audio, and Game.
+- Contextual tool navigation groups related workspaces beneath each section.
+- Sections remember their last-used tool, and inspector/asset shortcuts update the active navigation.
+- All existing editing tools remain available; project and runtime behavior are unchanged.
+
 ## 1.0.0 RC1 — combined v0.7/v0.8 candidate
 
 - Customizable title screens and pause menus with New, Continue, Save, Load, Settings, Return to title, and Quit.

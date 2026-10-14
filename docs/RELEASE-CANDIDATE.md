@@ -1,4 +1,4 @@
-# EveNGINE 1.0.0 RC1
+# EveNGINE 1.0.0 RC2
 
 This candidate combines the planned v0.7 and v0.8 additions into one build. It is ready for testing as a release candidate; the public GitHub release remains v0.6.0.
 
@@ -7,6 +7,20 @@ This candidate combines the planned v0.7 and v0.8 additions into one build. It i
 Open EveNGINE-Studio.app. Choose **New → Release candidate demo · menus, events & map tools**, or open the included `Release-Candidate.eve` project. Playtest starts directly on your selected map. The included `Release-Candidate.app` opens at its title screen and runs independently of Studio.
 
 The sample includes the keeper's branching quest, a custom gem icon, Midnight blue UI, portraits and text reveal, a welcome event, a one-time grove coin reward, a repeatable camp area event, a path autotile rule, scenery groups, and a saved world layout.
+
+## Editor navigation
+
+The editor has five main sections. Related tools appear underneath the selected section:
+
+| Section | Tools |
+| --- | --- |
+| Maps | Map editor, World overview, Terrain & groups |
+| Artwork | Project assets, Built-in library, Pixel editor, Animation |
+| Story | Dialogue, Quests, Items, Events & flags |
+| Audio | Music, effects, cues, and sound library |
+| Game | Appearance, Menus & controls |
+
+Each section remembers its last-used tool. Opening artwork or an NPC through an existing shortcut also selects the matching section. In the instructions below, **Dialogue**, **Events**, and other tool names refer to these tools inside their main section.
 
 ## Menus and player settings
 
@@ -62,6 +76,6 @@ Object groups belong to one map. Assign an object using its inspector. Group con
 
 Project format remains `lota-studio` version 1. New authoring fields are optional. Existing projects receive default menus, controls, UI colors, instant text, and no events. Current saves use format 4 and load Studio save formats 2 and 3. New progress includes quests, flags, and completed one-time events. Changed quest objectives or missing saved event/flag definitions reject incompatible progress without partially modifying the current session. Renaming or deleting story definitions during development can invalidate existing saves.
 
-RC1 is built for macOS 12 or later, with arm64 and x86_64 binaries. Automated model, runtime, loader, virtual-controller, and production export checks accompany the build. Native Apple Silicon checks covered app launch, title and pause navigation, fullscreen toggling, and the unsaved-progress confirmation. Physical-controller testing, execution on Intel hardware, and Windows/Linux desktop packaging remain unverified. The Mac candidate is not Developer ID signed or notarized.
+RC2 is built for macOS 12 or later, with arm64 and x86_64 binaries. Automated model, runtime, loader, virtual-controller, and production export checks accompany the build. Native Apple Silicon checks covered app launch, title and pause navigation, fullscreen toggling, and the unsaved-progress confirmation. Physical-controller testing, execution on Intel hardware, and Windows/Linux desktop packaging remain unverified. The Mac candidate is not Developer ID signed or notarized.
 
-See `VALIDATION-RC1.md` for the final check results. Before declaring a stable v1.0, play through the included game and try an existing project through edit → playtest → export → save → relaunch → continue.
+See `VALIDATION-RC2.md` for the final check results. Before declaring a stable v1.0, play through the included game and try an existing project through edit → playtest → export → save → relaunch → continue.
