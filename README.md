@@ -2,7 +2,7 @@
 
 **v1.0.0 release candidate 3:** NPC patrols, shops, melee combat, contextual editing, unified Game Setup, and the combined v0.7/v0.8 feature set: dialogue and quests, game icons and UI colors, menus and player settings, events, controls, portraits, autotiles, object groups, and world overview. See [the RC guide](docs/RELEASE-CANDIDATE.md) and [changelog](CHANGELOG.md). This is a local candidate; the published GitHub release remains v0.6.0.
 
-A reusable 2D C++ engine with a separate GUI authoring app. Requires macOS 12 or later; universal Apple Silicon / Intel binaries are included. Normal editing and app export do not require a terminal, Python, Xcode or a compiler.
+A reusable 2D C++ engine with a separate GUI authoring app. Official Mac support targets Apple Silicon on macOS 12 or later. Intel compatibility is unofficial; the current download includes Intel binaries. Normal editing and app export do not require a terminal, Python, Xcode or a compiler.
 
 ## Downloads
 
@@ -24,7 +24,7 @@ These paths refer to the downloaded SDK. In the Studio download, open `EveNGINE-
 
 `macOS/Keys-and-Gates.app` is the new interaction demo; its editable source is `editor/examples/Keys-and-Gates.eve`. `macOS/Mosslight-Example.app` is the original standalone sample export. `editor/examples/Mosslight.eve` is its editable source. `docs/STUDIO.md` is the user guide.
 
-If macOS blocks a downloaded development app, use Finder's Open action or the approval shown in Privacy & Security. These builds are development binaries and are not notarized. The owner reports successful Mac use on Apple Silicon; Intel execution remains untested.
+If macOS blocks a downloaded development app, use Finder's Open action or the approval shown in Privacy & Security. These builds are development binaries and are not notarized. The owner reports successful Mac use on Apple Silicon. Intel compatibility is unofficial and is not a release requirement.
 
 ## Included
 
@@ -86,6 +86,6 @@ See `VALIDATION.md` for the checks and their limits. Third-party notices are in 
 
 ## Compatibility
 
-Existing `.lota` projects, their IDs and progress remain compatible. New files use `.eve`; both extensions open in EveNGINE Studio. The original `LotAEngine` CMake package, `LotA::` targets and `<lota/...>` headers remain compatibility entry points. New code can use `EveNGINE`, `EveNGINE::` targets and `<evengine/...>` headers with the `evengine` namespace. Recovery continues to use the existing Application Support location.
+The owner has verified compatibility with older projects. Existing `.lota` projects, their IDs and progress remain compatible. New files use `.eve`; both extensions open in EveNGINE Studio. The original `LotAEngine` CMake package, `LotA::` targets and `<lota/...>` headers remain compatibility entry points. New code can use `EveNGINE`, `EveNGINE::` targets and `<evengine/...>` headers with the `evengine` namespace. Recovery continues to use the existing Application Support location.
 
 Original code, artwork, examples and documentation are MIT-licensed; see LICENSE. Third-party components retain their licenses.

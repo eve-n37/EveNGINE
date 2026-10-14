@@ -76,11 +76,11 @@ Object groups belong to one map. Assign an object using its inspector. Group con
 
 ## Compatibility and verification
 
-Project format remains `lota-studio` version 1. New authoring fields are optional. Existing projects receive default menus, controls, UI colors, instant text, and no events. Current saves use format 4 and load Studio save formats 2 and 3. New progress includes quests, flags, and completed one-time events. Changed quest objectives or missing saved event/flag definitions reject incompatible progress without partially modifying the current session. Renaming or deleting story definitions during development can invalidate existing saves.
+Project format remains `lota-studio` version 1. New authoring fields are optional. Existing projects receive default menus, controls, UI colors, instant text, and no events. Adventure projects use save format 5; projects without adventure systems retain format 4. The loader accepts Studio save formats 2, 3, 4, and 5. New progress includes quests, flags, and completed one-time events. Changed quest objectives or missing saved event/flag definitions reject incompatible progress without partially modifying the current session. Renaming or deleting story definitions during development can invalidate existing saves.
 
-RC2 is built for macOS 12 or later, with arm64 and x86_64 binaries. Automated model, runtime, loader, virtual-controller, and production export checks accompany the build. Native Apple Silicon checks covered app launch, title and pause navigation, fullscreen toggling, and the unsaved-progress confirmation. Physical-controller testing, execution on Intel hardware, and Windows/Linux desktop packaging remain unverified. The Mac candidate is not Developer ID signed or notarized.
+RC3 officially supports Apple Silicon Macs running macOS 12 or later. The current package also contains x86_64 binaries, but Intel compatibility is unofficial and is not a release requirement. Automated model, runtime, loader, virtual-controller, and production export checks accompany the build. Native Apple Silicon checks covered app launch, title and pause navigation, fullscreen toggling, and the unsaved-progress confirmation. Physical-controller testing remains pending. Windows/Linux desktop packaging is not verified. The Mac candidate is not Developer ID signed or notarized.
 
-See `VALIDATION-RC2.md` for the final check results. Before declaring a stable v1.0, play through the included game and try an existing project through edit → playtest → export → save → relaunch → continue.
+See `VALIDATION-RC3.md` for the current check results. The owner reports that the current build works and has verified compatibility with older projects. Physical-controller testing remains pending.
 
 ## RC3 editing improvements
 

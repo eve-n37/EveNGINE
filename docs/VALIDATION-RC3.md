@@ -19,8 +19,10 @@ Verified in the live editor preview: creation of the complete adventure sample; 
 
 The macOS Studio, embedded runtime, exported adventure runtime, and SDL framework include arm64 and x86_64 slices. Bundle resources are compared with current source. ZIP integrity, executable permissions, exported project equality, icon metadata, and SHA-256 checksums are checked during packaging.
 
-## Remaining manual checks
+## User verification and remaining checks
 
-The native screen-capture service failed when inspecting the exported sample, so a complete hands-on native RC3 playthrough is not claimed. Engine-rendered previews and automated gameplay checks are separate evidence. Physical Intel execution, physical gamepad testing, and Windows/Linux desktop runs remain unverified. The candidate requires macOS 12 or later.
+The owner reports that the current build works and has verified compatibility with older projects. This is user-reported verification; the earlier assistant native screen-capture failure does not invalidate that acceptance. No additional specific playthrough steps are inferred from the report.
 
-Actors update on the current map; their assigned sprites currently have no separate NPC walking animation sets. Combat is directional melee. Closing the operating system window exits directly; the pause menu supplies save and unsaved-progress confirmation. This is a local release candidate, pending manual acceptance; it has not been published to GitHub.
+Physical gamepad testing remains pending. Official Mac support is Apple Silicon on macOS 12 or later. Intel compatibility is unofficial and Intel hardware testing is not a release requirement. Windows/Linux desktop runs remain unverified.
+
+Actors update on the current map; their assigned sprites currently have no separate NPC walking animation sets. Combat is directional melee. Closing the operating system window exits directly; the pause menu supplies save and unsaved-progress confirmation. This is a local release candidate, with user acceptance of the current functionality and older-project compatibility recorded; it has not been published to GitHub.
