@@ -87,3 +87,7 @@ See `VALIDATION-RC2.md` for the final check results. Before declaring a stable v
 Sidebars show tools relevant to the current section. Game → Setup gathers project movement settings, icon and UI colors, menus and controls, and optional player combat into expandable sections. Click a validation issue to open its map, object, dialogue node, quest, asset, or event. Sounds referenced by custom events are protected from deletion.
 
 See VALIDATION-RC3.md for current checks and remaining manual validation.
+
+## Dragging placed assets
+
+In Maps → Map editor, choose **Select / Move**, then drag a placed object or exit. The object keeps the offset where you grabbed it. Hold Shift to snap its position to 16-pixel tiles. Escape cancels a drag; Undo reverses the whole move. Locked groups cannot be moved, and objects stay within the map. This moves individual placed objects; terrain is edited with the Brush or Region tools.

@@ -1,5 +1,10 @@
 # Changelog
 
+## RC3 update — drag placed assets
+
+- Select / Move drags map objects and exits, preserving grab offset with optional Shift tile snapping.
+- One undo step per drag, Escape cancellation, map boundaries, and locked-group protection.
+
 ## 1.0.0 RC3 — adventure systems and focused editing
 
 - Context-aware sidebars, unified Game Setup, clickable validation locations, and sound deletion protection for custom events.
