@@ -18,7 +18,7 @@ class SDLPlatform final : public Platform {
   std::vector<SDL_AudioStream*> effects;
   SDL_Gamepad *gamepad = nullptr;
   std::array<bool, size_t(Action::Count)> keyboard{}, controller{};
-  bool running = true;
+  bool running = true, closeConfirmation=false, closeRequested=false;
   bool customInput=false, padActive=false;std::string rawKey;std::map<Action,std::string> configuredKeys,configuredButtons;
   int mapping(SDL_Scancode code) {
     if(customInput){switch(code){case SDL_SCANCODE_LEFT:return int(Action::Left);case SDL_SCANCODE_RIGHT:return int(Action::Right);case SDL_SCANCODE_UP:return int(Action::Up);case SDL_SCANCODE_DOWN:return int(Action::Down);case SDL_SCANCODE_RETURN:return int(Action::Interact);case SDL_SCANCODE_ESCAPE:return int(Action::Pause);default:break;}for(auto& binding:configuredKeys)if(SDL_GetScancodeFromName(binding.second.c_str())==code)return int(binding.first);return -1;}
@@ -140,11 +140,14 @@ public:
   std::string takeKeyPress() override{auto key=rawKey;rawKey.clear();return key;}
   bool usingGamepad() const override{return padActive;}
   bool setFullscreen(bool enabled) override{return SDL_SetWindowFullscreen(window,enabled);}
+  void confirmWindowClose(bool enabled) override { closeConfirmation=enabled; }
+  bool takeCloseRequest() override { bool requested=closeRequested;closeRequested=false;return requested; }
   bool poll(Input &input) override {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
-      if (event.type == SDL_EVENT_QUIT)
-        running = false;
+      if (event.type == SDL_EVENT_QUIT || event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
+        if(closeConfirmation)closeRequested=true;else running=false;
+      }
       if (event.type == SDL_EVENT_WINDOW_FOCUS_LOST)
         keyboard.fill(false);
       if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP) {

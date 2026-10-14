@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 RC4 — final release polish
+
+- Added the missing percent glyph used by Settings volume values.
+- Game window and application close requests offer save, cancel, or explicit discard for unsaved progress; failed saves keep the window open.
+- New projects default to Blank map; removed Release candidate demo from the New project menu.
+- Physical-controller operation verified by the owner.
+
 ## RC3 update — drag placed assets
 
 - Select / Move drags map objects and exits, preserving grab offset with optional Shift tile snapping.

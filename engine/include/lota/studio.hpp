@@ -87,6 +87,8 @@ public:
  void loadReleaseFeatures(const Json& project);
  void beginSession(const std::string& savePath,bool playtest=false);
  void startNewGame();
+ void requestWindowClose();
+ std::string closeReturn="playing";
  bool updateFrontend(const Input& input);
  void drawFrontend(Canvas& canvas) const;
  std::vector<std::string> menuOptions() const;

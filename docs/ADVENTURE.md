@@ -1,6 +1,6 @@
 # NPC movement, trading, and combat
 
-Open the Adventure-Candidate.eve template, or choose New → Release candidate demo. The exported Adventure-Candidate.app starts at the title screen. You begin with 15 coins: buy bread from the camp trader, explore the keeper’s quest, and fight the raider near camp.
+Open the Adventure-Candidate.eve template. New projects default to Blank map. The exported Adventure-Candidate.app starts at the title screen. You begin with 15 coins: buy bread from the camp trader, explore the keeper’s quest, and fight the raider near camp.
 
 ## NPC movement
 

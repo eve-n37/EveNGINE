@@ -34,10 +34,13 @@ int main(int argc,char **argv){
   if(!game.audioAssets.empty()&&!platform->audioAvailable())std::cerr<<"Audio device unavailable; continuing silently.\n";
   game.beginSession(platform->savePath(game.project.id),!scene.empty());
   platform->configureInput(game.keyBindings,game.buttonBindings);
+  platform->confirmWindowClose(true);
   bool fullscreen=false,suppressCapture=false;
   lota::Input input;
   double previous=platform->seconds(),accumulator=0;
   while(!game.quit&&platform->poll(input)){
+   if(platform->takeCloseRequest())game.requestWindowClose();
+   if(game.quit)break;
    game.controllerMode=platform->usingGamepad();
    auto key=platform->takeKeyPress();
    if(!game.pendingBinding.empty()&&!key.empty()){

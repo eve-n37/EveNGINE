@@ -1,0 +1,29 @@
+Test project /Users/relic/.codex/.chatgpt-projects/g-p-6ac2b2b6f4f48191b5b9cb797fcab636/EveNGINE/build-rc1-headless
+      Start  1: starter-smoke
+ 1/12 Test  #1: starter-smoke ....................   Passed    0.28 sec
+      Start  2: studio-template-validation
+ 2/12 Test  #2: studio-template-validation .......   Passed    0.25 sec
+      Start  3: studio-runtime-regression
+ 3/12 Test  #3: studio-runtime-regression ........   Passed    0.26 sec
+      Start  4: studio-audio-regression
+ 4/12 Test  #4: studio-audio-regression ..........   Passed    0.26 sec
+      Start  5: studio-interactions
+ 5/12 Test  #5: studio-interactions ..............   Passed    0.26 sec
+      Start  6: studio-story
+ 6/12 Test  #6: studio-story .....................   Passed    0.28 sec
+      Start  7: studio-story-loader
+ 7/12 Test  #7: studio-story-loader ..............   Passed    0.37 sec
+      Start  8: studio-appearance
+ 8/12 Test  #8: studio-appearance ................   Passed    0.28 sec
+      Start  9: studio-release-candidate
+ 9/12 Test  #9: studio-release-candidate .........   Passed    0.29 sec
+      Start 10: studio-rc-loader
+10/12 Test #10: studio-rc-loader .................   Passed    0.49 sec
+      Start 11: studio-adventure
+11/12 Test #11: studio-adventure .................   Passed    0.28 sec
+      Start 12: studio-adventure-loader
+12/12 Test #12: studio-adventure-loader ..........   Passed    0.36 sec
+
+100% tests passed out of 12
+
+Total Test time (real) =   3.67 sec

@@ -8,6 +8,8 @@ class Platform {
 public:
     virtual ~Platform() = default;
     virtual bool poll(Input& input) = 0;
+    virtual void confirmWindowClose(bool enabled) {}
+    virtual bool takeCloseRequest() { return false; }
     virtual double seconds() = 0;
     virtual void present(const Canvas& canvas) = 0;
     virtual void tone(float frequency, float duration) = 0;

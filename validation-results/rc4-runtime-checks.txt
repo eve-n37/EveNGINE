@@ -1,0 +1,64 @@
+OK fresh games open at title without Continue
+OK title pauses the world
+OK custom duplicate labels cannot select the wrong action
+OK map entry runs once and marks unsaved progress
+OK Escape opens pause without quitting
+OK pause freezes movement
+OK return to title confirms unsaved progress
+OK keep playing preserves the session
+OK save success enables Continue and gives feedback
+OK settings remember their return menu
+OK music volume changes in settings
+OK effects volume changes in settings
+OK fullscreen toggles independently
+OK controls reference opens
+OK selected action begins rebinding
+OK duplicate key cannot overwrite another action
+OK valid key updates control prompts
+OK gamepad prompts use assigned buttons
+OK player settings and bindings survive restart
+OK valid saved progress enables Continue on restart
+OK portraits and typewriter presentation load
+OK first confirm reveals text without choosing
+OK second confirm chooses and restarts reveal timer
+OK Escape closes dialogue before opening pause
+OK next Escape opens pause
+OK entry sequence sets flag and awards item
+OK one-time entry event cannot repeat on reentry
+OK v4 event progress saves
+OK flags and fired events restore together
+OK reloading cannot duplicate event rewards
+OK event save record exists
+OK unknown saved event rejects atomically
+OK full-bag event is handled without partial flags or rewards
+OK event retries after capacity becomes available
+OK event activation opens switch-linked doors
+OK change-map action uses validated arrival
+OK dialogue action opens referenced NPC
+OK quick load confirms before discarding progress
+OK confirmed load restores saved progress
+OK save failure is visible to player
+OK load failure is visible to player
+OK step event fires on entry rather than every frame
+OK repeatable step event fires after leaving and reentering
+OK authored interactions replace default behavior and rewards stay one-time
+OK item and flag conditions must both match
+OK matching event conditions run their sequence
+OK New game clears progress and preserves settings
+OK New game preserves player bindings
+OK window close offers save, cancel and discard with cancel selected
+OK repeated close then cancel restores settings and progress
+OK back cancels window close without closing the bag
+OK failed save prevents window close
+OK successful save closes safely
+OK explicit discard closes an unsaved session
+OK saved session closes without prompting
+OK percent glyph exists and differs from question mark
+OK percent text uses its own font cell
+OK frontend renders safely
+OK frontend renders safely
+OK frontend renders safely
+OK frontend renders safely
+OK frontend renders safely
+OK frontend renders safely
+63 RC runtime checks passed

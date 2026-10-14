@@ -1,6 +1,6 @@
-# EveNGINE 1.0.0 RC3 — EveNGINE Studio
+# EveNGINE 1.0.0 RC4 — EveNGINE Studio
 
-**v1.0.0 release candidate 3:** NPC patrols, shops, melee combat, contextual editing, unified Game Setup, and the combined v0.7/v0.8 feature set: dialogue and quests, game icons and UI colors, menus and player settings, events, controls, portraits, autotiles, object groups, and world overview. See [the RC guide](docs/RELEASE-CANDIDATE.md) and [changelog](CHANGELOG.md). This is a local candidate; the published GitHub release remains v0.6.0.
+**v1.0.0 release candidate 4:** NPC patrols, shops, melee combat, contextual editing, unified Game Setup, and the combined v0.7/v0.8 feature set: dialogue and quests, game icons and UI colors, menus and player settings, events, controls, portraits, autotiles, object groups, and world overview. See [the RC guide](docs/RELEASE-CANDIDATE.md) and [changelog](CHANGELOG.md). This is a local candidate; the published GitHub release remains v0.6.0.
 
 A reusable 2D C++ engine with a separate GUI authoring app. Official Mac support targets Apple Silicon on macOS 12 or later. Intel compatibility is unofficial; the current download includes Intel binaries. Normal editing and app export do not require a terminal, Python, Xcode or a compiler.
 

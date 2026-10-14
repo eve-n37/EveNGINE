@@ -1,14 +1,14 @@
-# EveNGINE 1.0.0 RC3
+# EveNGINE 1.0.0 RC4
 
 This candidate combines the planned v0.7 and v0.8 additions into one build. It is ready for testing as a release candidate; the public GitHub release remains v0.6.0.
 
 ## Try it
 
-Open EveNGINE-Studio.app. Choose **New → Release candidate demo · menus, events & map tools**, or open the included `Adventure-Candidate.eve` project. Playtest starts directly on your selected map. The included `Adventure-Candidate.app` opens at its title screen and runs independently of Studio.
+Open EveNGINE-Studio.app. New projects default to **Blank map**. Open the included `Adventure-Candidate.eve` project to try the adventure systems. Playtest starts directly on your selected map. The included `Adventure-Candidate.app` opens at its title screen and runs independently of Studio.
 
 The sample includes the keeper's branching quest, a custom gem icon, Midnight blue UI, portraits and text reveal, a welcome event, a one-time grove coin reward, a repeatable camp area event, a path autotile rule, scenery groups, and a saved world layout.
 
-The RC3 adventure sample also includes a patrolling keeper, camp and grove merchants, healing bread, and a pursuing enemy that drops coins. See [ADVENTURE.md](ADVENTURE.md) for those systems.
+The RC4 adventure sample also includes a patrolling keeper, camp and grove merchants, healing bread, and a pursuing enemy that drops coins. See [ADVENTURE.md](ADVENTURE.md) for those systems.
 
 ## Editor navigation
 
@@ -28,7 +28,7 @@ Each section remembers its last-used tool. Opening artwork or an NPC through an 
 
 **Game → Setup** lets you set the game title, subtitle, title artwork from a project sprite, and button labels. The title screen offers New, Continue when a compatible save exists, Settings, and Quit. Every exported Studio game has these menus, including older projects.
 
-Escape opens Pause. Resume, Save, Load, Settings, Return to title, and Quit are available there. Escape first closes an open conversation, bag, or journal. Menu exits and loading ask before discarding unsaved progress. Save and load success or failure appears on screen. Closing the operating system window exits directly; use the pause menu to save or request the unsaved-progress check.
+Escape opens Pause. Resume, Save, Load, Settings, Return to title, and Quit are available there. Escape first closes an open conversation, bag, or journal. Menu exits and loading ask before discarding unsaved progress. Save and load success or failure appears on screen. Closing the game window checks for unsaved progress and offers Save and quit, Keep playing, or Discard and quit. A failed save keeps the game open.
 
 Settings provides music and effects volume, fullscreen, and Controls. Left/Right adjusts volume in 10% steps. Enter or the confirm action selects. The game stores player preferences separately from story progress, so New game keeps the player's settings and key assignments. The runtime multiplies player volume by the project's audio mix.
 
@@ -78,15 +78,15 @@ Object groups belong to one map. Assign an object using its inspector. Group con
 
 Project format remains `lota-studio` version 1. New authoring fields are optional. Existing projects receive default menus, controls, UI colors, instant text, and no events. Adventure projects use save format 5; projects without adventure systems retain format 4. The loader accepts Studio save formats 2, 3, 4, and 5. New progress includes quests, flags, and completed one-time events. Changed quest objectives or missing saved event/flag definitions reject incompatible progress without partially modifying the current session. Renaming or deleting story definitions during development can invalidate existing saves.
 
-RC3 officially supports Apple Silicon Macs running macOS 12 or later. The current package also contains x86_64 binaries, but Intel compatibility is unofficial and is not a release requirement. Automated model, runtime, loader, virtual-controller, and production export checks accompany the build. Native Apple Silicon checks covered app launch, title and pause navigation, fullscreen toggling, and the unsaved-progress confirmation. Physical-controller testing remains pending. Windows/Linux desktop packaging is not verified. The Mac candidate is not Developer ID signed or notarized.
+RC4 officially supports Apple Silicon Macs running macOS 12 or later. The current package also contains x86_64 binaries, but Intel compatibility is unofficial and is not a release requirement. Automated model, runtime, loader, virtual-controller, and production export checks accompany the build. Native Apple Silicon checks covered app launch, title and pause navigation, fullscreen toggling, and the unsaved-progress confirmation. The owner has verified physical-controller operation. Windows/Linux desktop packaging is not verified. The Mac candidate is not Developer ID signed or notarized.
 
-See `VALIDATION-RC3.md` for the current check results. The owner reports that the current build works and has verified compatibility with older projects. Physical-controller testing remains pending.
+See `VALIDATION-RC4.md` for the current check results. The owner reports that the current build works and has verified compatibility with older projects. The owner has verified physical-controller operation.
 
-## RC3 editing improvements
+## RC4 editing improvements
 
 Sidebars show tools relevant to the current section. Game → Setup gathers project movement settings, icon and UI colors, menus and controls, and optional player combat into expandable sections. Click a validation issue to open its map, object, dialogue node, quest, asset, or event. Sounds referenced by custom events are protected from deletion.
 
-See VALIDATION-RC3.md for current checks and remaining manual validation.
+See VALIDATION-RC4.md for current checks and remaining manual validation.
 
 ## Dragging placed assets
 
