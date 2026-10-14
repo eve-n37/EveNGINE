@@ -1,21 +1,21 @@
-# EveNGINE 1.0.0 RC4 — EveNGINE Studio
+# EveNGINE 1.0.0 — EveNGINE Studio
 
-**v1.0.0 release candidate 4:** NPC patrols, shops, melee combat, contextual editing, unified Game Setup, and the combined v0.7/v0.8 feature set: dialogue and quests, game icons and UI colors, menus and player settings, events, controls, portraits, autotiles, object groups, and world overview. See [the RC guide](docs/RELEASE-CANDIDATE.md) and [changelog](CHANGELOG.md). This is a local candidate; the published GitHub release remains v0.6.0.
+**v1.0.0:** NPC patrols, shops, melee combat, contextual editing, unified Game Setup, and the combined v0.7/v0.8 feature set: dialogue and quests, game icons and UI colors, menus and player settings, events, controls, portraits, autotiles, object groups, and world overview. See [the release guide](docs/RELEASE.md) and [changelog](CHANGELOG.md). Official Mac support targets Apple Silicon.
 
 A reusable 2D C++ engine with a separate GUI authoring app. Official Mac support targets Apple Silicon on macOS 12 or later. Intel compatibility is unofficial; the current download includes Intel binaries. Normal editing and app export do not require a terminal, Python, Xcode or a compiler.
 
 ## Downloads
 
-Get the [first public release](https://github.com/eve-n37/EveNGINE/releases/tag/v0.6.0). Download **EveNGINE-Studio-v0.6.0-macOS.zip** for the editor and playable samples, or **EveNGINE-SDK-v0.6.0.zip** for the source and prebuilt SDK. The repository contains source and the bundled SDL3 framework; prebuilt apps and installed libraries are in the release downloads.
+Get [EveNGINE v1.0.0](https://github.com/eve-n37/EveNGINE/releases/tag/v1.0.0). Download **EveNGINE-Studio-v1.0.0-macOS.zip** for Studio, editable templates, and the standalone adventure sample, or **EveNGINE-Source-v1.0.0.zip** for source. The Mac download requires macOS 12 or later; Apple Silicon is officially supported. Intel compatibility is unofficial.
 
 ![EveNGINE Studio and runtime previews](preview.png)
 
 ## Start here
 
-These paths refer to the downloaded SDK. In the Studio download, open `EveNGINE-Studio.app` directly.
+In the Studio download, open `EveNGINE-Studio.app` directly.
 
-1. Open `macOS/EveNGINE-Studio.app`.
-2. Choose **New → Keys and Gates** to try the new interactions, or start a blank map.
+1. Open `EveNGINE-Studio.app`.
+2. Choose **New** to start a blank map, select another template, or open an example from Templates.
 3. Paint terrain, detail, collision and water. Place objects, a spawn and exits.
 4. Use **Built-in assets** for ready-made artwork or **Asset browser** to import tilesets or sprite sheets; double-click artwork to draw it. Use **Animation** to arrange frames.
 5. Use **Region** to copy map areas and save stamps. Add music and event sounds in **Audio**.

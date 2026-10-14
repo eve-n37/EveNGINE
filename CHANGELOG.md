@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 — stable release
+
+- Promoted the owner-accepted RC4 build to 1.0.0.
+- Includes branching dialogue and quests, custom icons and UI themes, menus and controls, events, map tools, NPC patrols, trading, melee combat, healing, and persistent adventure progress.
+- Includes drag-to-move assets, grid snapping, safe game closing, and blank-first project creation.
+- Older-project compatibility and physical-controller operation verified by the owner. Apple Silicon is the official Mac target.
+
 ## 1.0.0 RC4 — final release polish
 
 - Added the missing percent glyph used by Settings volume values.
