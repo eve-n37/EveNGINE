@@ -27,6 +27,8 @@ struct StudioInteraction {
 class StudioGame {
 public:
  Project project; Atlas atlas;
+ Color uiPanel{18,28,34,230},uiModal{18,28,34,245},uiText{219,226,211},uiAccent{233,200,138},uiMuted{153,181,171},uiSelection{48,65,49,255};
+ void loadAppearance(const Json& project);
  std::map<std::string,StudioLayer> layers;
  std::vector<Rect> tileSources;
  std::vector<StudioClip> clips;

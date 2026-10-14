@@ -2,6 +2,11 @@
 
 ## 0.7.0 — development build
 
+- Game Appearance workspace with PNG icon import, sprite-to-icon creation, pixel painting, fill, erasing, previews, and PNG export.
+- Mac exports generate and register complete app icons; older projects receive a default icon.
+- Editable game UI colors and panel opacity for the HUD, dialogue, bag, and journal, with live preview and presets.
+- Appearance demo with a custom gem icon and Midnight blue UI.
+
 - Branching NPC conversations with up to three choices per node, quest-state and inventory conditions, and quest acceptance/turn-in actions.
 - Optional quests with item delivery, NPC conversations, map visits, and object activation objectives, plus one-time item rewards.
 - A paged quest journal opened with J, and persisted quest progress with compatibility for older saves.

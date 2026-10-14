@@ -1,6 +1,6 @@
 # EveNGINE 0.7.0 — EveNGINE Studio
 
-**v0.7.0 development build:** branching dialogue, quests, and a journal. See [the story guide](docs/STORY.md) and [changelog](CHANGELOG.md). The published GitHub release below remains v0.6.0.
+**v0.7.0 development build:** branching dialogue, quests, a journal, game icons, and editable UI colors. See [the appearance guide](docs/APPEARANCE.md), [the story guide](docs/STORY.md) and [changelog](CHANGELOG.md). The published GitHub release below remains v0.6.0.
 
 A reusable 2D C++ engine with a separate GUI authoring app. Requires macOS 12 or later; universal Apple Silicon / Intel binaries are included. Normal editing and app export do not require a terminal, Python, Xcode or a compiler.
 

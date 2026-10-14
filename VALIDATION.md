@@ -1,11 +1,13 @@
 # EveNGINE v0.7.0 development validation
 
-October 14, 2026: a fresh universal Mac build succeeded with Apple Clang 21, CMake 4.4.4, and a macOS 12 deployment target. Apple Silicon execution passed all seven CTest suites in both desktop and headless configurations. Intel slices compiled; Intel execution remains untested.
+October 14, 2026: a fresh universal Mac build succeeded with Apple Clang 21, CMake 4.4.4, and a macOS 12 deployment target. Apple Silicon execution passed all nine CTest suites in both desktop and headless configurations. Intel slices compiled; Intel execution remains untested.
 
-- 91 editor model checks passed: 15 original, 22 sheet/stamp/audio, 23 built-in asset/interaction, and 31 story checks.
+- 113 editor model checks passed: 15 original, 22 sheet/stamp/audio, 23 built-in asset/interaction, 31 story checks, and 22 appearance checks.
 - 37 new native story runtime checks passed, covering acceptance, conditional branches, input, journal pause, all four objectives, item consumption, reward capacity, one-time rewards, progress persistence, corrupt-save atomicity, stale-objective protection, v0.6 saves, and native rendering.
-- 13 native story-loader checks passed for malformed quests, nodes, conditions, references, and quantities.
-- Browser checks exercised the story template, quest naming and undo, quest/node creation and undo, dialogue controls, validation, and file saving. The saved browser-authored project also passed native runtime validation.
+- 19 native story/appearance-loader checks passed for malformed quests, nodes, conditions, references, and quantities.
+- 28 native export checks passed: custom/default/transparent icons, ten icon representations, orientation/alpha, registered bundle metadata, preserved project settings, and failed-export atomicity. The appearance demo was exported through the production helper.
+- 10 native appearance checks passed for loaded colors, rendered HUD pixels, branching/simple dialogue, the bag, the journal, and progress reload.
+- Browser checks exercised the story template, quest naming and undo, quest/node creation and undo, dialogue controls, validation, and file saving. The saved browser-authored project also passed native runtime validation. Additional appearance checks created a sprite icon, applied a theme preset, and imported a non-square PNG with transparent padding.
 - The packaged editor UI and runtime were byte-compared to the tested source and binary. Studio, the runtime, and the standalone demo contain arm64 and x86_64 slices. Native dialogue/journal previews were rendered and visually checked.
 
 Run the model checks with `node editor/tests/run-model-tests.js`. Build with CMake and run `ctest --test-dir build --output-on-failure` for native checks. The story-loader suite is registered when Python is available.

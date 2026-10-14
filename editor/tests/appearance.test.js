@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),M=require('../ui/model.js');let count=0;
+const test=(name,fn)=>{fn();count++;console.log('OK '+name);},project=()=>M.createProject();
+test('legacy projects use appearance defaults',()=>assert.deepEqual(M.validate(project()),[]));
+test('complete UI theme validates',()=>{let p=project();p.uiTheme=M.clone(M.defaultUITheme);assert.deepEqual(M.validate(p),[]);});
+test('partial UI theme validates',()=>{let p=project();p.uiTheme={accent:'#102030'};assert.deepEqual(M.validate(p),[]);});
+for(let [name,value] of [['malformed color',{panel:'red'}],['alpha in RGB color',{text:'#ffffffff'}],['unknown role',{wrong:'#ffffff'}],['opacity above one',{panelOpacity:2}],['negative opacity',{panelOpacity:-1}],['null theme',null]])test(name+' rejects',()=>{let p=project();p.uiTheme=value;assert(M.validate(p).length);});
+test('new icon has square transparent pixels',()=>{let icon=M.createIcon();assert.equal(icon.size,64);assert.equal(icon.pixels,'00000000'.repeat(4096));});
+test('pencil paints RGBA and erase clears alpha',()=>{let icon=M.createIcon(16);assert(M.paintIcon(icon,2,3,'#123456'));assert.equal(icon.pixels.slice((3*16+2)*8,(3*16+2)*8+8),'123456ff');assert(M.paintIcon(icon,2,3,'#fff','erase'));assert.equal(icon.pixels.slice((3*16+2)*8,(3*16+2)*8+8),'00000000');});
+test('painting outside the icon is harmless',()=>{let icon=M.createIcon(16),before=icon.pixels;assert(!M.paintIcon(icon,-1,2,'#ffffff'));assert.equal(icon.pixels,before);});
+test('fill changes only the connected region',()=>{let icon=M.createIcon(16);for(let y=0;y<16;y++)M.paintIcon(icon,8,y,'#ffffff');M.paintIcon(icon,0,0,'#ff0000','fill');assert.equal(icon.pixels.slice(0,8),'ff0000ff');assert.equal(icon.pixels.slice(9*8,10*8),'00000000');});
+test('no-op painting is not a new edit',()=>{let icon=M.createIcon(16);M.paintIcon(icon,0,0,'#ff0000');assert(!M.paintIcon(icon,0,0,'#ff0000'));});
+test('sprite artwork maps exact colors independently of palette',()=>{let p=project(),a=p.sprites[0],icon=M.iconFromAsset(p,a);let before=icon.pixels;p.palette[1]='#112233';assert.equal(icon.pixels,before);assert(icon.pixels.match(/.{8}/g).some(v=>v.slice(6)!=='00'));p.appIcon=icon;assert.deepEqual(M.validate(p),[]);});
+for(let [name,value] of [['bad dimensions',{size:513,pixels:''}],['fractional size',{size:16.5,pixels:''}],['truncated pixels',{size:16,pixels:'00'}],['invalid hex',{size:16,pixels:'x'.repeat(16*16*8)}],['null icon',null]])test(name+' rejects',()=>{let p=project();p.appIcon=value;assert(M.validate(p).length);});
+test('icon and theme survive serialization',()=>{let p=project();p.appIcon=M.iconFromAsset(p,p.sprites[0]);p.uiTheme=M.clone(M.defaultUITheme);assert.deepEqual(M.validate(JSON.parse(JSON.stringify(p))),[]);});
+test('undo restores icon strokes and theme changes',()=>{let p=project();p.appIcon=M.createIcon(16);let h=new M.History(p),before=M.clone(h.project);M.paintIcon(h.project.appIcon,1,1,'#ff0000');h.project.uiTheme={accent:'#ff0000'};assert(h.commit(before)&&h.undo());assert.deepEqual(h.project,p);assert(h.redo());assert.equal(h.project.uiTheme.accent,'#ff0000');});
+if(process.argv[2]){let p=JSON.parse(fs.readFileSync(__dirname+'/../examples/Keepers-Errand.eve'));p.appIcon=M.iconFromAsset(p,p.sprites.find(a=>a.id==='eve-gem'));p.uiTheme={panel:'#131b3a',text:'#e6eeff',accent:'#80d6ff',muted:'#a9b7d7',selection:'#294668',panelOpacity:1};fs.writeFileSync(process.argv[2],JSON.stringify(p,null,2));}
+console.log(count+' appearance model checks passed');

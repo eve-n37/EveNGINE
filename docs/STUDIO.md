@@ -128,3 +128,8 @@ Existing `.lota` and `.lota-object` files still open. New saves use `.eve` and `
 ## v0.7.0 dialogue and quests
 
 Use the new Quests and Dialogue tabs to author story content. Choose the Keeper’s Errand template for a complete playable example. See [STORY.md](STORY.md) for authoring, controls, objectives, rewards, and save compatibility.
+
+
+## Game icons and UI colors
+
+Use the Game appearance tab to draw or import an app icon and edit the game’s UI colors. Native Mac exports include the icon automatically. See [APPEARANCE.md](APPEARANCE.md) for controls, presets, import limits, and the appearance demo.

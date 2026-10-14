@@ -1,5 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
+#import "GameAppearance.h"
 @interface StudioDelegate : NSObject <NSApplicationDelegate,NSWindowDelegate,WKScriptMessageHandler,WKNavigationDelegate,WKUIDelegate>
 @property NSWindow *window;
 @property WKWebView *web;
@@ -54,14 +55,9 @@
  else if([action isEqual:@"play"]||[action isEqual:@"export"]){NSURL *project=[self temporaryProject:body[@"project"] error:&error];if(project&&[self validate:project error:&error]){
  if([action isEqual:@"play"]){NSTask *task=[NSTask new];task.executableURL=[self.resources URLByAppendingPathComponent:@"Runtime"];task.arguments=@[@"--project",project.path,@"--scene",body[@"scene"]?:body[@"project"][@"start"]];if([task launchAndReturnError:&error]){[self.tasks addObject:task];[self reply:request data:@{@"message":@"Native playtest launched. F3 shows collision; Esc closes the game."}];return;}}
  else {NSSavePanel *panel=[NSSavePanel savePanel];panel.allowedFileTypes=@[@"app"];panel.nameFieldStringValue=@"My Adventure.app";if([panel runModal]!=NSModalResponseOK){[self reply:request data:@{@"cancelled":@YES}];return;}
- NSURL *destination=panel.URL;NSURL *staging=[[destination URLByDeletingLastPathComponent] URLByAppendingPathComponent:[@".lota-export-" stringByAppendingString:NSUUID.UUID.UUIDString]];NSFileManager *fm=NSFileManager.defaultManager;NSURL *contents=[staging URLByAppendingPathComponent:@"Contents"];BOOL ok=[fm createDirectoryAtURL:[contents URLByAppendingPathComponent:@"MacOS"] withIntermediateDirectories:YES attributes:nil error:&error]&&[fm createDirectoryAtURL:[contents URLByAppendingPathComponent:@"Resources"] withIntermediateDirectories:YES attributes:nil error:&error]&&[fm createDirectoryAtURL:[contents URLByAppendingPathComponent:@"Frameworks"] withIntermediateDirectories:YES attributes:nil error:&error];
- if(ok)ok=[fm copyItemAtURL:[self.resources URLByAppendingPathComponent:@"Runtime"] toURL:[contents URLByAppendingPathComponent:@"MacOS/Game"] error:&error];
- if(ok)ok=[fm copyItemAtURL:project toURL:[contents URLByAppendingPathComponent:@"Resources/project.lota"] error:&error];
- if(ok)ok=[fm copyItemAtURL:[self.resources URLByAppendingPathComponent:@"font.pam"] toURL:[contents URLByAppendingPathComponent:@"Resources/font.pam"] error:&error];
- if(ok)ok=[fm copyItemAtURL:[[self.resources.URLByDeletingLastPathComponent URLByAppendingPathComponent:@"Frameworks"] URLByAppendingPathComponent:@"SDL3.framework"] toURL:[contents URLByAppendingPathComponent:@"Frameworks/SDL3.framework"] error:&error];
- NSString *title=body[@"project"][@"title"]?:@"My Game";NSDictionary *plist=@{@"CFBundleName":title,@"CFBundleDisplayName":title,@"CFBundleExecutable":@"Game",@"CFBundleIdentifier":[@"dev.lota.game." stringByAppendingString:body[@"project"][@"id"]],@"CFBundlePackageType":@"APPL",@"CFBundleVersion":@"1.0.0",@"CFBundleShortVersionString":@"1.0.0",@"LSMinimumSystemVersion":@"12.0",@"NSHighResolutionCapable":@YES,@"SDL_FILESYSTEM_BASE_DIR_TYPE":@"resource"};NSData *info=[NSPropertyListSerialization dataWithPropertyList:plist format:NSPropertyListXMLFormat_v1_0 options:0 error:&error];if(ok)ok=info&&[self write:info url:[contents URLByAppendingPathComponent:@"Info.plist"] error:&error];
- if(ok){if([fm fileExistsAtPath:destination.path]){NSURL *result=nil;ok=[fm replaceItemAtURL:destination withItemAtURL:staging backupItemName:nil options:0 resultingItemURL:&result error:&error];}else ok=[fm moveItemAtURL:staging toURL:destination error:&error];}
- if(ok){[self reply:request data:@{@"message":[@"Exported " stringByAppendingString:destination.lastPathComponent]}];[NSWorkspace.sharedWorkspace activateFileViewerSelectingURLs:@[destination]];return;}[fm removeItemAtURL:staging error:nil];
+ NSURL *destination=panel.URL;BOOL ok=EveExportGame(body[@"project"],[self.resources URLByAppendingPathComponent:@"Runtime"],[self.resources URLByAppendingPathComponent:@"font.pam"],[[self.resources.URLByDeletingLastPathComponent URLByAppendingPathComponent:@"Frameworks"] URLByAppendingPathComponent:@"SDL3.framework"],[self.resources URLByAppendingPathComponent:@"Studio.icns"],destination,&error);
+ if(ok){[self reply:request data:@{@"message":[@"Exported " stringByAppendingString:destination.lastPathComponent]}];[NSWorkspace.sharedWorkspace activateFileViewerSelectingURLs:@[destination]];return;}
+
  }}}
  else error=[NSError errorWithDomain:@"Studio" code:3 userInfo:@{NSLocalizedDescriptionKey:@"Unknown editor action"}];
  [self reply:request data:@{@"error":error.localizedDescription?:@"Operation failed"}];

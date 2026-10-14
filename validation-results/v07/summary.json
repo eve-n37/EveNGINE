@@ -3,11 +3,15 @@
   "build": "universal macOS 12+",
   "execution": "Apple Silicon",
   "intelExecution": "untested",
-  "modelChecks": 91,
+  "modelChecks": 113,
   "storyRuntimeChecks": 37,
-  "storyLoaderChecks": 13,
-  "desktopSuites": 7,
-  "headlessSuites": 7,
+  "storyLoaderChecks": 19,
+  "desktopSuites": 9,
+  "headlessSuites": 9,
   "browserSavedProjectNativeValidation": "passed",
-  "packageResourceEquality": "passed"
+  "packageResourceEquality": "passed",
+  "appearanceRuntimeChecks": 10,
+  "exportChecks": 28,
+  "customIconRepresentations": 10,
+  "appearancePNGImport": "passed"
 }
