@@ -8,7 +8,7 @@ const workspaceGroups=[
  {id:'game',name:'Game',views:[['appearance','Appearance'],['menus','Menus & controls']]}
 ];
 const lastWorkspaceView=new Map(workspaceGroups.map(group=>[group.id,group.views[0][0]]));
-function selectWorkspaceView(next){view=next;if(view==='pixels'&&selected?.type!=='tile')selected={type:'sprite'};render();}
+function selectWorkspaceView(next){let group=workspaceGroups.find(g=>g.views.some(([id])=>id===next));if(group?.id!==document.body.dataset.workspace)selected=null;view=next;if(view==='pixels'&&selected?.type!=='tile')selected={type:'sprite'};render();}
 function renderWorkspaceNavigation(){
  const group=workspaceGroups.find(group=>group.views.some(([id])=>id===view));
  if(!group)return;

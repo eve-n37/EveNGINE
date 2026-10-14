@@ -2,6 +2,7 @@
 #include "lota/core.hpp"
 #include "lota/json.hpp"
 #include <memory>
+#include <iosfwd>
 #include <set>
 #include "lota/audio.hpp"
 namespace lota {
@@ -28,6 +29,11 @@ struct StudioInteraction {
 struct StudioCondition { std::string kind,target,state;int quantity=1;bool value=true; };
 struct StudioEventAction { std::string type,target,text;int quantity=1;bool value=true;Vec2 arrival; };
 struct StudioEvent { std::string id,name,trigger,scene,object;Rect area;bool once=true;std::vector<StudioCondition> conditions;std::vector<StudioEventAction> actions; };
+struct StudioActor {std::string map,id,mode;float speed=24,wait=1,range=24,aggro=96,cooldown=.8f;int maxHealth=3,damage=1,rewardQuantity=1;std::string rewardItem;std::vector<Vec2> points;};
+struct StudioActorState {Vec2 position;int health=3,waypoint=0;bool lootClaimed=false;float timer=0,routeTimer=0;std::vector<Vec2> route;};
+struct StudioOffer {std::string item;int buy=1,sell=0,stock=-1;};
+struct StudioShop {std::string currency;std::vector<StudioOffer> offers;};
+struct StudioAdventureState {int health=10;std::map<std::string,StudioActorState> actors;std::map<std::string,std::vector<int>> stock;};
 class StudioGame {
 public:
  Project project; Atlas atlas;
@@ -96,6 +102,15 @@ public:
  std::string revealText(const std::string& text) const;
  Color speakerTint() const;
  void drawPortrait(Canvas& canvas,int x,int y) const;
+ bool combatEnabled=false;int maxHealth=10,health=10,attackDamage=2;float attackRange=28,attackDelay=.35f,combatClock=0,hurtClock=0;
+ std::map<std::string,StudioActor> actors;std::map<std::string,StudioActorState> actorStates;
+ std::map<std::string,StudioShop> shops;std::map<std::string,std::vector<int>> shopStock;std::map<std::string,int> healing;
+ std::string shopObject;int shopRow=0,bagRow=0;bool selling=false;
+ bool hasAdventure() const;void loadAdventure(const Json& project);void resetAdventure();
+ Scene liveScene(const std::string& map) const;Vec2 actorFeet(const std::string& key) const;
+ void updateActors(float dt);void playerAttack();bool claimLoot(const std::string& key);bool trade(size_t row,bool sell,int quantity=1);bool useItem(const std::string& item);
+ bool updateShop(const Input& input);void drawAdventure(Canvas& canvas) const;void respawnPlayer();
+ void writeAdventure(std::ostream& out) const;StudioAdventureState readAdventure(std::istream& input) const;void restoreAdventure(const StudioAdventureState& state);
  explicit StudioGame(const std::string &path);
  void update(const Input &input,float dt);
  Canvas draw() const;

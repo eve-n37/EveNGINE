@@ -1,0 +1,47 @@
+OK adventure definitions load
+OK NPC patrol moves through the map
+OK conversation freezes NPC movement
+OK patrolling NPC retains branching quest dialogue
+OK NPC opens trading panel
+OK trading freezes the world
+OK insufficient funds reject atomically
+OK purchase updates currency, items and finite stock
+OK sale restores stock and pays the sell price
+OK cannot sell items not owned
+OK full bag cannot spend currency
+OK currency capacity rejects sale atomically
+OK sold-out offer cannot spend currency
+OK trade quantity is bounded
+OK consumable restores health and consumes one item
+OK full health does not consume healing items
+OK ordinary inventory items cannot heal
+OK back closes trading without attacking
+OK front-facing attack applies damage
+OK attack cooldown prevents repeated damage
+OK attack uses the direction pressed in the same frame
+OK attack cannot hit behind the player
+OK terrain blocks attacks through walls
+OK attack works after obstruction is removed
+OK defeat awards loot once
+OK defeated enemy cannot duplicate rewards
+OK looted defeated enemy disappears
+OK full bag leaves enemy loot available
+OK pending loot can be claimed after making room
+OK enemy pursues a nearby player
+OK enemy stops pursuing outside detection distance
+OK enemy attack damages the player
+OK invulnerability and enemy cooldown prevent frame-by-frame damage
+OK player defeat opens recovery menu
+OK defeat load confirms discarding unsaved progress
+OK canceling defeat confirmation returns to recovery menu
+OK recovery returns player to camp with health restored
+OK unaccepted quests do not gain merchant talk progress
+OK trading NPC counts as a quest conversation
+OK adventure progress saves
+OK health, actor state and merchant stock restore together
+OK reload does not duplicate enemy rewards
+OK merchant save record exists
+OK corrupt merchant save rejects without partial progress changes
+OK changed merchant offer rejects stale stock
+OK New game resets actors, health and merchant stock
+46 adventure runtime checks passed

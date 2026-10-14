@@ -1,0 +1,25 @@
+OK enemy requires player combat
+OK zero player health
+OK player attack cooldown minimum
+OK player damage bounds
+OK enemy health bounds
+OK enemy speed bounds
+OK enemy cooldown bounds
+OK unknown enemy reward
+OK reward field type
+OK enemy reward quantity
+OK NPC movement mode
+OK empty patrol
+OK negative NPC wait
+OK NPC outside map
+OK NPC blocked waypoint
+OK only NPCs patrol
+OK enemy cannot patrol
+OK unknown currency
+OK empty shop
+OK currency cannot be merchandise
+OK sell price exceeds buy price
+OK invalid finite stock
+OK duplicate shop items
+OK invalid healing amount
+24 adventure loader checks passed

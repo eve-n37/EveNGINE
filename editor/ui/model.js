@@ -29,26 +29,26 @@ function createProject(name='Mosslight Workshop'){
  let project={format:'lota-studio',version:1,id:'workshop-'+Math.random().toString(36).slice(2,10),title:name,palette:clone(palette),tiles,sprites,animations:['south','north','east','west'].map(d=>({id:'walk-'+d,direction:d,state:'walk',frames:[0,1,2,3].map(f=>({sprite:d+f,ms:140}))})),scenes:[a,b],start:'meadow',player:{speed:64,runMultiplier:1.7}};if(root.StudioSampleAudio){project.audio=clone(root.StudioSampleAudio);for(let s of project.scenes)s.music='mosslight-music';}return project;
 }
 function createBlankProject(name='Untitled adventure'){let p=createProject(name),s=p.scenes[0];s.title='Starting map';s.base=blank(s.width,s.height);s.detail=blank(s.width,s.height,-1);s.collision=blank(s.width,s.height);s.water=blank(s.width,s.height);s.objects=[];s.portals=[];p.scenes=[s];delete p.audio;delete s.music;return p;}
-function validate(p){let errors=[],bad=s=>errors.push(s),finite=x=>typeof x==='number'&&Number.isFinite(x),ident=x=>typeof x==='string'&&/^[A-Za-z0-9_-]{1,64}$/.test(x);
+function validate(p,issues=null){let context={view:"setup"},errors=[],bad=(s,where=context)=>{errors.push(s);if(issues)issues.push({message:s,...where});},finite=x=>typeof x==='number'&&Number.isFinite(x),ident=x=>typeof x==='string'&&/^[A-Za-z0-9_-]{1,64}$/.test(x);
  if(!p||p.format!=='lota-studio'||p.version!==1)return['Not a supported EveNGINE Studio project.'];
  if(!ident(p.id))bad('Project ID is invalid.');if(typeof p.title!=='string'||p.title.length<1||p.title.length>80)bad('Project title must be 1–80 characters.');
  if(!Array.isArray(p.palette)||p.palette.length<2||p.palette.length>256||p.palette.some(c=>!/^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(c)))bad('Invalid palette.');
  if(!Array.isArray(p.tiles)||!p.tiles.length||p.tiles.length>64)bad('Use 1–64 tiles.');if(!Array.isArray(p.sprites)||p.sprites.length>256)bad('Use at most 256 sprite frames.');
  if(errors.length)return errors;
- let all=[...p.tiles,...p.sprites],ids=new Set();for(let a of all){if(!ident(a.id)||ids.has(a.id))bad('Asset IDs must be unique.');ids.add(a.id);if(!Number.isInteger(a.width)||!Number.isInteger(a.height)||a.width<1||a.height<1||a.width>64||a.height>64)bad('Asset '+a.id+' must be at most 64 × 64.');else if(typeof a.pixels!=='string'||a.pixels.length!==a.width*a.height*2||!/^[0-9a-fA-F]+$/.test(a.pixels)||decode(a.pixels).some(v=>v>=p.palette.length))bad('Invalid pixels in '+a.id);let c=a.collider;if(!c||!['x','y','w','h'].every(k=>finite(c[k]))||c.x<0||c.y<0||c.w<0||c.h<0||c.x+c.w>a.width||c.y+c.h>a.height)bad('Invalid collider in '+a.id);}
+ let all=[...p.tiles,...p.sprites],ids=new Set();for(let a of all){context={view:"pixels",asset:a.id,kind:p.tiles.includes(a)?"tile":"sprite"};if(!ident(a.id)||ids.has(a.id))bad('Asset IDs must be unique.');ids.add(a.id);if(!Number.isInteger(a.width)||!Number.isInteger(a.height)||a.width<1||a.height<1||a.width>64||a.height>64)bad('Asset '+a.id+' must be at most 64 × 64.');else if(typeof a.pixels!=='string'||a.pixels.length!==a.width*a.height*2||!/^[0-9a-fA-F]+$/.test(a.pixels)||decode(a.pixels).some(v=>v>=p.palette.length))bad('Invalid pixels in '+a.id);let c=a.collider;if(!c||!['x','y','w','h'].every(k=>finite(c[k]))||c.x<0||c.y<0||c.w<0||c.h<0||c.x+c.w>a.width||c.y+c.h>a.height)bad('Invalid collider in '+a.id);}
  if(p.tiles.some(a=>a.width!==16||a.height!==16))bad('Tiles must be 16 × 16.');
  if(!Array.isArray(p.scenes)||p.scenes.length<1||p.scenes.length>64)return [...errors,'Use 1–64 maps.'];
  let scenes=new Map(p.scenes.map(s=>[s.id,s]));if(scenes.size!==p.scenes.length||!scenes.has(p.start))bad('Duplicate map IDs or missing starting map.');
  let inMap=(s,x,y)=>finite(x)&&finite(y)&&x>=0&&y>=0&&x<s.width*16&&y<s.height*16;
  let rectBlocked=(s,x,y)=>{let l=Math.floor((x-5)/16),r=Math.floor((x+4.999)/16),t=Math.floor((y-7)/16),b=Math.floor((y-.001)/16);for(let yy=t;yy<=b;yy++)for(let xx=l;xx<=r;xx++)if(xx<0||yy<0||xx>=s.width||yy>=s.height||s.collision[yy*s.width+xx])return true;for(let o of s.objects||[]){let a=p.sprites.find(a=>a.id===o.sprite),c=a?.collider;if(c&&c.w>0&&c.h>0&&x-5<o.x+c.x+c.w&&x+5>o.x+c.x&&y-7<o.y+c.y+c.h&&y>o.y+c.y)return true;}return false;};
- for(let s of p.scenes){if(!ident(s.id)||typeof s.title!=='string')bad('Map ID or title invalid.');if(!Number.isInteger(s.width)||!Number.isInteger(s.height)||s.width<1||s.height<1||s.width>256||s.height>256){bad('Invalid map dimensions.');continue;}for(let k of ['base','detail','collision','water'])if(!Array.isArray(s[k])||s[k].length!==s.width*s.height||s[k].some(v=>!Number.isInteger(v)||(k==='base'?(v<0||v>=p.tiles.length):k==='detail'?(v< -1||v>=p.tiles.length):(v<0||v>1))))bad('Invalid '+k+' layer in '+s.title);
+ for(let s of p.scenes){context={view:"map",scene:s.id};if(!ident(s.id)||typeof s.title!=='string')bad('Map ID or title invalid.');if(!Number.isInteger(s.width)||!Number.isInteger(s.height)||s.width<1||s.height<1||s.width>256||s.height>256){bad('Invalid map dimensions.');continue;}for(let k of ['base','detail','collision','water'])if(!Array.isArray(s[k])||s[k].length!==s.width*s.height||s[k].some(v=>!Number.isInteger(v)||(k==='base'?(v<0||v>=p.tiles.length):k==='detail'?(v< -1||v>=p.tiles.length):(v<0||v>1))))bad('Invalid '+k+' layer in '+s.title);
  if(!s.spawn||!inMap(s,s.spawn.x,s.spawn.y)||rectBlocked(s,s.spawn.x,s.spawn.y))bad('Spawn is outside the map or blocked in '+s.title);
  if(!Array.isArray(s.objects)||s.objects.length>4096||!Array.isArray(s.portals)||s.portals.length>512){bad('Invalid objects or exits.');continue;}
- let objectIds=new Set();for(let o of s.objects){if(!ident(o.id)||objectIds.has(o.id))bad('Duplicate/invalid object ID.');objectIds.add(o.id);if(!p.sprites.some(a=>a.id===o.sprite)||!['decoration','collectible','sign','npc','chest','door','switch'].includes(o.kind)||!inMap(s,o.x,o.y)||typeof o.text!=='string'||o.text.length>180)bad('Invalid object in '+s.title);}
- for(let e of s.portals){let target=scenes.get(e.target);if(!ident(e.id)||!target||!['x','y','w','h'].every(k=>finite(e[k]))||e.w<=0||e.h<=0||e.x<0||e.y<0||e.x+e.w>s.width*16||e.y+e.h>s.height*16||!e.arrival||!inMap(target,e.arrival.x,e.arrival.y)||rectBlocked(target,e.arrival.x,e.arrival.y))bad('Invalid or blocked exit in '+s.title);}}
- if(!Array.isArray(p.animations)||p.animations.length>64)bad('Invalid animation list.');else {let keys=new Set();for(let a of p.animations){let key=a.state+'-'+a.direction;if(keys.has(key)||!ident(a.id)||!['south','north','east','west'].includes(a.direction)||!['walk','idle','attack'].includes(a.state)||!Array.isArray(a.frames)||a.frames.length<1||a.frames.length>64||a.frames.some(f=>!p.sprites.some(s=>s.id===f.sprite)||!Number.isInteger(f.ms)||f.ms<16||f.ms>5000))bad('Invalid animation '+a.id);keys.add(key);}for(let d of ['south','north','east','west'])if(!keys.has('walk-'+d))bad('Missing '+d+' walking animation.');}
- validateExtras(p,bad);validateInteractions(p,bad);validateStory(p,bad);validateAppearance(p,bad);(root.EveRCModel||(typeof require!=='undefined'?require('./rc-model.js'):null))?.validate(p,bad);
- if(!p.player||!finite(p.player.speed)||p.player.speed<1||p.player.speed>512||!finite(p.player.runMultiplier)||p.player.runMultiplier<1||p.player.runMultiplier>4)bad('Invalid movement speed.');return errors;
+ let objectIds=new Set();for(let o of s.objects){context={view:"map",scene:s.id,object:o.id};if(!ident(o.id)||objectIds.has(o.id))bad('Duplicate/invalid object ID.');objectIds.add(o.id);if(!p.sprites.some(a=>a.id===o.sprite)||!['decoration','collectible','sign','npc','chest','door','switch','enemy'].includes(o.kind)||!inMap(s,o.x,o.y)||typeof o.text!=='string'||o.text.length>180)bad('Invalid object in '+s.title);}
+ for(let e of s.portals){context={view:"map",scene:s.id,exit:e.id};let target=scenes.get(e.target);if(!ident(e.id)||!target||!['x','y','w','h'].every(k=>finite(e[k]))||e.w<=0||e.h<=0||e.x<0||e.y<0||e.x+e.w>s.width*16||e.y+e.h>s.height*16||!e.arrival||!inMap(target,e.arrival.x,e.arrival.y)||rectBlocked(target,e.arrival.x,e.arrival.y))bad('Invalid or blocked exit in '+s.title);}}
+ context={view:'animation'};if(!Array.isArray(p.animations)||p.animations.length>64)bad('Invalid animation list.');else {let keys=new Set();for(let a of p.animations){let key=a.state+'-'+a.direction;if(keys.has(key)||!ident(a.id)||!['south','north','east','west'].includes(a.direction)||!['walk','idle','attack'].includes(a.state)||!Array.isArray(a.frames)||a.frames.length<1||a.frames.length>64||a.frames.some(f=>!p.sprites.some(s=>s.id===f.sprite)||!Number.isInteger(f.ms)||f.ms<16||f.ms>5000))bad('Invalid animation '+a.id);keys.add(key);}for(let d of ['south','north','east','west'])if(!keys.has('walk-'+d))bad('Missing '+d+' walking animation.');}
+ context={view:"assets"};validateExtras(p,bad);validateInteractions(p,bad);validateStory(p,bad);validateAppearance(p,bad);(root.EveAdventureModel||(typeof require!=='undefined'?require('./adventure-model.js'):null))?.validate(p,bad);(root.EveRCModel||(typeof require!=='undefined'?require('./rc-model.js'):null))?.validate(p,bad);
+ context={view:"setup"};if(!p.player||!finite(p.player.speed)||p.player.speed<1||p.player.speed>512||!finite(p.player.runMultiplier)||p.player.runMultiplier<1||p.player.runMultiplier>4)bad('Invalid movement speed.');return errors;
 }
 class History{constructor(p){this.project=clone(p);this.undoStack=[];this.redoStack=[];}commit(before){if(JSON.stringify(before)===JSON.stringify(this.project))return false;this.undoStack.push(before);if(this.undoStack.length>60)this.undoStack.shift();this.redoStack=[];this.trim();return true;}trim(){let bytes=0;for(let i=this.undoStack.length-1;i>=0;i--){bytes+=JSON.stringify(this.undoStack[i]).length;if(bytes>64*1024*1024){this.undoStack.splice(0,i+1);break;}}}undo(){if(!this.undoStack.length)return false;this.redoStack.push(clone(this.project));this.project=this.undoStack.pop();return true;}redo(){if(!this.redoStack.length)return false;this.undoStack.push(clone(this.project));this.project=this.redoStack.pop();return true;}}
 function fill(a,w,h,x,y,v){let old=a[y*w+x];if(old===v)return;let q=[[x,y]];a[y*w+x]=v;while(q.length){let [xx,yy]=q.pop();for(let [nx,ny] of [[xx-1,yy],[xx+1,yy],[xx,yy-1],[xx,yy+1]])if(nx>=0&&ny>=0&&nx<w&&ny<h&&a[ny*w+nx]===old){a[ny*w+nx]=v;q.push([nx,ny]);}}}
@@ -103,11 +103,11 @@ function validateExtras(p,bad){
 }
 
 
-function validateInteractions(p,bad){
+function validateInteractions(p,report){const bad=message=>report(message,{view:"items"});
  const ident=v=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,64}$/.test(v),items=p.items||[],itemIds=new Set();
  if(!Array.isArray(items)||items.length>64){bad('Use at most 64 item definitions.');return;}
  for(let item of items){if(!item||!ident(item.id)||itemIds.has(item.id)||typeof item.name!=='string'||item.name.length<1||item.name.length>40||!p.sprites.some(a=>a.id===item.icon))bad('Invalid inventory item or icon.');else itemIds.add(item.id);}
- for(let s of p.scenes)for(let o of s.objects){
+ for(let s of p.scenes)for(let o of s.objects){const bad=message=>report(message,{view:"map",scene:s.id,object:o.id});
   if(o.openSprite!==undefined&&(typeof o.openSprite!=='string'||o.openSprite&&!p.sprites.some(a=>a.id===o.openSprite)))bad('Missing alternate sprite in '+o.id);
   for(let key of ['item','requiredItem'])if(o[key]!==undefined&&(typeof o[key]!=='string'||o[key]&&!itemIds.has(o[key])))bad('Unknown item in '+o.id);
   if(o.quantity!==undefined&&(!Number.isInteger(o.quantity)||o.quantity<1||o.quantity>99))bad('Item quantities must be 1–99.');
@@ -145,11 +145,11 @@ function paintTerrain(p,s,k,x,y,mode,value,auto){let indices=[];if(mode==='fill'
 }
 
 
-function validateStory(p,bad){
+function validateStory(p,report){const bad=report;
  const ident=v=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,64}$/.test(v),text=(v,n,empty=false)=>typeof v==='string'&&v.length<=n&&(empty||v.length>0),quantity=v=>v===undefined||Number.isInteger(v)&&v>=1&&v<=99;
  const objects=new Map(p.scenes.flatMap(s=>(s.objects||[]).map(o=>[s.id+':'+o.id,o]))),items=new Set((Array.isArray(p.items)?p.items:[]).map(i=>i.id)),quests=p.quests===undefined?[]:p.quests,ids=new Set();
  if(!Array.isArray(quests)||quests.length>64){bad('Use at most 64 quests.');return;}
- for(let q of quests){
+ for(let q of quests){const bad=(message,where)=>report(message,where||{view:"quests",quest:q?.id});
   if(!q||!ident(q.id)||ids.has(q.id)){bad('Quest IDs must be unique.');continue;}ids.add(q.id);
   if(!text(q.name,40)||!text(q.description,180,true))bad('Quest names allow 40 characters; descriptions allow 180.');
   if(!Array.isArray(q.objectives)||q.objectives.length<1||q.objectives.length>8){bad('Each quest needs 1–8 objectives.');continue;}
@@ -162,10 +162,10 @@ function validateStory(p,bad){
   }
   if(q.rewardItem!==undefined&&(typeof q.rewardItem!=='string'||q.rewardItem&&!items.has(q.rewardItem)))bad('Unknown quest reward item.');if(!quantity(q.rewardQuantity))bad('Quest reward quantities must be 1–99.');
  }
- for(let s of p.scenes)for(let o of s.objects||[])if(o.dialogue!==undefined){let d=o.dialogue;
+ for(let s of p.scenes)for(let o of s.objects||[])if(o.dialogue!==undefined){const bad=(message,where)=>report(message,where||{view:"dialogue",scene:s.id,object:o.id});let d=o.dialogue;
   if(o.kind!=='npc'||!d||!ident(d.start)||!Array.isArray(d.nodes)||d.nodes.length<1||d.nodes.length>64){bad('Dialogue trees need an NPC, a start node and 1–64 nodes.');continue;}
   if(!text(o.speaker,40,true))bad('Dialogue speaker allows 40 characters.');let nodes=new Map();
-  for(let node of d.nodes){if(!node||!ident(node.id)||nodes.has(node.id)){bad('Dialogue node IDs must be unique.');continue;}nodes.set(node.id,node);if(!text(node.text,180))bad('Dialogue text must be 1–180 characters.');if(!Array.isArray(node.choices)||node.choices.length>3){bad('Use at most three choices per dialogue node.');continue;}
+  for(let node of d.nodes){const bad=message=>report(message,{view:"dialogue",scene:s.id,object:o.id,node:node?.id});if(!node||!ident(node.id)||nodes.has(node.id)){bad('Dialogue node IDs must be unique.');continue;}nodes.set(node.id,node);if(!text(node.text,180))bad('Dialogue text must be 1–180 characters.');if(!Array.isArray(node.choices)||node.choices.length>3){bad('Use at most three choices per dialogue node.');continue;}
    for(let c of node.choices){if(!c||!text(c.text,40)||typeof c.next!=='string'||c.next&&!ident(c.next)){bad('Invalid dialogue choice or destination.');continue;}
     if(['action','quest','conditionQuest','conditionState','requiredItem'].some(k=>c[k]!==undefined&&typeof c[k]!=='string'))bad('Dialogue action and condition fields must be text.');
     if(c.action? !['accept','complete'].includes(c.action)||!ids.has(c.quest):!!c.quest)bad('Choose an existing quest for a dialogue action.');
@@ -173,11 +173,11 @@ function validateStory(p,bad){
     if(c.requiredItem!==undefined&&(typeof c.requiredItem!=='string'||c.requiredItem&&!items.has(c.requiredItem)))bad('Unknown choice requirement item.');if(!quantity(c.quantity))bad('Choice quantities must be 1–99.');
    }
   }
-  if(!nodes.has(d.start))bad('Missing starting dialogue node.');for(let node of nodes.values())for(let c of (Array.isArray(node.choices)?node.choices:[]))if(c?.next&&!nodes.has(c.next))bad('Missing dialogue destination: '+c.next);
-  let reached=new Set(),pending=[d.start];while(pending.length){let id=pending.pop();if(reached.has(id)||!nodes.has(id))continue;reached.add(id);for(let c of (Array.isArray(nodes.get(id).choices)?nodes.get(id).choices:[]))if(c?.next)pending.push(c.next);}if(reached.size!==nodes.size)bad('Every dialogue node must be reachable from the start.');
+  if(!nodes.has(d.start))bad('Missing starting dialogue node.');for(let node of nodes.values())for(let c of (Array.isArray(node.choices)?node.choices:[]))if(c?.next&&!nodes.has(c.next))bad('Missing dialogue destination: '+c.next,{view:'dialogue',scene:s.id,object:o.id,node:node.id});
+  let reached=new Set(),pending=[d.start];while(pending.length){let id=pending.pop();if(reached.has(id)||!nodes.has(id))continue;reached.add(id);for(let c of (Array.isArray(nodes.get(id).choices)?nodes.get(id).choices:[]))if(c?.next)pending.push(c.next);}if(reached.size!==nodes.size)bad('Every dialogue node must be reachable from the start.',{view:'dialogue',scene:s.id,object:o.id,node:[...nodes.keys()].find(k=>!reached.has(k))});
  }
 }
-function storyItemUsed(p,id){return (p.events||[]).some(e=>[...e.actions,...e.conditions||[]].some(a=>a.target===id))||(p.quests||[]).some(q=>q.rewardItem===id||q.objectives.some(o=>o.type==='item'&&o.target===id))||p.scenes.some(s=>s.objects.some(o=>o.dialogue?.nodes.some(n=>n.choices.some(c=>c.requiredItem===id))));}
+function storyItemUsed(p,id){return (root.EveAdventureModel||(typeof require!=='undefined'?require('./adventure-model.js'):null))?.itemUsed(p,id)||(p.events||[]).some(e=>[...e.actions,...e.conditions||[]].some(a=>a.target===id))||(p.quests||[]).some(q=>q.rewardItem===id||q.objectives.some(o=>o.type==='item'&&o.target===id))||p.scenes.some(s=>s.objects.some(o=>o.dialogue?.nodes.some(n=>n.choices.some(c=>c.requiredItem===id))));}
 function storyObjectUsed(p,key){return (p.events||[]).some(e=>e.scene+':'+e.object===key||e.actions.some(a=>a.target===key))||(p.quests||[]).some(q=>q.objectives.some(o=>['talk','activate'].includes(o.type)&&o.target===key));}
 function renameStoryObject(p,scene,oldId,newId){for(let e of p.events||[]){if(e.scene===scene&&e.object===oldId)e.object=newId;for(let a of e.actions)if(a.target===scene+':'+oldId)a.target=scene+':'+newId;}for(let q of p.quests||[])for(let o of q.objectives)if(['talk','activate'].includes(o.type)&&o.target===scene+':'+oldId)o.target=scene+':'+newId;}
 
@@ -196,5 +196,6 @@ function paintIcon(icon,x,y,color,tool='pencil'){if(!Number.isInteger(x)||!Numbe
  else icon.pixels=icon.pixels.slice(0,index*8)+value+icon.pixels.slice(index*8+8);return true;
 }
 
-const api={defaultUITheme,validateAppearance,createIcon,iconFromAsset,paintIcon,validateStory,storyItemUsed,storyObjectUsed,renameStoryObject,clone,blank,pixelString,decode,createProject,createBlankProject,validate,History,fill,transform,wavInfo,base64Bytes,importSheet,assetUsage,deleteAsset,copyRegion,pasteRegion,clearRegion,transformStamp,validateStamp,validateInteractions,importBuiltins,objectDefaults,paintTerrain};if(typeof module!=='undefined')module.exports=api;root.LotaModel=api;
+function validateDetailed(p){let issues=[];let errors=validate(p,issues);if(!issues.length&&errors.length)issues=errors.map(message=>({message,view:"setup"}));return issues;}
+const api={validateDetailed,defaultUITheme,validateAppearance,createIcon,iconFromAsset,paintIcon,validateStory,storyItemUsed,storyObjectUsed,renameStoryObject,clone,blank,pixelString,decode,createProject,createBlankProject,validate,History,fill,transform,wavInfo,base64Bytes,importSheet,assetUsage,deleteAsset,copyRegion,pasteRegion,clearRegion,transformStamp,validateStamp,validateInteractions,importBuiltins,objectDefaults,paintTerrain};if(typeof module!=='undefined')module.exports=api;root.LotaModel=api;
 })(typeof window!=='undefined'?window:globalThis);

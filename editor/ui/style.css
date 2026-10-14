@@ -20,3 +20,4 @@ nav{height:auto;min-height:48px;overflow-x:visible;flex-wrap:wrap;padding-top:4p
 .sectionTab{background:transparent;border-color:transparent;padding:6px 12px;color:var(--muted);font-size:12px;flex-shrink:0}
 .sectionTab.active{background:#2a4035;border-color:#5c7768;color:#e0ecdb}
 @media(max-width:1100px){#primaryNavigation>span{font-size:9px}.workspaceTab{padding:0 13px}}
+[hidden]{display:none!important}.setupSection{margin:14px 0;border:1px solid var(--edge);border-radius:9px;background:#192630}.setupSection>summary{padding:16px 20px;cursor:pointer;font-weight:600;color:var(--accent)}.setupSection>div{padding:0 20px 20px}.setupSection .featureWorkspace{overflow:visible;padding:0}.setupSection .workspaceHeading{margin-top:10px}.validationIssue{display:block;white-space:normal;text-align:left;width:100%;margin:6px 0;font-size:11px;border-color:#9e665b}.right[hidden]{display:none}#contextSidebar .mapRow{width:100%;margin-bottom:6px}

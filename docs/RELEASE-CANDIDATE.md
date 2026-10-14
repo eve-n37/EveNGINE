@@ -1,12 +1,14 @@
-# EveNGINE 1.0.0 RC2
+# EveNGINE 1.0.0 RC3
 
 This candidate combines the planned v0.7 and v0.8 additions into one build. It is ready for testing as a release candidate; the public GitHub release remains v0.6.0.
 
 ## Try it
 
-Open EveNGINE-Studio.app. Choose **New → Release candidate demo · menus, events & map tools**, or open the included `Release-Candidate.eve` project. Playtest starts directly on your selected map. The included `Release-Candidate.app` opens at its title screen and runs independently of Studio.
+Open EveNGINE-Studio.app. Choose **New → Release candidate demo · menus, events & map tools**, or open the included `Adventure-Candidate.eve` project. Playtest starts directly on your selected map. The included `Adventure-Candidate.app` opens at its title screen and runs independently of Studio.
 
 The sample includes the keeper's branching quest, a custom gem icon, Midnight blue UI, portraits and text reveal, a welcome event, a one-time grove coin reward, a repeatable camp area event, a path autotile rule, scenery groups, and a saved world layout.
+
+The RC3 adventure sample also includes a patrolling keeper, camp and grove merchants, healing bread, and a pursuing enemy that drops coins. See [ADVENTURE.md](ADVENTURE.md) for those systems.
 
 ## Editor navigation
 
@@ -16,15 +18,15 @@ The editor has five main sections. Related tools appear underneath the selected 
 | --- | --- |
 | Maps | Map editor, World overview, Terrain & groups |
 | Artwork | Project assets, Built-in library, Pixel editor, Animation |
-| Story | Dialogue, Quests, Items, Events & flags |
+| Story | Dialogue, NPCs & trading, Quests, Items, Events & flags |
 | Audio | Music, effects, cues, and sound library |
-| Game | Appearance, Menus & controls |
+| Game | Setup |
 
 Each section remembers its last-used tool. Opening artwork or an NPC through an existing shortcut also selects the matching section. In the instructions below, **Dialogue**, **Events**, and other tool names refer to these tools inside their main section.
 
 ## Menus and player settings
 
-**Menus & controls** lets you set the game title, subtitle, title artwork from a project sprite, and button labels. The title screen offers New, Continue when a compatible save exists, Settings, and Quit. Every exported Studio game has these menus, including older projects.
+**Game → Setup** lets you set the game title, subtitle, title artwork from a project sprite, and button labels. The title screen offers New, Continue when a compatible save exists, Settings, and Quit. Every exported Studio game has these menus, including older projects.
 
 Escape opens Pause. Resume, Save, Load, Settings, Return to title, and Quit are available there. Escape first closes an open conversation, bag, or journal. Menu exits and loading ask before discarding unsaved progress. Save and load success or failure appears on screen. Closing the operating system window exits directly; use the pause menu to save or request the unsaved-progress check.
 
@@ -32,7 +34,7 @@ Settings provides music and effects volume, fullscreen, and Controls. Left/Right
 
 ## Controls
 
-Defaults: WASD or arrows move, Shift runs, E/Enter interacts, Space attacks or closes dialogue, Q opens the bag, J opens the journal, Escape pauses, F5 saves, F9 loads, and F3 shows collision/debug information. Studio can set default keyboard and gamepad assignments in **Menus & controls**. Choosing a used assignment swaps the two actions.
+Defaults: WASD or arrows move, Shift runs, E/Enter interacts, Space attacks or closes dialogue, Q opens the bag, J opens the journal, Escape pauses, F5 saves, F9 loads, and F3 shows collision/debug information. Studio can set default keyboard and gamepad assignments in **Game → Setup**. Choosing a used assignment swaps the two actions.
 
 Players can rebind keyboard actions through Settings → Controls. Select an action and press a new key; Escape cancels. Duplicate keys are rejected. Arrows, Enter, and Escape remain available as menu fallbacks. Escape's pause binding stays reserved.
 
@@ -60,7 +62,7 @@ The current limits are 128 events, 128 flags, 16 conditions per event, and 32 ac
 
 ## Dialogue presentation
 
-Choose an NPC in **Dialogue** to assign a portrait and an optional speaker color. Set the project's text reveal speed in **Menus & controls**; 0 shows text immediately. Confirm first finishes revealing text, then the next confirm follows the selected choice or advances the page. Choices appear after the text is revealed. The portrait comes from the sprite library, so PNG artwork can use the existing sprite import workflow.
+Choose an NPC in **Dialogue** to assign a portrait and an optional speaker color. Set the project's text reveal speed in **Game → Setup**; 0 shows text immediately. Confirm first finishes revealing text, then the next confirm follows the selected choice or advances the page. Choices appear after the text is revealed. The portrait comes from the sprite library, so PNG artwork can use the existing sprite import workflow.
 
 ## Map tools
 
@@ -79,3 +81,9 @@ Project format remains `lota-studio` version 1. New authoring fields are optiona
 RC2 is built for macOS 12 or later, with arm64 and x86_64 binaries. Automated model, runtime, loader, virtual-controller, and production export checks accompany the build. Native Apple Silicon checks covered app launch, title and pause navigation, fullscreen toggling, and the unsaved-progress confirmation. Physical-controller testing, execution on Intel hardware, and Windows/Linux desktop packaging remain unverified. The Mac candidate is not Developer ID signed or notarized.
 
 See `VALIDATION-RC2.md` for the final check results. Before declaring a stable v1.0, play through the included game and try an existing project through edit → playtest → export → save → relaunch → continue.
+
+## RC3 editing improvements
+
+Sidebars show tools relevant to the current section. Game → Setup gathers project movement settings, icon and UI colors, menus and controls, and optional player combat into expandable sections. Click a validation issue to open its map, object, dialogue node, quest, asset, or event. Sounds referenced by custom events are protected from deletion.
+
+See VALIDATION-RC3.md for current checks and remaining manual validation.

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.0 RC3 — adventure systems and focused editing
+
+- Context-aware sidebars, unified Game Setup, clickable validation locations, and sound deletion protection for custom events.
+- NPC patrol and wander routes with collision-aware movement and editable map waypoints.
+- Merchants with item currencies, buy/sell prices, finite or unlimited stock, and atomic inventory transactions.
+- Optional player health, healing items, directional melee attacks, pursuing enemies, one-time loot, and defeat recovery.
+- Version 5 saves preserve health, actor positions, defeated enemies, claimed loot, and merchant stock; older saves remain readable.
+- A playable Keeper’s Adventure sample combines dialogue, quests, movement, trading, and combat.
+
 ## 1.0.0 RC2 — editor navigation cleanup
 
 - Reorganized the 14 workspace tabs into five main sections: Maps, Artwork, Story, Audio, and Game.
