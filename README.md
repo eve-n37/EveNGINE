@@ -5,7 +5,8 @@ top-down adventure games without writing code. You draw maps and artwork, write 
 quests, add music, and export a standalone Mac game. Studio itself needs no terminal, compiler or
 Python.
 
-**Current version: 1.0.0** · [Release notes](docs/RELEASE.md) · [Changelog](CHANGELOG.md)
+**Current version: 1.0.0** · [Release notes](docs/RELEASE.md) · [Changelog](CHANGELOG.md) · 1.1.0 is in
+development on `main`
 
 ![EveNGINE Studio and runtime previews](preview.png)
 
@@ -31,15 +32,17 @@ Security**.
 
 Want to see everything working together? Open `editor/examples/Adventure-Candidate.eve`. It has a
 branching quest, merchants, a patrolling NPC, combat, events and a custom title screen.
+`editor/examples/Frontier-Watch.eve` adds the 1.1 features: equipment, ranged attacks, rival
+factions, NPC animations and a timed event.
 
 ## What's included
 
 | Area                  | Highlights                                                                                           |
 | --------------------- | ---------------------------------------------------------------------------------------------------- |
 | **Maps**              | Terrain and detail layers, collision and water, autotiles, object groups, region copy/paste, stamps, world overview |
-| **Artwork**           | Pixel editor, animation timeline, PNG and sprite-sheet import, 110 original built-in tiles and sprites |
-| **Story**             | Branching dialogue, quests, items, events and story flags, NPC patrols, shops                          |
-| **Gameplay**          | Doors, keys, switches, chests, melee combat, health and healing, saved progress                       |
+| **Artwork**           | Pixel editor, animation timeline, PNG and sprite-sheet import, 110 original built-in tiles and sprites, NPC and enemy walk/attack animations |
+| **Story**             | Branching dialogue, quests, items, events (including timed events) and story flags, NPC patrols, shops |
+| **Gameplay**          | Doors, keys, switches, chests, melee and ranged combat, equipment, factions, health and healing, saved progress |
 | **Audio**             | Embedded WAV music and sound effects, per-map music, event cues                                        |
 | **Game setup**        | Title and pause menus, player settings, keyboard and gamepad controls, app icon, UI colours            |
 | **Engine / SDK**      | Reusable C++ libraries with CMake packages, an SDL3 desktop backend and a headless backend            |

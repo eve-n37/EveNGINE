@@ -17,7 +17,8 @@ Open `EveNGINE-Studio.app` and choose **New**. Pick a template:
 | **Appearance demo · icons and UI colors** | The keeper’s errand with a custom icon and colour theme.        |
 
 To try every feature together, use **Open** on `Adventure-Candidate.eve` (in the download's
-Templates folder, or `editor/examples/` in the source).
+Templates folder, or `editor/examples/` in the source). `Frontier-Watch.eve` adds the 1.1
+features: equipment, a sling, rival factions and an animated NPC.
 
 A project is a single `.eve` file. All artwork, maps, stamps, audio and settings live inside it, so
 you can move or share it on its own. Older `.lota` files still open.

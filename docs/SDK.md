@@ -36,14 +36,15 @@ Then point your project at it with `-DCMAKE_PREFIX_PATH=/path/to/sdk`:
 cmake_minimum_required(VERSION 3.20)
 project(my-game LANGUAGES CXX)
 
-find_package(EveNGINE 1.0 CONFIG REQUIRED)
+find_package(EveNGINE 1.1 CONFIG REQUIRED)
 
 add_executable(my-game main.cpp)
 target_link_libraries(my-game PRIVATE EveNGINE::Core EveNGINE::Platform)
 target_compile_features(my-game PRIVATE cxx_std_17)
 ```
 
-The package uses same-minor-version compatibility. Ask for the version you installed (`1.0`).
+The package uses same-minor-version compatibility. Ask for the version you installed (`1.1` for
+this source tree, `1.0` for the v1.0.0 download).
 
 The published v0.6.0 download includes a prebuilt universal SDK in its `macOS` folder. For that
 one, request `find_package(EveNGINE 0.6 CONFIG REQUIRED)`.

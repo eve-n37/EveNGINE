@@ -1,6 +1,18 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 — adventure expansion (in development)
+
+- Equipment: items can be weapons, armor or charms with attack, defense and maximum-health bonuses. Equip and unequip from the bag; the HUD shows attack and defense.
+- Ranged attacks: ranged weapons fire projectiles, optionally using an ammunition item. Enemies can use a ranged attack style with a longer reach.
+- Factions: enemies can belong to factions that are hostile or neutral toward the player and hostile to each other. Neutral enemies fight back once attacked.
+- NPC and enemy animations: per-direction walk frames for moving NPCs and enemies, and attack frames for enemies. Enemies flash when hit and the player blinks while invulnerable.
+- Timed events: a new trigger fires after a set time on a map, once or repeatedly.
+- Save format 6 adds equipped items and provoked enemies. Formats 2–5 still load.
+- New `Frontier-Watch.eve` sample, plus runtime, loader, model and editor UI tests for the new features.
+- Engine, SDK and app versions are now 1.1.0; the starter requests `find_package(EveNGINE 1.1)`.
+- Removed the unused `LOTA_GAME`, `LOTA_SAMPLES`, `LOTA_STARTER` and `LOTA_TESTS` CMake options, which pointed at files no longer in the repository.
+
+## Unreleased (1.0 documentation)
 
 - Rewrote the README and user guides. The Studio guide is current for 1.0, and new guides cover game setup (menus, controls, icons, UI colours), the C++ SDK and development (building, testing, formatting).
 - Removed `docs/RELEASE-CANDIDATE.md`, which duplicated the release notes, and merged `docs/APPEARANCE.md` into `docs/GAME-SETUP.md`.

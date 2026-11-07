@@ -63,9 +63,14 @@ sets up.
 
 ### Editor UI
 
-`editor/tests/ui_test.py`, `features_ui_test.py` and `render_parity.py` drive the editor in a
-browser with the Python [Playwright](https://playwright.dev/python/) package. Set `LOTA_CHROMIUM`
-to a Chromium executable if Playwright can't find one.
+`editor/tests/ui_test.py`, `features_ui_test.py`, `expansion_ui_test.py` and `render_parity.py`
+drive the editor in a browser with the Python [Playwright](https://playwright.dev/python/) package.
+Set `LOTA_CHROMIUM` to a Chromium executable if Playwright can't find one, and `LOTA_TEST_OUTPUT`
+to choose where screenshots go.
+
+```bash
+python3 editor/tests/expansion_ui_test.py
+```
 
 ## Code style
 

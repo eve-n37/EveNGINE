@@ -104,6 +104,10 @@ An **event** has a trigger, optional conditions, and a list of actions.
 - Entering a rectangular area (measured in map pixels). Repeatable area events fire again only after
   the player leaves and comes back.
 - Interacting with an object.
+- Spending time on a map (1.1). Set a delay from 0.5 seconds to an hour. The timer starts when the
+  player enters the map, pauses while a menu, conversation, shop, bag or journal is open, and starts
+  again from zero whenever the player leaves and comes back. Timers aren't saved, so loading a game
+  also restarts them. Untick **Run only once** to repeat the event at that interval.
 
 **Conditions** (all must match)
 
@@ -123,12 +127,15 @@ Tick **Run only once** for events that should only ever happen once. That's save
 progress. Before running, the game checks that every item reward fits in the bag. If it doesn't, the
 event doesn't run and can be tried again later.
 
+A one-time timed event whose conditions don't match yet keeps checking until they do. A repeating
+one checks its conditions each time the interval comes round.
+
 If an event is triggered by an object, it replaces the object's normal behaviour whenever its
 conditions match. When they don't match, the object behaves normally. Decorations and collectibles
 can be used as event triggers too.
 
 Limits: 128 events, 128 flags, 16 conditions per event and 32 actions per event. There's no
-scripting language or timer triggers.
+scripting language.
 
 ## Playing
 

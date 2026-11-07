@@ -83,8 +83,8 @@ animation.
 
 ## Player combat
 
-Turns on player health and melee attacks. See the
-[adventure guide](ADVENTURE.md#combat-and-healing).
+Turns on player health and melee attacks. Equipment (weapons, armor and charms) also needs this
+turned on. See the [adventure guide](ADVENTURE.md#combat-and-healing).
 
 ## Dialogue text speed
 
