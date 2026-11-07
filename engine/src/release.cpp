@@ -167,7 +167,8 @@ void StudioGame::loadReleaseFeatures(const Json &j) {
       need(ids.insert(e.id).second, "Duplicate event");
       e.name = str(v["name"], 160);
       e.trigger = str(v["trigger"], 16);
-      need(e.trigger == "interact" || e.trigger == "enter" || e.trigger == "step",
+      need(e.trigger == "interact" || e.trigger == "enter" || e.trigger == "step" ||
+               e.trigger == "timer",
            "Unknown event trigger");
       e.scene = id(v["scene"]);
       need(project.scenes.count(e.scene), "Unknown event map");
@@ -177,6 +178,13 @@ void StudioGame::loadReleaseFeatures(const Json &j) {
       if (e.trigger == "interact") {
         e.object = id(v["object"]);
         need(interactions.count(e.scene + ":" + e.object), "Missing event object");
+      }
+      if (e.trigger == "timer") {
+        auto &d = v["delay"];
+        need(d.type == Json::Number && std::isfinite(d.number) && d.number >= .5 &&
+                 d.number <= 3600,
+             "Invalid event timer");
+        e.delay = float(d.number);
       }
       if (e.trigger == "step") {
         auto &r = v["area"];
@@ -393,6 +401,7 @@ void StudioGame::updateTriggers() {
   if (eventScene != scene) {
     eventScene = scene;
     insideTriggers.clear();
+    eventTimers.clear();
     runEvents("enter", scene);
     if (scene != eventScene)
       return;
@@ -486,6 +495,7 @@ void StudioGame::startNewGame() {
   flags = flagDefaults;
   firedEvents.clear();
   insideTriggers.clear();
+  eventTimers.clear();
   eventScene.clear();
   dialogueObject.clear();
   dialogueNode.clear();
