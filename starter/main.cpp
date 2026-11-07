@@ -11,8 +11,7 @@ public:
   int crystals = 0;
   std::vector<std::string> collected;
   bool quit = false, help = true;
-  explicit Starter(const std::string &path)
-      : project(evengine::Project::load(path)) {
+  explicit Starter(const std::string &path) : project(evengine::Project::load(path)) {
     feet = project.scenes.at(project.start).spawn;
   }
   void update(const evengine::Input &input, float dt) {
@@ -20,21 +19,17 @@ public:
       quit = true;
     if (input.hit(evengine::Action::Menu))
       help = !help;
-    auto direction =
-        evengine::normalized({float(input.down(evengine::Action::Right)) -
-                              float(input.down(evengine::Action::Left)),
-                          float(input.down(evengine::Action::Down)) -
-                              float(input.down(evengine::Action::Up))});
+    auto direction = evengine::normalized(
+        {float(input.down(evengine::Action::Right)) - float(input.down(evengine::Action::Left)),
+         float(input.down(evengine::Action::Down)) - float(input.down(evengine::Action::Up))});
     auto speed = input.down(evengine::Action::Run) ? 80.0f : 48.0f;
     const auto &scene = project.scenes.at(project.start);
     feet = evengine::moveBody(project, scene, feet,
-                          {direction.x * speed * dt, direction.y * speed * dt});
+                              {direction.x * speed * dt, direction.y * speed * dt});
     for (const auto &object : scene.objects)
       if (object.kind == "crystal" &&
-          std::hypot(feet.x - object.position.x, feet.y - object.position.y) <
-              14 &&
-          std::find(collected.begin(), collected.end(), object.id) ==
-              collected.end()) {
+          std::hypot(feet.x - object.position.x, feet.y - object.position.y) < 14 &&
+          std::find(collected.begin(), collected.end(), object.id) == collected.end()) {
         collected.push_back(object.id);
         ++crystals;
       }
@@ -44,29 +39,26 @@ public:
     canvas.clear({24, 32, 44});
     const auto &scene = project.scenes.at(project.start);
     evengine::drawScene(canvas, project, scene, evengine::cameraFor(scene, feet), feet,
-                    project.sprites.at("player").source, collected, false);
+                        project.sprites.at("player").source, collected, false);
     canvas.rect({8, 8, 210, 29}, {24, 32, 44, 235});
     canvas.text("YOUR NEXT GAME", 16, 14, {229, 223, 191});
-    canvas.text("CRYSTALS " + std::to_string(crystals) + " / 3", 16, 25,
-                {138, 208, 213});
+    canvas.text("CRYSTALS " + std::to_string(crystals) + " / 3", 16, 25, {138, 208, 213});
     // Scaled images and nested clip regions are available to every SDK project.
     canvas.rect({310, 8, 80, 58}, {24, 32, 44});
     canvas.pushClip({316, 14, 68, 46});
     canvas.image(project.tiles.at('.').source, {316, 14, 68, 46});
-    canvas.rect({316 + feet.x / scene.width / 16 * 68 - 1,
-                 14 + feet.y / scene.height / 16 * 46 - 1, 3, 3},
-                {229, 223, 191});
+    canvas.rect(
+        {316 + feet.x / scene.width / 16 * 68 - 1, 14 + feet.y / scene.height / 16 * 46 - 1, 3, 3},
+        {229, 223, 191});
     canvas.popClip();
     if (help) {
       canvas.rect({8, 211, 384, 21}, {24, 32, 44, 235});
-      canvas.text("MOVE WASD  SHIFT RUN  Q HELP  F5 SAVE", 16, 218,
-                  {138, 208, 213});
+      canvas.text("MOVE WASD  SHIFT RUN  Q HELP  F5 SAVE", 16, 218, {138, 208, 213});
     }
     return canvas;
   }
   bool save(const std::string &path, std::string &error) const {
-    return evengine::saveState(
-        path, {project.id, project.start, feet, crystals, collected}, error);
+    return evengine::saveState(path, {project.id, project.start, feet, crystals, collected}, error);
   }
   bool load(const std::string &path, std::string &error) {
     evengine::SavedState state;

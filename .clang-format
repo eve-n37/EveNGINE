@@ -1,0 +1,14 @@
+---
+BasedOnStyle: LLVM
+ColumnLimit: 100
+IndentWidth: 2
+SortIncludes: Never
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+---
+Language: ObjC
+BasedOnStyle: LLVM
+ColumnLimit: 100
+IndentWidth: 2
+SortIncludes: Never
