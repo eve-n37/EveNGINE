@@ -128,6 +128,36 @@ much as Linux ones on private repositories. To check a branch without opening a 
 The Linux package is built on Ubuntu 22.04 so it runs on glibc 2.35 and later. Download it, or the
 zipped Mac app, from the run's **Artifacts** section. CI apps aren't signed or notarized.
 
+## Making a release
+
+Releases are built by `.github/workflows/release.yml`, so nobody needs to package anything by hand.
+
+1. Set the new version in both `project()` lines (`CMakeLists.txt` and `engine/CMakeLists.txt`),
+   `editor/native/Info.plist`, the exported-game version in `editor/native/GameAppearance.m`, the
+   Linux app's `--version` text in `editor/linux/main.cpp` and exported-game README in
+   `editor/linux/export.cpp`, the editor footer in `editor/ui/index.html`, and the `find_package`
+   version in `starter/CMakeLists.txt` and `docs/SDK.md`. (CI checks that the Mac app's version
+   matches CMake.)
+2. Update `CHANGELOG.md` and `docs/RELEASE.md` (the release page text; use absolute links), then
+   merge to `main`.
+3. Optionally, do a dry run: **Actions → Release → Run workflow** on `main`. It builds and tests
+   everything and keeps the downloads as a `release-dry-run` artifact, without creating a release.
+4. Tag the merged commit and push the tag:
+
+   ```bash
+   git tag v1.1.0
+   ```
+
+   ```bash
+   git push origin v1.1.0
+   ```
+
+The workflow checks that the tag matches the CMake version, runs the whole CI suite on Linux and
+macOS, and creates a **draft** release with the Linux `.tar.gz`, the macOS `.zip` and
+`SHA256SUMS.txt`. Review the draft on the repository's **Releases** page and click **Publish
+release**. If a step fails, fix it, delete the tag (`git push origin :v1.1.0` and `git tag -d
+v1.1.0`) and tag again.
+
 ## Code style
 
 Formatting is automatic. Format your changes before committing:

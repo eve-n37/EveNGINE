@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # release.yml runs the whole suite and publishes its artifacts.
+  workflow_call:
 
 permissions:
   contents: read
@@ -76,6 +78,7 @@ jobs:
           SDL_AUDIODRIVER: dummy
       - name: Check the app bundle
         run: |
+          version=$(sed -n 's/^project(EveNGINESDK VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
           app=build/EveNGINE-Studio.app
           for binary in "$app/Contents/MacOS/EveNGINE-Studio" "$app/Contents/Resources/Runtime"; do
             archs=$(lipo -archs "$binary")
@@ -89,14 +92,32 @@ jobs:
           done
           test -f "$app/Contents/Frameworks/SDL3.framework/SDL3"
           test -f "$app/Contents/Resources/ui/index.html"
-          test "$(plutil -extract CFBundleShortVersionString raw "$app/Contents/Info.plist")" = 1.1.0
+          test "$(plutil -extract CFBundleShortVersionString raw "$app/Contents/Info.plist")" = "$version"
           "$app/Contents/Resources/Runtime" --project editor/examples/Frontier-Watch.eve --validate
-      - name: Zip the app
-        run: ditto -c -k --keepParent build/EveNGINE-Studio.app EveNGINE-Studio-macOS.zip
+      - name: Package
+        run: |
+          version=$(sed -n 's/^project(EveNGINESDK VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
+          name="EveNGINE-Studio-v$version-macOS"
+          mkdir -p "$name/Templates" "$name/Licenses"
+          ditto build/EveNGINE-Studio.app "$name/EveNGINE-Studio.app"
+          cp editor/examples/*.eve "$name/Templates/"
+          cp LICENSE "$name/Licenses/EveNGINE-LICENSE.txt"
+          cp third_party/* "$name/Licenses/"
+          cat > "$name/README.txt" <<EOF
+          EveNGINE Studio $version for macOS (Apple Silicon and Intel)
+
+          Open EveNGINE-Studio.app. It needs macOS 12 or later. Apple Silicon is officially
+          supported; the Intel build is included but unofficial. The app isn't notarized, so the
+          first time, Control-click it and choose Open, or allow it under System Settings ->
+          Privacy & Security.
+
+          Templates/   editable example projects (open them with Open)
+          EOF
+          ditto -c -k --keepParent "$name" "$name.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: EveNGINE-Studio-macOS
-          path: EveNGINE-Studio-macOS.zip
+          path: EveNGINE-Studio-v*-macOS.zip
           if-no-files-found: error
 
   sanitizers:

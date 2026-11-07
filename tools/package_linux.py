@@ -17,7 +17,12 @@ root = Path(__file__).resolve().parents[1]
 p = argparse.ArgumentParser()
 p.add_argument("--build", required=True, type=Path, help="CMake build folder")
 p.add_argument("--output", required=True, type=Path)
-p.add_argument("--version", default="1.1.0")
+version = re.search(
+    r"project\(EveNGINESDK VERSION ([0-9.]+)", (root / "CMakeLists.txt").read_text()
+).group(1)
+p.add_argument(
+    "--version", default=version, help="defaults to the CMake project version"
+)
 p.add_argument("--arch", default=platform.machine())
 a = p.parse_args()
 
