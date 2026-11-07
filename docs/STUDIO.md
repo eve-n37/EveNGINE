@@ -1,139 +1,242 @@
-# EveNGINE Studio 0.6.0 guide
+# EveNGINE Studio guide
 
-Open **EveNGINE-Studio.app**. In the full SDK, it is in the `macOS` folder. The editor starts with a small two-map exploration sample. **New** offers this sample, a blank map with starter assets, or **Keys and Gates**, a two-map interaction demo. **Open** restores a `.eve` file. All artwork, map stamps, audio and definitions live in that one file.
+This guide covers the editor itself: making maps and artwork, adding audio, playtesting and
+exporting. For gameplay content, see the [story guide](STORY.md), the
+[adventure guide](ADVENTURE.md) and the [game setup guide](GAME-SETUP.md).
+
+## Getting started
+
+Open `EveNGINE-Studio.app` and choose **New**. Pick a template:
+
+| Template                                 | What you get                                                    |
+| ---------------------------------------- | --------------------------------------------------------------- |
+| **Blank map · starter character**        | An empty map with a walking character. The default.            |
+| **Exploration sample · two maps**        | Two connected maps to explore.                                  |
+| **Interaction demo · keys and gates**    | Keys, a chest, a locked door, a lever and a gate.               |
+| **Story demo · the keeper’s errand**     | A branching conversation and a complete quest.                  |
+| **Appearance demo · icons and UI colors** | The keeper’s errand with a custom icon and colour theme.        |
+
+To try every feature together, use **Open** on `Adventure-Candidate.eve` (in the download's
+Templates folder, or `editor/examples/` in the source).
+
+A project is a single `.eve` file. All artwork, maps, stamps, audio and settings live inside it, so
+you can move or share it on its own. Older `.lota` files still open.
+
+## Finding your way around
+
+The editor has five sections. Each has its own tools and remembers the last one you used.
+
+| Section     | Tools                                                    |
+| ----------- | -------------------------------------------------------- |
+| **Maps**    | Map editor, World overview, Terrain & groups             |
+| **Artwork** | Project assets, Built-in library, Pixel editor, Animation |
+| **Story**   | Dialogue, NPCs & trading, Quests, Items, Events & flags  |
+| **Audio**   | Music, sound effects, event cues and the sound library   |
+| **Game**    | Setup                                                    |
+
+The sidebar shows tools for the current section. The inspector on the right edits whatever you have
+selected.
 
 ## Maps
 
-Select a map in the left panel. Use **+** beside Maps to add a map; use the inspector to rename it, resize it or make it the starting map.
+Select a map in the sidebar. Click **+** beside Maps to add one. Rename, resize or make it the
+starting map in the inspector.
 
-- **Terrain** is an opaque tile layer. **Detail** is a second tile layer with transparent, empty cells.
-- Pick a tile, then use **Brush**, **Erase** or **Fill**. Brush strokes are grouped into one undo action.
-- **Collision** paints blocked cells; **Water** paints cells that slow the sample character. They are independent of the artwork. Erase removes these flags. With **Tile flags** enabled, terrain brush/fill also applies a tile’s solid/water defaults; the checkbox starts off.
-- **Spawn** places the player's feet. It must leave the 10 × 7 foot collider clear of walls and solid objects.
-- Pick a sprite, choose **Object**, then click to place it. **Select** picks placed objects or exits. Use the inspector for exact positions and properties.
-- Object behaviours are decoration, collectible, sign, NPC, chest, door and switch. See Interactions below.
-- **Exit** places a 16 × 16 trigger. Set its size, destination and arrival position in the inspector. Add a second exit on the destination map for a return route. Validation checks that the arrival is clear.
-- **Grid** and zoom affect only the editor view. Maps can be scrolled.
+### Layers
 
-Maps are limited to 256 × 256 tiles, with 16 × 16 tiles. There are two visual layers. A project can hold 64 maps and 64 tile assets.
+- **Terrain** is the solid ground layer. Every cell has a tile.
+- **Detail** sits on top. Cells can be empty, which makes it useful for flowers, rugs and so on.
+- **Collision** marks cells the player can't walk through.
+- **Water** marks cells that slow the player down.
 
-## Tiles and sprites
+Collision and water are separate from the artwork. Turn on **Tile flags** to have terrain painting
+also apply each tile's default collision and water settings (off by default).
 
-Double-click an asset in the left panel, or choose **Tiles & sprites**. **+** creates a tile or sprite. Tiles are 16 × 16; sprites can be up to 64 × 64. The first palette colour is permanently transparent.
+### Painting
 
-Pencil/eraser work while dragging; fill affects connected pixels; the eyedropper selects a colour. Drag a selection from its top left to its bottom right; Copy and Paste use that rectangle. Without a selection, Copy uses the whole image and Paste begins at the top left. Flip affects the full asset. Rotation is available for square assets. Palette colour edits affect every asset using that palette index.
+Pick a tile, then use **Brush**, **Erase** or **Fill**. A whole brush stroke undoes as one step.
+**Grid** and zoom only affect the editor view.
 
-**Import PNG** requires an image with exactly the selected asset's dimensions. It preserves alpha and adds colours up to the 256-colour palette limit. **PNG** saves the selected asset as a PNG. The two previews show the asset at game scale and repeated as a tile.
+### Objects, spawn and exits
 
-The inspector's collider rectangle is relative to the sprite's top left. Set width or height to zero for a decorative object without collision. Placed object coordinates are top-left coordinates. The player uses a bottom-centre foot anchor and a 10 × 7 body collider.
+- **Object**: pick a sprite, choose Object, then click to place it. Set its behaviour (sign, NPC,
+  chest, door and so on) in the inspector. See the [story guide](STORY.md#objects-and-interactions).
+- **Spawn**: where the player starts. The player's 10 × 7 pixel foot area must be clear.
+- **Exit**: a trigger that sends the player to another map. Set its size, destination and arrival
+  position in the inspector. For a return trip, add an exit on the other map too.
 
-**Duplicate asset** makes an independent copy. **Save object template** writes a `.eve-object` file containing the sprite and collider. **Open** can import that template into another project with the same palette. For different palettes, use PNG import instead.
+### Moving placed things
 
-A project can hold 256 sprite frames. Undo also reverses new assets, map resizing, palette edits and object changes.
+Choose **Select / Move** and drag an object or exit. It keeps the point where you grabbed it.
 
-## Asset browser and sheet import
+- Turn on **Snap to grid** to snap to 16-pixel tiles, or hold **Shift** to snap temporarily.
+- **Escape** cancels a drag. **Undo** reverses the whole move.
+- Objects stay inside the map, and objects in locked groups can't be moved.
 
-Choose **Asset browser** to see all tiles and sprites. Search by name, ID or group, and filter by artwork type or group. Select an asset to rename it or assign a group in the inspector. **Edit artwork** or double-click opens the pixel editor. Duplicate creates a separate asset. Deletion is available for unused artwork; map cells, stamps, placed objects, alternate-state sprites, item icons and animation frames all count as references. Deleting an unused tile adjusts later map indexes automatically.
+### Regions and stamps
 
-**Import PNG sheet** opens a grid preview. Choose tiles (fixed 16 × 16 cells) or sprites (1–64 pixels per axis), then set cell size, outside margin, cell spacing and the shared name/group. The grid must fit the complete image exactly. Frames are read left to right, then down. Fully transparent pixels map to palette index zero; exact RGBA colours are reused or added. Import is atomic and is one undo action. The importer blocks mismatched grids, palette overflow and asset-limit overflow. Source PNGs are limited to 16 MiB and 4096 × 4096 pixels.
+Choose **Region** and drag across the map. With **All layers** checked, terrain, detail, collision
+and water are all included. Otherwise only the current layer is. Regions can be up to 64 × 64
+tiles. Objects, exits and spawns aren't included.
 
-For a sprite sheet, you can replace an existing animation's frames during import. This uses all imported frames in order at 140 ms each; tune the timeline afterwards. Choose **Artwork only** to keep current clips. Clips have at most 64 frames. Imported pixels are embedded; the original PNG does not need to stay beside the project.
+- **Copy**, **Cut** and **Clear** work like you'd expect. Cleared terrain resets to the first tile.
+- **Paste** switches to the Stamp tool. Click to place it, on this map or another one. Anything
+  outside the map edge is clipped.
+- **Save stamp** keeps a named, reusable copy in the project. Click a saved stamp to place it;
+  double-click to rename or delete it.
+- **Rotate stamp** and **Flip stamp** change the copy you're placing, not the saved original.
+- Cmd/Ctrl + C, X and V work on map selections when you're not typing in a text field.
 
-## Map regions and reusable stamps
+### Autotiles
 
-Choose **Region** and drag in either direction. **All layers** copies terrain, detail, collision and water together; uncheck it to copy the selected layer. Regions are limited to 64 × 64 tiles. Objects, exits and spawns are authored separately.
+**Maps → Terrain & groups** lets you create autotile rules. A rule has 16 tile slots, one for each
+combination of connected neighbours (N, E, S, W, or "Isolated" for none). Paint with the rule's
+brush on the Terrain layer, and edges and corners update automatically as you paint.
 
-- **Copy** captures the region. **Cut** captures it and clears its copied layers. **Clear** only clears those layers. Terrain clears to the first tile, detail to empty, and flags to zero.
-- **Paste** switches to the Stamp tool. Click a map to place the clipboard; choose another map to paste there. Each placement is one undo action. Cells outside the destination map are clipped and reported.
-- **Save stamp** stores a named, reusable copy in the project. Click a saved stamp in the sidebar and place it with the Stamp tool. Double-click a saved stamp to rename or delete it.
-- **Rotate stamp** rotates the active copy clockwise, including rectangular areas. **Flip stamp** flips it horizontally. Transforming the active copy does not change the stored original.
-- Command/Control-C, X and V work on map selections when text fields are not focused.
+- **Fill** follows connected cells that use the same rule.
+- **Erase** resets the cell to the first tile and updates its neighbours.
+- Painting with a normal brush or pasting a region over autotiled cells replaces them.
 
-Stamps retain tile IDs rather than palette positions. A project can hold 64 stamps. Save and reopen preserves them.
+Autotiles are saved as ordinary terrain, so the exported game looks exactly like the editor.
+
+### Object groups
+
+Groups belong to one map. Assign objects to a group in the inspector. A group can be hidden or
+locked in the editor, or moved one tile at a time. A move is cancelled if any object would leave the
+map. Hidden and locked groups still appear normally in the game.
+
+### World overview
+
+**Maps → World overview** shows every map as a thumbnail, with lines for the exits between them.
+Drag a map's heading to rearrange the overview, or click **Open map** to edit it. The layout only
+affects this view; it doesn't change the game.
+
+## Artwork
+
+### Pixel editor
+
+Double-click any artwork to open it. Click **+** to create a new tile (16 × 16) or sprite (up to
+64 × 64).
+
+- **Pencil** and **eraser** draw as you drag. **Fill** fills connected pixels. The **eyedropper**
+  picks a colour.
+- Drag a rectangle to select. **Copy** and **Paste** use the selection, or the whole image if
+  nothing is selected.
+- **Flip** and **Rotate** (square artwork only) affect the whole image.
+- **Import PNG** loads an image of exactly the same size. **PNG** exports the current artwork.
+- The two previews show the artwork at game scale and tiled.
+
+Palette colour 0 is always transparent. Editing a palette colour changes it in every asset that uses
+it. Palettes hold up to 256 colours.
+
+A sprite's **collider** is the rectangle the player bumps into, measured from the sprite's top left.
+Set the width or height to 0 for a decoration with no collision.
+
+**Duplicate asset** makes an independent copy. **Save object template** writes an `.eve-object` file
+with the sprite and collider, which you can **Open** in another project that uses the same palette.
+
+### Project assets
+
+**Artwork → Project assets** lists all your tiles and sprites. Search by name, ID or group and filter
+by type or group. Select something to rename it or set its group.
+
+You can delete artwork only when nothing uses it. Map cells, stamps, placed objects, open/closed
+sprites, item icons and animation frames all count.
+
+### Importing a sprite sheet
+
+**Import PNG sheet** cuts a sheet into separate tiles or sprites. Set the cell size, outer margin
+and spacing between cells. The grid must fit the image exactly. Cells are read left to right, then
+top to bottom.
+
+Fully transparent pixels become transparent. Other colours are matched to the palette, or added if
+there's room. The import happens all at once and undoes as one step. It's refused if the grid doesn't
+fit, the palette would overflow or the project would go over its limits. Sheets can be up to 16 MiB
+and 4096 × 4096 pixels.
+
+For sprite sheets, you can also replace an animation's frames during import. Frames are set to
+140 ms each; adjust them on the timeline afterwards. The PNG is embedded in the project, so you don't
+need to keep the original file.
+
+### Built-in library
+
+**Artwork → Built-in library** has 110 original assets (48 tiles and 62 sprites) in seven packs:
+outdoors, interiors, dungeon, nature, village, characters and items. There are also eight map
+stamps. Search, filter, and import a single item or everything shown. Imports bring along anything
+they depend on (such as open-door sprites or a stamp's tiles) and undo as one step.
+
+**Use explorer character** imports a four-direction walking character and replaces your walk
+animations, after asking.
+
+### Animation
+
+Choose **Artwork → Animation** and select a clip. Every project has walk clips for south, north,
+east and west. **New clip** adds an idle or attack clip for a direction.
+
+Pick a sprite and click **Add selected sprite** to add it as a frame. Use the timeline buttons to
+duplicate, remove and reorder frames, and set each frame's duration in milliseconds. **Onion skin**
+shows the previous frame faintly behind the current one.
+
+Walking animations speed up while running. If there's no idle clip, the first walk frame is used.
+Attack clips play when the player attacks.
 
 ## Audio
 
-Choose **Audio**, then **Import WAV**. Supported clips are uncompressed PCM 16-bit WAV, mono or stereo, 8–48 kHz, at most 60 seconds and 4 MiB each. The project can hold 32 clips with 12 MiB of combined WAV data. MP3, compressed/float WAV and other formats must be converted before import. The whole project has a 32 MiB runtime JSON limit.
+Choose **Audio → Import WAV** to add a clip.
 
-**Preview** plays a clip once at the effects volume; **Stop preview** ends playback. Rename clips in the list. Remove music and event assignments before deleting a referenced clip.
+| Limit                  | Value                                              |
+| ---------------------- | -------------------------------------------------- |
+| Format                 | Uncompressed 16-bit PCM WAV, mono or stereo        |
+| Sample rate            | 8–48 kHz                                           |
+| Each clip              | Up to 60 seconds and 4 MiB                         |
+| Per project            | Up to 32 clips and 12 MiB of audio                 |
 
-The music selector applies to the map selected in the sidebar. Each track loops end to start; choose **None** for silence. Seamless source clips give the best loop. Maps sharing a track continue it; switching tracks starts the new one. Seven project-wide event cues can be assigned: collect, attack, exit, talk/read, chest, door and switch. Interaction and attack sounds use button press edges rather than repeating each held frame. Music and effects have independent 0–100% volume controls. The native backend supports eight overlapping effects, replacing the oldest if necessary.
+Convert MP3s and other formats before importing; [Audacity](https://www.audacityteam.org/) works
+well for this.
 
-WAV bytes are embedded in the `.eve` file and travel with unsaved playtests and exported apps. The sample contains an original soft meadow loop and a short collection chime. The blank template starts without audio. The game continues silently if a playback device cannot be opened. This milestone uses per-map music and seven fixed cues; event graphs, streaming long music, spatial audio and custom buses are future extensions.
+- **Preview** plays a clip once. **Stop preview** stops it.
+- **Music** is set per map and loops. Maps that share a track keep playing it across exits.
+- **Event cues** play a sound for collecting, attacking, using exits, talking or reading, chests,
+  doors and switches.
+- Music and sound effects have separate volume levels. Up to eight sound effects can play at once.
 
-## Built-in assets
-
-Choose **Built-in assets** to browse 110 original assets: 48 tiles and 62 sprites across outdoors, interiors, dungeon, nature, village, characters and items. Eight four-layer map stamps are included. Search and filter by pack or type, then import one asset/stamp or the filtered set. Imports reuse exact palette colours, include alternate-state sprites and stamp tile dependencies, and form one undo action. Imports that exceed project limits are rejected as a whole. Reimporting preserves your edits to existing compatible assets.
-
-**Use explorer character** imports sixteen directional walk frames and replaces the four walking clips after confirmation. It does not replace other animation states. Imported artwork is ordinary editable project content. Source PNGs, pack contact sheets, palette metadata and the artwork generator are in `editor/assets` in the full SDK.
-
-## Items and interactions
-
-Choose **Items** and add a named item with a sprite icon before making a reward chest or keyed door. Projects allow 64 item definitions. Their IDs stay stable when renamed. Referenced items cannot be deleted. Inventory holds up to 999 of each defined item; a reward exceeding that limit stays available rather than silently discarding items.
-
-Place an object and use its inspector to choose a behaviour:
-
-| Behaviour | Authoring and play |
-| --- | --- |
-| Collectible | Awards the existing score counter; optionally also gives an item and quantity. Disappears after collection. |
-| Sign | Displays its interaction text while E is held nearby. |
-| NPC | Set speaker and dialogue pages; separate pages with a blank line. E opens/advances, Space or Escape closes. Up to 16 pages, 180 characters each. Dialogue pauses movement. |
-| Chest | Choose item and quantity (1–99), plus an optional open sprite. E gives the reward once. |
-| Door | Select an optional required item and whether to consume one. **Switch only** gates cannot be opened manually. Activation removes the object collider and may replace its artwork. |
-| Switch | Select one or more doors on the same map. E latches the switch and opens all linked doors. It can bypass their key requirements. |
-
-Built-in NPCs, doors, gates and reward props provide useful placement defaults. Chests use your first item; levers link to the first existing door. Without those prerequisites they start as decorations; choose the behaviour after creating an item or door. Editing an object ID updates switch links; deletion of a linked door is blocked until it is unlinked.
-
-Door collision belongs to the placed object. Leave the door cell clear in the painted collision layer; an opened object cannot erase a painted wall. Switches are one-way latches in this release. E acts on the closest interaction within 32 pixels. Movement pauses while the bag or NPC dialogue is open.
-
-Try **New → Keys and Gates**: talk to the keeper, take the bronze key from the chest, open the timber door, pull the lever to open the iron gate, and follow the exit to the second map. F5/F9 saves and restores progress. Older Studio progress files continue to load; they start with no new inventory or activated interactions.
-
-## Animation
-
-Choose **Animation**, then select a clip. Walk clips exist for south, north, east and west. **New clip** adds an optional idle or attack clip for a direction. Each state/direction pair has one clip.
-
-Pick a sprite in the library and use **Add selected sprite**. Duplicate/remove/reorder frames with the timeline buttons; edit the selected frame duration in milliseconds. Onion skin shows the previous frame. Preview uses the same frame durations that the runtime reads.
-
-Walk animation speeds up by the project's run multiplier. Idle falls back to the first walk frame if no idle clip is defined. Space plays an authored attack clip and its assigned sound; a sound can play without an animation. The generic sample does not implement combat damage.
-
-Project settings edit the title, walking speed and running multiplier.
+You can't delete a clip that's in use; remove its music or cue assignments first. If the player's
+computer has no audio device, the game still runs silently.
 
 ## Playtest and export
 
-**Validate** checks data, asset references, frame timing, collider bounds, spawns and exits. It checks data validity, not whether every area can be reached. Build a route yourself and playtest it.
+**Validate** checks the project for problems: broken references, blocked spawns and arrivals,
+invalid frame timing and so on. Click an issue to jump to it. Validation can't tell whether every
+area is actually reachable, so playtest your routes.
 
-**Playtest** validates again in C++ and launches the selected map with its spawn. The playable window uses exactly the project currently in the workspace, even before saving. Unsaved playtest content is held in a temporary folder.
+**Playtest** runs the current map in the native game runtime, using exactly what's in the editor
+(even unsaved changes). Closing Studio also closes its playtests. Press **F3** in a playtest to show
+collision, water, the player's feet, exits and frame timing.
 
-Controls: WASD or arrows to move, Shift to run, E to interact/advance dialogue, Q to open the bag (A/D changes bag pages), Space to play attack animations or dismiss dialogue, F3 to show collision, water, feet, exits, coordinates and frame interval, F5 to save progress, F9 to reload, Escape closes dialogue/bag first, then opens the pause menu. Progress saves include inventory, collected pickups, opened chests/doors and latched switches, and are kept separately by project ID. Close the playtest when done; closing the editor also closes its active playtests.
+**Export app** builds a standalone Mac game (`.app`) after validating the project. The app includes
+your project, the runtime, the font and SDL3; it doesn't need Studio, a browser or a compiler. If an
+app already exists at that location, macOS asks before replacing it, and a failed export leaves the
+old app untouched. Exported games run on macOS 12 or later.
 
-**Export app** validates through the same C++ loader, asks where to save and produces a standalone universal Mac `.app`. The app contains project data, packed-at-load artwork, the native runtime, font and SDL3 framework. A compiler is not required. Export replaces an existing app only after the native save dialog's replacement confirmation; the new package is staged before committing. Exported games target macOS 12+ and can be launched without the editor.
+## Saving, undo and recovery
 
-The exported sample uses the generic exploration behaviours; C++ game-specific code needs a source build. Authoring/code tools are separate from the runtime.
+- **Save** (Cmd+S) writes the `.eve` file. The header shows when you have unsaved changes.
+- **Undo** (Cmd+Z) and **Redo** (Cmd+Shift+Z) keep up to 60 steps. History is cleared when you
+  open a project.
+- **Autosave** keeps a recovery copy as you work. **Recover autosave** restores it after asking. It
+  only keeps the latest snapshot, so save your projects properly too.
 
-## Save, undo and recovery
+Studio asks before closing if you have unsaved changes.
 
-Use **Save** or Command-S to keep the portable `.eve` file. A filled Save indicator means the current workspace has been saved. Unsaved changes are marked in the header.
+## Project limits
 
-Undo/redo use the toolbar or Command-Z / Command-Shift-Z. History keeps up to 60 edits within a 64 MiB snapshot budget and is reset when opening a project.
-
-Autosave writes recovery data after edits. **Recover autosave** restores the last snapshot; it asks before replacing your workspace. On Mac it retains the existing Application Support/LotA Studio location for compatibility. Save manually to keep multiple projects: recovery is one latest snapshot, not an archive. If a save or validation fails, the status line explains the error.
-
-## Current boundary
-
-This release adds original built-in artwork and basic inventory/interactions alongside reusable asset/map workflows and audio. Existing `.project` / `.scene` SDK content and the RPG's baked `world.json` are not editable `.eve` projects yet. The original C++ starter remains included; the existing Legend of the Ancients build is unchanged. Quest tracking, branching dialogue, shops, equipment, RPG data and UI layout editing are future modules. A full visual scripting system and 3DS export are outside this release.
-
-Existing `.lota` and `.lota-object` files still open. New saves use `.eve` and `.eve-object`. The compatible data format and project IDs are preserved.
-
-
-## v0.7.0 dialogue and quests
-
-Use the new Quests and Dialogue tabs to author story content. Choose the Keeper’s Errand template for a complete playable example. See [STORY.md](STORY.md) for authoring, controls, objectives, rewards, and save compatibility.
-
-
-## Game icons and UI colors
-
-Use the Game appearance tab to draw or import an app icon and edit the game’s UI colors. Native Mac exports include the icon automatically. See [APPEARANCE.md](APPEARANCE.md) for controls, presets, import limits, and the appearance demo.
-
-## Release candidate menus, events, and map tools
-
-See [the release candidate guide](RELEASE-CANDIDATE.md) for title screens, player settings, controls, event sequences, dialogue presentation, autotiles, groups, and the world overview. New projects can use **Release candidate demo** to try them together.
+| Item              | Limit                |
+| ----------------- | -------------------- |
+| Maps              | 64, up to 256 × 256 tiles each |
+| Tiles             | 64 (16 × 16 pixels)  |
+| Sprite frames     | 256 (up to 64 × 64 pixels) |
+| Stamps            | 64                   |
+| Items             | 64                   |
+| Animation frames  | 64 per clip          |
+| Undo history      | 60 steps             |
+| Project data      | 32 MiB               |

@@ -1,87 +1,104 @@
-# EveNGINE 1.0.0 — EveNGINE Studio
+# EveNGINE
 
-**v1.0.0:** NPC patrols, shops, melee combat, contextual editing, unified Game Setup, and the combined v0.7/v0.8 feature set: dialogue and quests, game icons and UI colors, menus and player settings, events, controls, portraits, autotiles, object groups, and world overview. See [the release guide](docs/RELEASE.md) and [changelog](CHANGELOG.md). Official Mac support targets Apple Silicon.
+EveNGINE is a 2D game engine written in C++, paired with **EveNGINE Studio**, a Mac app for building
+top-down adventure games without writing code. You draw maps and artwork, write dialogue and
+quests, add music, and export a standalone Mac game. Studio itself needs no terminal, compiler or
+Python.
 
-A reusable 2D C++ engine with a separate GUI authoring app. Official Mac support targets Apple Silicon on macOS 12 or later. Intel compatibility is unofficial; the current download includes Intel binaries. Normal editing and app export do not require a terminal, Python, Xcode or a compiler.
-
-## Downloads
-
-Get [EveNGINE v1.0.0](https://github.com/eve-n37/EveNGINE/releases/tag/v1.0.0). Download **EveNGINE-Studio-v1.0.0-macOS.zip** for Studio, editable templates, and the standalone adventure sample, or **EveNGINE-Source-v1.0.0.zip** for source. The Mac download requires macOS 12 or later; Apple Silicon is officially supported. Intel compatibility is unofficial.
+**Current version: 1.0.0** · [Release notes](docs/RELEASE.md) · [Changelog](CHANGELOG.md)
 
 ![EveNGINE Studio and runtime previews](preview.png)
 
-## Start here
+## Download
 
-In the Studio download, open `EveNGINE-Studio.app` directly.
+Grab the [v1.0.0 release](https://github.com/eve-n37/EveNGINE/releases/tag/v1.0.0):
+
+- **EveNGINE-Studio-v1.0.0-macOS.zip**: Studio, editable templates and a standalone sample game.
+- **EveNGINE-Source-v1.0.0.zip**: the source code.
+
+Studio requires macOS 12 or later. Apple Silicon is officially supported. The download also includes
+Intel binaries, but Intel support is unofficial. The apps aren't notarized, so the first time you
+open one, use Finder's **Open** command or approve it under **System Settings → Privacy &
+Security**.
+
+## Quick start
 
 1. Open `EveNGINE-Studio.app`.
-2. Choose **New** to start a blank map, select another template, or open an example from Templates.
-3. Paint terrain, detail, collision and water. Place objects, a spawn and exits.
-4. Use **Built-in assets** for ready-made artwork or **Asset browser** to import tilesets or sprite sheets; double-click artwork to draw it. Use **Animation** to arrange frames.
-5. Use **Region** to copy map areas and save stamps. Add music and event sounds in **Audio**.
-6. Click **Playtest** to run the current map in the native C++ runtime.
-7. Click **Save** to keep a portable `.eve` project; click **Export app** to produce a standalone Mac application.
+2. Choose **New**. Pick **Blank map** or one of the demo templates.
+3. Paint terrain, place objects, set a spawn point and add exits between maps.
+4. Click **Playtest** to play the current project in the native runtime, even before saving.
+5. **Save** keeps a portable `.eve` project. **Export app** builds a standalone Mac game.
 
-`macOS/Keys-and-Gates.app` is the new interaction demo; its editable source is `editor/examples/Keys-and-Gates.eve`. `macOS/Mosslight-Example.app` is the original standalone sample export. `editor/examples/Mosslight.eve` is its editable source. `docs/STUDIO.md` is the user guide.
+Want to see everything working together? Open `editor/examples/Adventure-Candidate.eve`. It has a
+branching quest, merchants, a patrolling NPC, combat, events and a custom title screen.
 
-If macOS blocks a downloaded development app, use Finder's Open action or the approval shown in Privacy & Security. These builds are development binaries and are not notarized. The owner reports successful Mac use on Apple Silicon. Intel compatibility is unofficial and is not a release requirement.
+## What's included
 
-## Included
+| Area                  | Highlights                                                                                           |
+| --------------------- | ---------------------------------------------------------------------------------------------------- |
+| **Maps**              | Terrain and detail layers, collision and water, autotiles, object groups, region copy/paste, stamps, world overview |
+| **Artwork**           | Pixel editor, animation timeline, PNG and sprite-sheet import, 110 original built-in tiles and sprites |
+| **Story**             | Branching dialogue, quests, items, events and story flags, NPC patrols, shops                          |
+| **Gameplay**          | Doors, keys, switches, chests, melee combat, health and healing, saved progress                       |
+| **Audio**             | Embedded WAV music and sound effects, per-map music, event cues                                        |
+| **Game setup**        | Title and pause menus, player settings, keyboard and gamepad controls, app icon, UI colours            |
+| **Engine / SDK**      | Reusable C++ libraries with CMake packages, an SDL3 desktop backend and a headless backend            |
 
-- Story tools: branching conversations, conditional choices, four quest objective types, one-time rewards, and a saved journal. Try **New → Story demo · the keeper’s errand**.
-- Built-in assets: 110 original pixel-art tiles/sprites, seven packs, eight map stamps and a four-direction explorer preset.
-- Interactions: NPC dialogue, inventory items, pickups, reward chests, keyed doors and linked latch switches, with saved progress.
-- Asset browser: name/ID/group search, type and group filters, artwork inspection, duplicate and reference-aware deletion.
-- PNG sheet importer: tile/sprite grids with cell size, margins, spacing, alpha, palette matching and optional animation assignment.
-- Map regions and stamps: four-layer copy/cut/paste, reusable stamps, rectangular rotation and flips, and cross-map placement.
-- Audio editor: embedded PCM WAV clips, preview, looping map music, seven interaction/event cues and separate music/effects volume.
-- Map editor: terrain and detail layers, collision/water painting, fill/erase, grid and zoom, map creation/resizing, spawn points and exits.
-- Pixel editor: pencil, eraser, fill, eyedropper, rectangular selection, copy/paste, palettes, transparency, flips, square rotation, PNG import/export, seamless tile previews.
-- Animation editor: directional walk, idle and attack clips, timeline, frame timing/reordering, live preview and onion skinning.
-- Inspector: object position, sprite, collider, sign text, behaviour and exit destinations.
-- Project templates, native open/save, object templates, bounded undo/redo, autosave/recovery and validation.
-- Playtest, debug overlays and export with the same C++ scene data used by the game runtime.
-- Engine source, universal Mac SDK libraries, CMake targets and regression tests.
+## Documentation
 
-The editor uses macOS AppKit and its built-in WebKit view. Exported games contain the native engine, SDL3 and their project data. They do not contain the editor or require a browser.
+| Guide                                           | What it covers                                           |
+| ----------------------------------------------- | -------------------------------------------------------- |
+| [Studio guide](docs/STUDIO.md)                  | The editor: maps, artwork, audio, playtesting, exporting |
+| [Story guide](docs/STORY.md)                    | Items, interactions, dialogue, quests, events and flags  |
+| [Adventure guide](docs/ADVENTURE.md)            | NPC movement, shops, combat and healing                  |
+| [Game setup guide](docs/GAME-SETUP.md)          | Menus, controls, app icons and UI colours                |
+| [SDK guide](docs/SDK.md)                        | Using the C++ engine in your own projects                |
+| [Audio API](docs/AUDIO-API.md)                  | The native audio interface                               |
+| [Development guide](docs/DEVELOPMENT.md)        | Building from source, running tests, code formatting     |
+| [Legacy starter format](docs/PROJECTS.md)       | The original `.project` / `.scene` text format           |
+
+Test results for each release are in [docs/VALIDATION-1.0.md](docs/VALIDATION-1.0.md) and the
+`validation-results/` folder.
 
 ## Build from source
 
-On Mac, install Xcode Command Line Tools and CMake, then:
+On a Mac, install the Xcode Command Line Tools and [CMake](https://cmake.org/download/), then run:
 
-```sh
+```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+```
+
+```bash
 cmake --build build --config Release
 ```
 
-Open `build/EveNGINE-Studio.app` (or the generator's Release directory). The bundled SDL3 framework is used. The C++ runtime is also buildable headlessly on other systems:
+This produces `build/EveNGINE-Studio.app` using the bundled SDL3 framework. The engine also builds
+and tests on other systems without a desktop window. See the
+[development guide](docs/DEVELOPMENT.md) for that, and for running the tests.
 
-```sh
-cmake -S . -B build-headless -DLOTA_DESKTOP=OFF
-cmake --build build-headless
-ctest --test-dir build-headless --output-on-failure
-```
+## Repository layout
 
-A Linux desktop build needs SDL3 3.2+ installed. The native GUI in this milestone is Mac-only. The HTML editor workspace can be opened separately for portable drawing and project saving, but native playtesting/export require the Mac app.
-
-## Reuse the SDK
-
-For the published v0.6.0 SDK, point `CMAKE_PREFIX_PATH` to its `macOS` directory and use:
-
-```cmake
-find_package(EveNGINE 0.6 CONFIG REQUIRED)
-add_executable(my-game main.cpp)
-target_link_libraries(my-game PRIVATE EveNGINE::Core EveNGINE::Platform EveNGINE::Studio)
-```
-
-`EveNGINE::Studio` is an optional, data-driven exploration module. Its public API is in `include/evengine/studio.hpp`. Other genres can link only the core/platform targets and define their own rules. The original C++ starter remains available under `starter` and in `macOS/EveNGINE-SDK-Starter.app`.
-
-For a v1.0.0 SDK built from this source, run `cmake --install build --prefix sdk`, point `CMAKE_PREFIX_PATH` to `sdk`, and request `find_package(EveNGINE 1.0 CONFIG REQUIRED)`.
-
-See `VALIDATION.md` for the checks and their limits. Third-party notices are in `third_party`.
+| Path                 | Contents                                                     |
+| -------------------- | ------------------------------------------------------------ |
+| `engine/`            | The C++ engine: core, platform backends, Studio game runtime |
+| `editor/native/`     | The macOS Studio app shell (AppKit + WebKit)                 |
+| `editor/ui/`         | The editor interface (HTML, CSS, JavaScript)                 |
+| `editor/runtime/`    | The game runtime used for playtests and exports              |
+| `editor/assets/`     | Built-in artwork and the script that generates it            |
+| `editor/examples/`   | Example `.eve` projects                                      |
+| `editor/tests/`      | Model, runtime, loader and UI tests                          |
+| `starter/`           | A minimal C++ game that uses the SDK directly                |
+| `tools/`             | Atlas packing and Mac packaging scripts                      |
+| `docs/`              | Guides and validation reports                                |
 
 ## Compatibility
 
-The owner has verified compatibility with older projects. Existing `.lota` projects, their IDs and progress remain compatible. New files use `.eve`; both extensions open in EveNGINE Studio. The original `LotAEngine` CMake package, `LotA::` targets and `<lota/...>` headers remain compatibility entry points. New code can use `EveNGINE`, `EveNGINE::` targets and `<evengine/...>` headers with the `evengine` namespace. Recovery continues to use the existing Application Support location.
+Projects from earlier versions open in 1.0. Older `.lota` project files still load, and new saves
+use `.eve`. The engine's original names are kept for compatibility: the `LotAEngine` CMake package,
+`LotA::` targets, `<lota/...>` headers and the `lota` namespace all still work. New code should use
+`EveNGINE`, `EveNGINE::` targets, `<evengine/...>` headers and the `evengine` namespace.
 
-Original code, artwork, examples and documentation are MIT-licensed; see LICENSE. Third-party components retain their licenses.
+## License
+
+The original code, artwork, examples and documentation are MIT-licensed; see [LICENSE](LICENSE).
+Third-party components keep their own licenses; see [third_party/](third_party/).

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Rewrote the README and user guides. The Studio guide is current for 1.0, and new guides cover game setup (menus, controls, icons, UI colours), the C++ SDK and development (building, testing, formatting).
+- Removed `docs/RELEASE-CANDIDATE.md`, which duplicated the release notes, and merged `docs/APPEARANCE.md` into `docs/GAME-SETUP.md`.
+- Added clang-format, Prettier, Black and EditorConfig settings and reformatted the source. No behaviour changes.
+
 ## 1.0.0 — stable release
 
 - Promoted the owner-accepted RC4 build to 1.0.0.
