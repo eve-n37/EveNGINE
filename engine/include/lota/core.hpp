@@ -111,8 +111,7 @@ public:
   void image(Rect source, Rect destination, bool flip = false, Color tint = {});
   void pushClip(Rect bounds);
   void popClip();
-  void text(const std::string &value, int x, int y, Color color = {},
-            int scale = 1);
+  void text(const std::string &value, int x, int y, Color color = {}, int scale = 1);
 
 private:
   std::vector<Rect> clips;
@@ -128,24 +127,20 @@ public:
   void render(const Canvas &canvas, const Atlas &atlas);
   void writePPM(const std::string &path) const;
 };
-static_assert(sizeof(SoftwareRenderer) <= 64,
-              "Renderer storage must remain off-stack");
+static_assert(sizeof(SoftwareRenderer) <= 64, "Renderer storage must remain off-stack");
 Rect body(Vec2 feet);
 bool blocked(const Project &project, const Scene &scene, Rect rectangle);
-Vec2 moveBody(const Project &project, const Scene &scene, Vec2 feet,
-              Vec2 delta);
+Vec2 moveBody(const Project &project, const Scene &scene, Vec2 feet, Vec2 delta);
 Vec2 cameraFor(const Scene &scene, Vec2 feet);
-void drawScene(Canvas &canvas, const Project &project, const Scene &scene,
-               Vec2 camera, Vec2 player, Rect playerSprite,
-               const std::vector<std::string> &removed, bool debug);
+void drawScene(Canvas &canvas, const Project &project, const Scene &scene, Vec2 camera, Vec2 player,
+               Rect playerSprite, const std::vector<std::string> &removed, bool debug);
 struct SavedState {
   std::string project, scene;
   Vec2 player;
   int score = 0;
   std::vector<std::string> removed;
 };
-bool saveState(const std::string &path, const SavedState &state,
+bool saveState(const std::string &path, const SavedState &state, std::string &error);
+bool loadState(const std::string &path, const Project &project, SavedState &state,
                std::string &error);
-bool loadState(const std::string &path, const Project &project,
-               SavedState &state, std::string &error);
 } // namespace lota

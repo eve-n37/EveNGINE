@@ -52,8 +52,7 @@ Scene loadScene(const std::string &path, const std::string &id) {
       row >> std::quoted(scene.title);
     else if (key == "size") {
       row >> scene.width >> scene.height;
-      require(scene.width > 0 && scene.height > 0 && scene.width <= 256 &&
-                  scene.height <= 256,
+      require(scene.width > 0 && scene.height > 0 && scene.width <= 256 && scene.height <= 256,
               "Scene size outside 1..256");
     } else if (key == "spawn")
       row >> scene.spawn.x >> scene.spawn.y;
@@ -61,39 +60,36 @@ Scene loadScene(const std::string &path, const std::string &id) {
       require(scene.width > 0 && !grid, "Size must precede one tile grid");
       grid = true;
       for (int y = 0; y < scene.height; ++y) {
-        require(bool(std::getline(input, line)),
-                "Truncated tile grid: " + path);
+        require(bool(std::getline(input, line)), "Truncated tile grid: " + path);
         ++number;
         if (!line.empty() && line.back() == '\r')
           line.pop_back();
-        require(int(line.size()) == scene.width,
-                "Tile row width mismatch: " + path);
+        require(int(line.size()) == scene.width, "Tile row width mismatch: " + path);
         scene.cells.insert(scene.cells.end(), line.begin(), line.end());
       }
     } else if (key == "object") {
       Object o;
-      row >> o.kind >> o.sprite >> o.id >> o.position.x >> o.position.y >>
-          std::quoted(o.text);
+      row >> o.kind >> o.sprite >> o.id >> o.position.x >> o.position.y >> std::quoted(o.text);
       scene.objects.push_back(o);
     } else if (key == "portal") {
       Portal p;
-      row >> p.bounds.x >> p.bounds.y >> p.bounds.w >> p.bounds.h >> p.target >>
-          p.arrival.x >> p.arrival.y;
+      row >> p.bounds.x >> p.bounds.y >> p.bounds.w >> p.bounds.h >> p.target >> p.arrival.x >>
+          p.arrival.y;
       require(p.bounds.w > 0 && p.bounds.h > 0, "Invalid portal bounds");
       scene.portals.push_back(p);
     } else
       throw std::runtime_error("Unknown scene field: " + key);
-    require(!row.fail(),
-            path + ":" + std::to_string(number) + " invalid " + key);
+    require(!row.fail(), path + ":" + std::to_string(number) + " invalid " + key);
   }
   require(grid && !scene.title.empty(), "Incomplete scene: " + path);
   return scene;
 }
-bool validPoint(Vec2 v) { return std::isfinite(v.x) && std::isfinite(v.y); }
+bool validPoint(Vec2 v) {
+  return std::isfinite(v.x) && std::isfinite(v.y);
+}
 } // namespace
 bool overlaps(Rect a, Rect b) {
-  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h &&
-         a.y + a.h > b.y;
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 Vec2 normalized(Vec2 v) {
   float length = std::sqrt(v.x * v.x + v.y * v.y);
@@ -148,12 +144,10 @@ Atlas Atlas::load(const std::string &path) {
     atlas.height = std::stoi(token(input));
     require(token(input) == "255", "Atlas must be 8 bit");
   }
-  require(atlas.width > 0 && atlas.height > 0 && atlas.width <= 4096 &&
-              atlas.height <= 4096,
+  require(atlas.width > 0 && atlas.height > 0 && atlas.width <= 4096 && atlas.height <= 4096,
           "Atlas too large");
   char separator = char(input.get());
-  require(separator == '\n' || separator == '\r' || separator == ' ',
-          "Missing atlas separator");
+  require(separator == '\n' || separator == '\r' || separator == ' ', "Missing atlas separator");
   if (separator == '\r' && input.peek() == '\n')
     input.get();
   atlas.pixels.resize(size_t(atlas.width) * atlas.height);
@@ -169,9 +163,7 @@ Atlas Atlas::load(const std::string &path) {
 }
 
 char Scene::at(int x, int y) const {
-  return x < 0 || y < 0 || x >= width || y >= height
-             ? '\0'
-             : cells[size_t(y) * width + x];
+  return x < 0 || y < 0 || x >= width || y >= height ? '\0' : cells[size_t(y) * width + x];
 }
 Project Project::load(const std::string &path) {
   std::ifstream input(path);
@@ -208,8 +200,8 @@ Project Project::load(const std::string &path) {
     } else if (key == "sprite") {
       std::string id;
       Sprite s;
-      row >> id >> s.source.x >> s.source.y >> s.source.w >> s.source.h >>
-          s.collider.x >> s.collider.y >> s.collider.w >> s.collider.h;
+      row >> id >> s.source.x >> s.source.y >> s.source.w >> s.source.h >> s.collider.x >>
+          s.collider.y >> s.collider.w >> s.collider.h;
       require(p.sprites.emplace(id, s).second, "Duplicate sprite");
     } else if (key == "collider") {
       std::string id;
@@ -228,18 +220,16 @@ Project Project::load(const std::string &path) {
   }
   require(!p.id.empty() && p.id.size() < 48 &&
               p.id.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO"
-                                     "PQRSTUVWXYZ0123456789_- ") ==
-                  std::string::npos,
+                                     "PQRSTUVWXYZ0123456789_- ") == std::string::npos,
           "Invalid project id");
   require(!p.title.empty() && !p.atlasPath.empty() && files.count(p.start),
           "Project needs title, atlas and start scene");
   for (auto &file : files)
-    p.scenes.emplace(file.first,
-                     loadScene(folder(path) + file.second, file.first));
+    p.scenes.emplace(file.first, loadScene(folder(path) + file.second, file.first));
   auto atlas = Atlas::load(p.atlasPath);
   auto validSprite = [&](Rect r) {
-    return validPoint({r.x, r.y}) && r.x >= 0 && r.y >= 0 && r.w > 0 &&
-           r.h > 0 && r.x + r.w <= atlas.width && r.y + r.h <= atlas.height;
+    return validPoint({r.x, r.y}) && r.x >= 0 && r.y >= 0 && r.w > 0 && r.h > 0 &&
+           r.x + r.w <= atlas.width && r.y + r.h <= atlas.height;
   };
   for (const auto &t : p.tiles)
     require(validSprite(t.second.source), "Tile source outside atlas");
@@ -251,17 +241,13 @@ Project Project::load(const std::string &path) {
     for (char c : s.cells)
       require(p.tiles.count(c), "Undefined tile in " + s.id);
     for (const auto &o : s.objects) {
-      require(p.sprites.count(o.sprite) && validPoint(o.position),
-              "Invalid object in " + s.id);
-      require(!o.id.empty() && o.id.size() <= 128 &&
-                  objectIds.insert(o.id).second,
+      require(p.sprites.count(o.sprite) && validPoint(o.position), "Invalid object in " + s.id);
+      require(!o.id.empty() && o.id.size() <= 128 && objectIds.insert(o.id).second,
               "Object IDs must be unique across the project");
     }
-    require(validPoint(s.spawn) && !blocked(p, s, body(s.spawn)),
-            "Blocked spawn in " + s.id);
+    require(validPoint(s.spawn) && !blocked(p, s, body(s.spawn)), "Blocked spawn in " + s.id);
     for (const auto &portal : s.portals) {
-      require(p.scenes.count(portal.target),
-              "Missing portal target: " + portal.target);
+      require(p.scenes.count(portal.target), "Missing portal target: " + portal.target);
       require(validPoint(portal.arrival) &&
                   !blocked(p, p.scenes.at(portal.target), body(portal.arrival)),
               "Blocked portal arrival");
@@ -274,8 +260,7 @@ void Canvas::append(Draw d) {
     d.clipped = true;
     d.clip = clips.back();
   }
-  if (d.destination.w > 0 && d.destination.h > 0 &&
-      overlaps(d.destination, {0, 0, Width, Height}))
+  if (d.destination.w > 0 && d.destination.h > 0 && overlaps(d.destination, {0, 0, Width, Height}))
     draws.push_back(d);
 }
 void Canvas::pushClip(Rect r) {
@@ -297,16 +282,16 @@ void Canvas::clear(Color c) {
   clips.clear();
   rect({0, 0, Width, Height}, c);
 }
-void Canvas::rect(Rect r, Color c) { append({false, r, {}, c, false}); }
+void Canvas::rect(Rect r, Color c) {
+  append({false, r, {}, c, false});
+}
 void Canvas::image(Rect source, Rect destination, bool flip, Color tint) {
   append({true, destination, source, tint, flip});
 }
 void Canvas::sprite(Rect source, Vec2 pos, bool flip, Color tint) {
-  image(source, {std::floor(pos.x), std::floor(pos.y), source.w, source.h},
-        flip, tint);
+  image(source, {std::floor(pos.x), std::floor(pos.y), source.w, source.h}, flip, tint);
 }
-void Canvas::text(const std::string &value, int x, int y, Color color,
-                  int scale) {
+void Canvas::text(const std::string &value, int x, int y, Color color, int scale) {
   int cursor = x;
   for (unsigned char c : value) {
     if (c == '\n') {
@@ -328,10 +313,8 @@ void SoftwareRenderer::render(const Canvas &canvas, const Atlas &atlas) {
   for (const auto &d : canvas.draws) {
     int left = std::max(0, int(std::floor(d.destination.x))),
         top = std::max(0, int(std::floor(d.destination.y)));
-    int right =
-            std::min(Width, int(std::ceil(d.destination.x + d.destination.w))),
-        bottom =
-            std::min(Height, int(std::ceil(d.destination.y + d.destination.h)));
+    int right = std::min(Width, int(std::ceil(d.destination.x + d.destination.w))),
+        bottom = std::min(Height, int(std::ceil(d.destination.y + d.destination.h)));
     if (d.clipped) {
       left = std::max(left, int(std::ceil(d.clip.x)));
       top = std::max(top, int(std::ceil(d.clip.y)));
@@ -346,18 +329,16 @@ void SoftwareRenderer::render(const Canvas &canvas, const Atlas &atlas) {
           if (d.flip)
             sx = int(d.source.w) - 1 - sx;
           sx += int(d.source.x);
-          int sy = int(d.source.y +
-                       (y - d.destination.y) * d.source.h / d.destination.h);
+          int sy = int(d.source.y + (y - d.destination.y) * d.source.h / d.destination.h);
           if (sx < 0 || sy < 0 || sx >= atlas.width || sy >= atlas.height)
             continue;
           auto t = atlas.pixels[size_t(sy) * atlas.width + sx];
-          c = {uint8_t(t.r * c.r / 255), uint8_t(t.g * c.g / 255),
-               uint8_t(t.b * c.b / 255), uint8_t(t.a * c.a / 255)};
+          c = {uint8_t(t.r * c.r / 255), uint8_t(t.g * c.g / 255), uint8_t(t.b * c.b / 255),
+               uint8_t(t.a * c.a / 255)};
         }
         auto &dst = pixels[size_t(y) * Width + x];
         unsigned a = c.a, b = 255 - a;
-        dst = {uint8_t((c.r * a + dst.r * b) / 255),
-               uint8_t((c.g * a + dst.g * b) / 255),
+        dst = {uint8_t((c.r * a + dst.r * b) / 255), uint8_t((c.g * a + dst.g * b) / 255),
                uint8_t((c.b * a + dst.b * b) / 255), 255};
       }
   }
@@ -371,14 +352,14 @@ void SoftwareRenderer::writePPM(const std::string &path) const {
     output.write(b, 3);
   }
 }
-Rect body(Vec2 feet) { return {feet.x - 5, feet.y - 7, 10, 7}; }
+Rect body(Vec2 feet) {
+  return {feet.x - 5, feet.y - 7, 10, 7};
+}
 bool blocked(const Project &p, const Scene &s, Rect r) {
-  if (!validPoint({r.x, r.y}) || !validPoint({r.w, r.h}) || r.w <= 0 ||
-      r.h <= 0 || r.x < 0 || r.y < 0 || r.x + r.w > s.width * TileSize ||
-      r.y + r.h > s.height * TileSize)
+  if (!validPoint({r.x, r.y}) || !validPoint({r.w, r.h}) || r.w <= 0 || r.h <= 0 || r.x < 0 ||
+      r.y < 0 || r.x + r.w > s.width * TileSize || r.y + r.h > s.height * TileSize)
     return true;
-  int x0 = int(std::floor(r.x / TileSize)),
-      y0 = int(std::floor(r.y / TileSize));
+  int x0 = int(std::floor(r.x / TileSize)), y0 = int(std::floor(r.y / TileSize));
   int x1 = int(std::floor((r.x + r.w - 0.001f) / TileSize)),
       y1 = int(std::floor((r.y + r.h - 0.001f) / TileSize));
   for (int y = y0; y <= y1; ++y)
@@ -390,12 +371,10 @@ bool blocked(const Project &p, const Scene &s, Rect r) {
   for (const auto &o : s.objects) {
     const auto &sprite = p.sprites.at(o.sprite);
     auto c = sprite.collider;
-    if (c.w > 0 && c.h > 0 &&
-        overlaps(r, {o.position.x + c.x, o.position.y + c.y, c.w, c.h}))
+    if (c.w > 0 && c.h > 0 && overlaps(r, {o.position.x + c.x, o.position.y + c.y, c.w, c.h}))
       return true;
     for (auto extra : sprite.extraColliders)
-      if (overlaps(r, {o.position.x + extra.x, o.position.y + extra.y, extra.w,
-                       extra.h}))
+      if (overlaps(r, {o.position.x + extra.x, o.position.y + extra.y, extra.w, extra.h}))
         return true;
   }
   return false;
@@ -406,8 +385,7 @@ Vec2 moveBody(const Project &p, const Scene &s, Vec2 pos, Vec2 delta) {
     return pos;
   // Substeps prevent tunnelling, including callers that supply unusually large
   // deltas.
-  int steps = std::max(
-      1, int(std::ceil(std::max(std::abs(delta.x), std::abs(delta.y)) / 3.0f)));
+  int steps = std::max(1, int(std::ceil(std::max(std::abs(delta.x), std::abs(delta.y)) / 3.0f)));
   steps = std::min(steps, 4096);
   delta.x /= steps;
   delta.y /= steps;
@@ -422,36 +400,29 @@ Vec2 moveBody(const Project &p, const Scene &s, Vec2 pos, Vec2 delta) {
   return pos;
 }
 Vec2 cameraFor(const Scene &s, Vec2 p) {
-  return {
-      std::floor(std::clamp(p.x - Width / 2.0f, 0.0f,
-                            std::max(0.0f, float(s.width * TileSize - Width)))),
-      std::floor(
-          std::clamp(p.y - Height / 2.0f, 0.0f,
-                     std::max(0.0f, float(s.height * TileSize - Height))))};
+  return {std::floor(std::clamp(p.x - Width / 2.0f, 0.0f,
+                                std::max(0.0f, float(s.width * TileSize - Width)))),
+          std::floor(std::clamp(p.y - Height / 2.0f, 0.0f,
+                                std::max(0.0f, float(s.height * TileSize - Height))))};
 }
-void drawScene(Canvas &c, const Project &p, const Scene &s, Vec2 camera,
-               Vec2 player, Rect playerSprite,
-               const std::vector<std::string> &removed, bool debug) {
+void drawScene(Canvas &c, const Project &p, const Scene &s, Vec2 camera, Vec2 player,
+               Rect playerSprite, const std::vector<std::string> &removed, bool debug) {
   c.clear({25, 45, 39, 255});
   int left = int(camera.x) / TileSize, top = int(camera.y) / TileSize;
   for (int y = top; y < std::min(s.height, top + Height / TileSize + 2); ++y)
     for (int x = left; x < std::min(s.width, left + Width / TileSize + 2); ++x)
-      c.sprite(p.tiles.at(s.at(x, y)).source, {float(x * TileSize) - camera.x,
-                                               float(y * TileSize) - camera.y});
+      c.sprite(p.tiles.at(s.at(x, y)).source,
+               {float(x * TileSize) - camera.x, float(y * TileSize) - camera.y});
   std::vector<const Object *> visible;
   for (const auto &o : s.objects)
     if (std::find(removed.begin(), removed.end(), o.id) == removed.end())
       visible.push_back(&o);
-  auto bottom = [&](const Object *o) {
-    return o->position.y + p.sprites.at(o->sprite).source.h;
-  };
-  std::stable_sort(
-      visible.begin(), visible.end(),
-      [&](const Object *a, const Object *b) { return bottom(a) < bottom(b); });
+  auto bottom = [&](const Object *o) { return o->position.y + p.sprites.at(o->sprite).source.h; };
+  std::stable_sort(visible.begin(), visible.end(),
+                   [&](const Object *a, const Object *b) { return bottom(a) < bottom(b); });
   bool drawn = false;
   auto drawPlayer = [&] {
-    c.sprite(p.sprites.at("shadow").source,
-             {player.x - camera.x - 8, player.y - camera.y - 3});
+    c.sprite(p.sprites.at("shadow").source, {player.x - camera.x - 8, player.y - camera.y - 3});
     c.sprite(playerSprite, {player.x - camera.x - 8, player.y - camera.y - 23});
   };
   for (auto o : visible) {
@@ -459,19 +430,16 @@ void drawScene(Canvas &c, const Project &p, const Scene &s, Vec2 camera,
       drawPlayer();
       drawn = true;
     }
-    c.sprite(p.sprites.at(o->sprite).source,
-             {o->position.x - camera.x, o->position.y - camera.y});
+    c.sprite(p.sprites.at(o->sprite).source, {o->position.x - camera.x, o->position.y - camera.y});
     if (debug) {
       auto b = p.sprites.at(o->sprite).collider;
       if (b.w > 0)
-        c.rect({o->position.x + b.x - camera.x, o->position.y + b.y - camera.y,
-                b.w, b.h},
+        c.rect({o->position.x + b.x - camera.x, o->position.y + b.y - camera.y, b.w, b.h},
                {255, 70, 90, 100});
     }
     if (debug)
       for (auto b : p.sprites.at(o->sprite).extraColliders)
-        c.rect({o->position.x + b.x - camera.x, o->position.y + b.y - camera.y,
-                b.w, b.h},
+        c.rect({o->position.x + b.x - camera.x, o->position.y + b.y - camera.y, b.w, b.h},
                {255, 70, 90, 100});
   }
   if (!drawn)
@@ -481,8 +449,7 @@ void drawScene(Canvas &c, const Project &p, const Scene &s, Vec2 camera,
     c.rect({b.x - camera.x, b.y - camera.y, b.w, b.h}, {70, 255, 220, 130});
   }
 }
-bool saveState(const std::string &path, const SavedState &s,
-               std::string &error) {
+bool saveState(const std::string &path, const SavedState &s, std::string &error) {
   std::string temporary = path + ".tmp";
   std::ofstream out(temporary, std::ios::binary);
   if (!out) {
@@ -491,8 +458,7 @@ bool saveState(const std::string &path, const SavedState &s,
   }
   out << "LOTA_SAVE 1\n"
       << std::quoted(s.project) << " " << std::quoted(s.scene) << "\n"
-      << std::setprecision(9) << s.player.x << " " << s.player.y << " "
-      << s.score << "\n"
+      << std::setprecision(9) << s.player.x << " " << s.player.y << " " << s.score << "\n"
       << s.removed.size() << "\n";
   for (const auto &id : s.removed)
     out << std::quoted(id) << "\n";
@@ -505,9 +471,8 @@ bool saveState(const std::string &path, const SavedState &s,
     return false;
   }
 #ifdef _WIN32
-  bool committed =
-      MoveFileExA(temporary.c_str(), path.c_str(),
-                  MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != 0;
+  bool committed = MoveFileExA(temporary.c_str(), path.c_str(),
+                               MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != 0;
 #else
   bool committed = std::rename(temporary.c_str(), path.c_str()) == 0;
 #endif
@@ -519,18 +484,16 @@ bool saveState(const std::string &path, const SavedState &s,
   error.clear();
   return true;
 }
-bool loadState(const std::string &path, const Project &p, SavedState &state,
-               std::string &error) {
+bool loadState(const std::string &path, const Project &p, SavedState &state, std::string &error) {
   std::ifstream input(path, std::ios::binary);
   SavedState next;
   std::string magic;
   int version = 0, count = 0;
-  input >> magic >> version >> std::quoted(next.project) >>
-      std::quoted(next.scene) >> next.player.x >> next.player.y >> next.score >>
-      count;
+  input >> magic >> version >> std::quoted(next.project) >> std::quoted(next.scene) >>
+      next.player.x >> next.player.y >> next.score >> count;
   if (!input || magic != "LOTA_SAVE" || version != 1 || next.project != p.id ||
-      !p.scenes.count(next.scene) || count < 0 || count > 4096 ||
-      next.score < 0 || !validPoint(next.player)) {
+      !p.scenes.count(next.scene) || count < 0 || count > 4096 || next.score < 0 ||
+      !validPoint(next.player)) {
     error = "Save is missing or incompatible";
     return false;
   }

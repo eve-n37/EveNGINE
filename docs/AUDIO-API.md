@@ -1,21 +1,56 @@
-# Native audio API
+# Audio API
 
-Include `<evengine/audio.hpp>` and `<evengine/platform.hpp>`. Link `EveNGINE::Core` and `EveNGINE::Platform`; `EveNGINE::Studio` is optional.
+This page covers playing audio from C++. For adding audio in Studio, see the
+[Studio guide](STUDIO.md#audio).
 
-`AudioClip` holds the sample rate, channel count and interleaved signed 16-bit PCM samples. `decodeWavBytes` parses a byte vector; `decodeWav` accepts its base64 form. Both apply Studio's PCM WAV limits. Playback uses SDL3 audio streams with native resampling.
+Include `<evengine/audio.hpp>` and `<evengine/platform.hpp>`, and link `EveNGINE::Core` and
+`EveNGINE::Platform`.
+
+## Loading clips
+
+An `AudioClip` holds a sample rate, a channel count and interleaved signed 16-bit PCM samples.
+
+- `decodeWavBytes(bytes)` decodes WAV data from a `std::vector<uint8_t>`.
+- `decodeWav(base64)` decodes base64-encoded WAV data, as stored in `.eve` projects.
+
+Both apply the same limits as Studio: 16-bit PCM, mono or stereo, 8–48 kHz, up to 60 seconds and
+4 MiB.
+
+## Playing audio
 
 ```cpp
 const auto clip = evengine::decodeWavBytes(wavBytes);
-platform->setMusic(&clip, 0.5f);  // loop, then keep this clip alive
-platform->playSound(clip, 0.7f); // queue one effect
-// Call platform->idle() in the normal render loop to refill music.
-platform->setMusic(nullptr, 0); // stop before releasing music storage
+
+platform->setMusic(&clip, 0.5f);  // start looping music
+platform->playSound(clip, 0.7f);  // play a one-off sound effect
+
+// In your main loop, call platform->idle() every frame to keep music playing.
+
+platform->setMusic(nullptr, 0);   // stop music
 ```
 
-`setMusic` retains a pointer: the clip and its samples must remain alive and unchanged until music is stopped or replaced. Passing the same pointer adjusts the volume without restarting it. `playSound` queues its samples during the call, so the caller can release that effect's storage afterwards. Gains are clamped to 0–1. Up to eight effects play concurrently; the oldest is replaced on overflow. Music is queued in short chunks rather than copying a complete track on each loop.
+Things to know:
 
-`audioAvailable()` indicates whether the desktop playback stream opened. Headless/custom platforms keep silent default methods. The original generated `tone()` method remains available. The bundled SDL3 3.2 backend implements playback; no mixer addon or audio codec package is required.
+- **`setMusic` keeps a pointer** to the clip. Keep the clip alive and unchanged until you stop or
+  replace the music. Calling it again with the same clip just changes the volume.
+- **`playSound` copies the samples** right away, so you can free the clip afterwards.
+- Volumes are clamped to 0–1.
+- Up to eight sound effects play at once. A ninth replaces the oldest.
+- `audioAvailable()` tells you whether an audio device was opened. The headless backend is always
+  silent.
+- The older `tone(frequency, duration)` method still works for simple generated beeps.
 
-`StudioGame::music()` returns the current map's retained clip. `soundEvents` contains audio asset IDs queued by simulation; play and clear them after fixed-step updates. The bundled runtime is an example of this integration. `musicVolume` and `sfxVolume` hold authored gains.
+The desktop backend uses [SDL3 audio streams](https://wiki.libsdl.org/SDL3/SDL_OpenAudioDeviceStream),
+which handle resampling. No extra mixer or codec libraries are needed.
 
-Official SDL stream reference: https://wiki.libsdl.org/SDL3/SDL_OpenAudioDeviceStream
+## Audio in Studio projects
+
+`StudioGame` loads a project's audio for you:
+
+- `music()` returns the current map's music clip (or `nullptr`).
+- `soundEvents` lists the audio asset IDs queued during the last update. Play each one, then clear
+  the list.
+- `audioAssets` maps asset IDs to clips.
+- `musicVolume` and `sfxVolume` hold the project's volume levels.
+
+`editor/runtime/main.cpp` shows the complete setup.

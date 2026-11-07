@@ -1,19 +1,23 @@
-# Legacy C++ starter workflow
+# Legacy starter project format
 
-For the new GUI, start with [STUDIO.md](STUDIO.md). This page covers the original `.project` / `.scene` starter format. Installed SDK consumers now request `LotAEngine 0.4`.
+> This is the original text-based project format. It's used by the C++ starter in `starter/`. For
+> new games, use [EveNGINE Studio](STUDIO.md) and `.eve` projects instead.
 
-# Creating a project
+A starter project has a `.project` file that lists tiles, sprites and scenes, and a `.scene` file
+for each map. Maps and artwork can change without recompiling. Gameplay is up to your C++ code; the
+engine core doesn't interpret the `mode` field.
 
-Copy the SDK starter (or a directory under `samples`), assign a unique `id` in `game.project`,
-and launch with `--project path/to/game.project`. Project IDs separate save files.
-Maps and art do not need recompilation. New behaviors belong to your C++ game module;
-the `mode` field is interpreted by the sample module, not by the core.
+`starter/content/` is a complete example.
 
-## Project format
+## General rules
 
-This first version uses a small UTF-8 line-oriented format. Comment lines start
-with `#`. Quoted text uses C++ `std::quoted` escaping (`\"`, `\\`). Paths are
-relative to the project file, and should have no spaces in this initial format.
+- Files are UTF-8 and line-based.
+- Lines starting with `#` are comments.
+- Quoted text uses C++ `std::quoted` escaping (`\"` and `\\`).
+- Paths are relative to the project file and can't contain spaces.
+- Coordinates are in world pixels.
+
+## The `.project` file
 
 ```text
 id my-game
@@ -29,14 +33,18 @@ collider tree 8 34 16 4
 scene clearing scenes/clearing.scene
 ```
 
-- `tile CHAR ATLAS_X ATLAS_Y SOLID`: 16x16 atlas region; solid is 0 or 1.
-- `sprite ID X Y WIDTH HEIGHT BODY_X BODY_Y BODY_W BODY_H`: atlas region plus
-  one collision rectangle relative to the sprite's top-left. Zero body width
-  and height makes it non-solid. `collider ID X Y W H` adds another rectangle;
-  the L-shaped inn uses two rectangles rather than blocking its open notch.
-- `scene ID FILE`: an independent map referenced by spawn, saves and portals.
+| Line                                         | Meaning                                                                                    |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `id NAME`                                    | A unique ID. Save files are kept separately per ID.                                        |
+| `title "TEXT"`                               | The window title.                                                                          |
+| `atlas FILE`                                 | The image atlas. See [atlases](SDK.md#atlases).                                            |
+| `start SCENE`                                | The scene the game starts in.                                                              |
+| `tile CHAR X Y SOLID`                        | A 16 × 16 tile at atlas position X, Y. SOLID is 0 or 1.                                    |
+| `sprite ID X Y W H BX BY BW BH`              | A sprite's atlas rectangle, plus a collision box relative to its top left. A 0 × 0 box means no collision. |
+| `collider ID X Y W H`                        | Adds another collision box to a sprite, for shapes like an L-shaped building.             |
+| `scene ID FILE`                              | A map.                                                                                     |
 
-## Scene format
+## The `.scene` file
 
 ```text
 title "A Clearing"
@@ -52,34 +60,19 @@ object sign sign sign-1 48 20 "A readable sign."
 portal 0 20 10 20 other-scene 100 100
 ```
 
-The example object and portal lines require the corresponding sprites and target
-scene to be defined in the project. Provide exactly `height` tile rows, each
-containing exactly `width` characters. Maximum scene dimensions are 256x256 tiles.
-Coordinates are world pixels. Player position refers to feet; sample sprites are
-drawn 8 pixels left and 23 pixels above the feet.
+| Line                                     | Meaning                                                                                 |
+| ---------------------------------------- | --------------------------------------------------------------------------------------- |
+| `size W H`                               | Map size in tiles, up to 256 × 256.                                                     |
+| `spawn X Y`                              | Where the player's feet start.                                                          |
+| `tiles`                                  | Followed by exactly H rows of exactly W tile characters.                               |
+| `object KIND SPRITE ID X Y "TEXT"`       | A placed object. IDs must be unique across the project for saving to work.              |
+| `portal X Y W H SCENE X Y`               | A trigger rectangle that moves the player to another scene and position.              |
 
-`object KIND SPRITE UNIQUE_ID X Y "TEXT"` is generic object data. The sample
-module interprets `sign` and `collect`; it draws `prop` as a normal object.
-IDs must be unique across a project if their state will be saved. `portal`
-contains a trigger rectangle, destination scene and destination feet position.
-The loader rejects unknown tiles, missing sprites/targets and blocked spawn or
-arrival positions. Author arrivals clear of the destination trigger.
+The loader rejects unknown tiles, missing sprites or scenes, and blocked spawn or arrival points.
+Put arrival points outside the destination's own portals.
 
-## Atlas layout in v0.3
+## Using it in code
 
-The engine loads P6 binary PPM and P7 RGBA PAM without an image-decoder dependency. In PPM, magenta `255,0,255` is transparent; other colors are opaque. PAM uses straight RGBA and supports partial alpha. Desktop/reference atlas dimensions are limited to 4096 on each side. The 3DS backend remains paused. `Canvas::text` expects a six-by-eight-pixel ASCII font strip at atlas row 128; the SDK provides it.
-
-The sample controller's four facing rows begin at y=32,56,80,104, with four
-16x24 frames per row. The core text helper expects printable ASCII glyphs in a
-6x8 grid starting at x=0,y=128 with 32 glyphs per row. A configurable font/animation
-resource format is a later milestone. Artwork is generated by the checked-in
-authoring script; `atlas.png` is a convenient editable preview, and `atlas.ppm`
-is the runtime asset.
-
-## Add different gameplay
-
-Link `lota_core` in a new CMake target. Load a `Project`, build a `Canvas`, then
-pass the canvas to your platform renderer. Reuse `blocked`, `moveBody`,
-`cameraFor`, `Atlas`, `Canvas` and `SavedState` as needed. `drawScene` is a
-top-down convenience helper; platformers or puzzle games can build their own
-draw lists and controllers without importing `lota_sample`.
+Link `EveNGINE::Core`, load the project with `evengine::Project::load`, and use helpers such as
+`moveBody`, `blocked`, `cameraFor` and `drawScene`. `drawScene` is a convenience for top-down games;
+other genres can draw their own way. See `starter/main.cpp` and the [SDK guide](SDK.md).

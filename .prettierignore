@@ -1,0 +1,6 @@
+# Generated data bundles (see editor/assets/build_assets.py)
+editor/ui/builtins-data.js
+editor/ui/sample-audio.js
+engine/vendor/
+validation-results/
+*.md
