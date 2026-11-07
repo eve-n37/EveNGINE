@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
 project(EveNGINESDK VERSION 1.0.0 LANGUAGES CXX)
-set(LOTA_TESTS OFF CACHE BOOL "" FORCE)
 add_subdirectory(engine)
 add_executable(my-game starter/main.cpp)
 target_link_libraries(my-game PRIVATE LotA::Core LotA::Platform)
