@@ -10,4 +10,8 @@ if(@LOTA_DESKTOP@)
   endif()
 endif()
 include("${CMAKE_CURRENT_LIST_DIR}/LotAEngineTargets.cmake")
+if(@LOTA_DESKTOP@ AND "@EVE_SDL_FETCHED@" AND TARGET SDL3::SDL3)
+  # SDKs built with the downloaded SDL3 install it alongside; link it from here.
+  set_property(TARGET LotA::Platform APPEND PROPERTY INTERFACE_LINK_LIBRARIES SDL3::SDL3)
+endif()
 check_required_components(LotAEngine)
