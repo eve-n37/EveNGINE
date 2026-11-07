@@ -63,6 +63,9 @@ jobs:
   macos:
     name: macOS Studio app and tests
     # Apple Silicon runner; the universal build also produces the unofficial Intel slice.
+    # macOS minutes cost about 10x Linux on private repositories, so this job runs only on pushes
+    # to main and manual runs (Actions → CI → Run workflow), not on every pull request update.
+    if: github.event_name != 'pull_request'
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
