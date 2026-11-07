@@ -14,7 +14,6 @@ How it works:
 - WebKitGTK looks for its helper processes at a path fixed when it was compiled. The copy of
   libwebkit2gtk has that path changed from /usr/lib/... to the relative ././/lib/..., and AppRun
   starts Studio inside usr, so the bundled helpers are found.
-- WebKit's bubblewrap sandbox stays on. Studio adds the mounted image to it, read-only.
 
 Like the tar.gz, the AppImage needs at least the glibc of the machine it was built on.
 """

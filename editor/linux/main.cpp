@@ -477,11 +477,6 @@ int main(int argc, char **argv) {
   fs::create_directories(data);
   studio.recovery = data / "recovery.lota";
 
-  // Inside the AppImage, WebKit's helper processes and libraries live in the mounted image.
-  // Let them through the sandbox (read-only) instead of turning the sandbox off.
-  if (auto appdir = std::getenv("APPDIR"); appdir && std::getenv("APPIMAGE"))
-    webkit_web_context_add_path_to_sandbox(webkit_web_context_get_default(), appdir, TRUE);
-
   WebKitUserContentManager *content = webkit_user_content_manager_new();
   g_signal_connect(content, "script-message-received::studio", G_CALLBACK(received), nullptr);
   webkit_user_content_manager_register_script_message_handler(content, "studio");

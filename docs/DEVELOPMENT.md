@@ -63,7 +63,7 @@ python3 tools/package_appimage.py --build build-linux --output deliverables --ap
 
 Leave out `--appimagetool` to only assemble `deliverables/AppDir`, which you can test by running
 its `AppRun`. CI uninstalls the system WebKitGTK and runs the Linux Studio test against the
-AppImage, including a check that WebKit's sandbox is still on.
+AppImage.
 
 ### Without a desktop window (any platform)
 

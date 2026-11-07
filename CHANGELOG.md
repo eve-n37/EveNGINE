@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- **Linux AppImage**: `EveNGINE-Studio-v<version>-linux-x86_64.AppImage` is a single file that brings its own WebKitGTK and GTK 3, for SteamOS and other systems where WebKitGTK can't be installed. WebKit's sandbox stays on. `tools/package_appimage.py` builds it, and CI tests it with the system WebKitGTK uninstalled. Releases now include it.
+- **Linux AppImage**: `EveNGINE-Studio-v<version>-linux-x86_64.AppImage` is a single file that brings its own WebKitGTK and GTK 3, for SteamOS and other systems where WebKitGTK can't be installed. `tools/package_appimage.py` builds it, and CI tests it with the system WebKitGTK uninstalled. Releases now include it.
 - New `docs/LINUX.md` covers installing Studio on each distribution, including SteamOS and other read-only systems.
 - Linux Studio resolves relative command-line paths against the folder it was started from even when its working folder differs (as in the AppImage).
 
