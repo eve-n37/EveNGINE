@@ -116,17 +116,47 @@ python3 editor/tests/expansion_ui_test.py
 | Job                    | Runner       | What it does                                                         |
 | ---------------------- | ------------ | -------------------------------------------------------------------- |
 | Studio build, tests and package | Ubuntu 22.04 | Builds the Linux desktop app, runs `ctest` (including `linux-studio` under Xvfb), packages Studio, checks the unpacked package and uploads it as an artifact. |
-| macOS Studio app and tests | macOS 14 (Apple Silicon) | Builds the universal Studio app, runs `ctest` (including the export icon and controller tests), checks both architectures and the bundle contents, and uploads the zipped app as an artifact. |
+| macOS Studio app and tests | macOS 15 (Apple Silicon) | Builds the universal Studio app, runs `ctest` (including the export icon and controller tests), checks both architectures, the macOS 12 minimum and the bundle contents, and uploads the zipped app as an artifact. |
 | Headless engine with sanitizers | Ubuntu 24.04 | Runs `ctest` on a headless build with ASan and UBSan. |
 | Editor model and UI tests | Ubuntu 24.04 | Runs the Node.js model tests and `expansion_ui_test.py` in Chromium. |
 | Formatting             | Ubuntu 24.04 | Checks clang-format 18, Prettier 3.8 and Black.                      |
 
-The macOS job runs only on pushes to `main` and manual runs, because macOS runner minutes cost about
-ten times as much as Linux ones on private repositories. To check a branch on macOS before merging,
-open **Actions → CI → Run workflow** and pick the branch.
+Every job, including macOS, runs on pull requests. macOS runner minutes cost about ten times as
+much as Linux ones on private repositories. To check a branch without opening a pull request, use
+**Actions → CI → Run workflow**.
 
 The Linux package is built on Ubuntu 22.04 so it runs on glibc 2.35 and later. Download it, or the
 zipped Mac app, from the run's **Artifacts** section. CI apps aren't signed or notarized.
+
+## Making a release
+
+Releases are built by `.github/workflows/release.yml`, so nobody needs to package anything by hand.
+
+1. Set the new version in both `project()` lines (`CMakeLists.txt` and `engine/CMakeLists.txt`),
+   `editor/native/Info.plist`, the exported-game version in `editor/native/GameAppearance.m`, the
+   Linux app's `--version` text in `editor/linux/main.cpp` and exported-game README in
+   `editor/linux/export.cpp`, the editor footer in `editor/ui/index.html`, and the `find_package`
+   version in `starter/CMakeLists.txt` and `docs/SDK.md`. (CI checks that the Mac app's version
+   matches CMake.)
+2. Update `CHANGELOG.md` and `docs/RELEASE.md` (the release page text; use absolute links), then
+   merge to `main`.
+3. Optionally, do a dry run: **Actions → Release → Run workflow** on `main`. It builds and tests
+   everything and keeps the downloads as a `release-dry-run` artifact, without creating a release.
+4. Tag the merged commit and push the tag:
+
+   ```bash
+   git tag v1.1.0
+   ```
+
+   ```bash
+   git push origin v1.1.0
+   ```
+
+The workflow checks that the tag matches the CMake version, runs the whole CI suite on Linux and
+macOS, and creates a **draft** release with the Linux `.tar.gz`, the macOS `.zip` and
+`SHA256SUMS.txt`. Review the draft on the repository's **Releases** page and click **Publish
+release**. If a step fails, fix it, delete the tag (`git push origin :v1.1.0` and `git tag -d
+v1.1.0`) and tag again.
 
 ## Code style
 

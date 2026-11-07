@@ -5,21 +5,24 @@ for building top-down adventure games without writing code. You draw maps and ar
 dialogue and quests, add music, and export a standalone game. Studio itself needs no terminal,
 compiler or Python.
 
-**Current version: 1.0.0** · [Release notes](docs/RELEASE.md) · [Changelog](CHANGELOG.md) · 1.1.0 is in
-development on `main`
+**Current version: 1.1.0** · [Release notes](docs/RELEASE.md) · [Changelog](CHANGELOG.md)
 
 ![EveNGINE Studio and runtime previews](preview.png)
 
 ## Download
 
-Grab the [v1.0.0 release](https://github.com/eve-n37/EveNGINE/releases/tag/v1.0.0):
+Grab the [v1.1.0 release](https://github.com/eve-n37/EveNGINE/releases/tag/v1.1.0):
 
-- **EveNGINE-Studio-v1.0.0-macOS.zip**: Studio, editable templates and a standalone sample game.
-- **EveNGINE-Source-v1.0.0.zip**: the source code.
+- **EveNGINE-Studio-v1.1.0-macOS.zip**: Studio for Mac and editable templates.
+- **EveNGINE-Studio-v1.1.0-linux-x86_64.tar.gz**: Studio for Linux, editable templates and a
+  standalone sample game.
+- The source code is attached as **Source code (zip)** and **Source code (tar.gz)**.
 
-Studio for Linux arrives with 1.1. Until then, [build it from source](docs/DEVELOPMENT.md#linux-full-studio-app).
+On Linux, Studio needs glibc 2.35 or later (Ubuntu 22.04, Debian 12, Fedora 36 and newer) and
+WebKitGTK 4.1 (`sudo apt install libwebkit2gtk-4.1-0` or `sudo dnf install webkit2gtk4.1`). Unpack
+it and run `./evengine-studio`.
 
-Studio requires macOS 12 or later. Apple Silicon is officially supported. The download also includes
+On a Mac, Studio requires macOS 12 or later. Apple Silicon is officially supported. The download also includes
 Intel binaries, but Intel support is unofficial. The apps aren't notarized, so the first time you
 open one, use Finder's **Open** command or approve it under **System Settings → Privacy &
 Security**.

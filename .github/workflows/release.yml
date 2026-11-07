@@ -1,0 +1,69 @@
+name: Release
+
+# Push a tag such as v1.1.0 to build, test and draft a GitHub release:
+#   git tag v1.1.0 && git push origin v1.1.0
+# The release stays a draft until someone reviews it and clicks Publish.
+# Running it manually (Actions → Release → Run workflow) is a dry run: it builds, tests and
+# collects the downloads as artifacts but doesn't create a release.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    name: Check the tag matches the version
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        run: |
+          version=$(sed -n 's/^project(EveNGINESDK VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
+          echo "CMake version $version, ref $GITHUB_REF_NAME ($GITHUB_REF_TYPE)"
+          if [ "$GITHUB_REF_TYPE" = tag ]; then test "v$version" = "$GITHUB_REF_NAME"; fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  ci:
+    name: CI
+    needs: version
+    uses: ./.github/workflows/ci.yml
+
+  draft:
+    name: Draft the GitHub release (dry run when started manually)
+    needs: [version, ci]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: EveNGINE-Studio-*
+          path: dist
+          merge-multiple: true
+      - name: Check the downloads
+        run: |
+          ls -l dist
+          test -f "dist/EveNGINE-Studio-v${{ needs.version.outputs.version }}-linux-x86_64.tar.gz"
+          test -f "dist/EveNGINE-Studio-v${{ needs.version.outputs.version }}-macOS.zip"
+          (cd dist && sha256sum ./* > SHA256SUMS.txt && cat SHA256SUMS.txt)
+      - name: Keep the dry-run downloads
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-dry-run
+          path: dist
+      - name: Create the draft release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --draft --verify-tag \
+            --title "EveNGINE ${{ needs.version.outputs.version }}" \
+            --notes-file docs/RELEASE.md
