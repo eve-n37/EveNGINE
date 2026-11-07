@@ -415,6 +415,7 @@
     (
       root.EveRCModel || (typeof require !== 'undefined' ? require('./rc-model.js') : null)
     )?.validate(p, bad);
+    expansionModel()?.validate(p, bad);
     context = { view: 'setup' };
     if (
       !p.player ||
@@ -648,6 +649,7 @@
       if (p.menus?.artwork === a.id) n++;
       for (let item of p.items || []) if (item.icon === a.id) n++;
       for (let c of p.animations) n += c.frames.filter((f) => f.sprite === a.id).length;
+      n += expansionModel()?.spriteUses(p, a.id) || 0;
     }
     return n;
   }
@@ -1210,8 +1212,15 @@
             });
         }
   }
+  function expansionModel() {
+    return (
+      root.EveExpansionModel ||
+      (typeof require !== 'undefined' ? require('./expansion-model.js') : null)
+    );
+  }
   function storyItemUsed(p, id) {
     return (
+      expansionModel()?.itemUsed(p, id) ||
       (
         root.EveAdventureModel ||
         (typeof require !== 'undefined' ? require('./adventure-model.js') : null)

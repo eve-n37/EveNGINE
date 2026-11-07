@@ -237,10 +237,13 @@ function renderEvents() {
           ['enter', 'Enter a map'],
           ['step', 'Step into an area'],
           ['interact', 'Interact with an object'],
+          ['timer', 'After time spent on a map'],
         ],
         e.trigger,
         (v) => {
           e.trigger = v;
+          if (v === 'timer') e.delay ||= 10;
+          else delete e.delay;
           if (v === 'step') {
             let s = P().scenes.find((s) => s.id === e.scene);
             e.area = {
@@ -285,6 +288,29 @@ function renderEvents() {
           (v) => (e.object = v)
         )
       );
+    if (e.trigger === 'timer') {
+      let delay = storyText(
+        'Delay (seconds on this map)',
+        e.delay ?? 10,
+        (v) => {
+          let n = Number(v);
+          if (!Number.isFinite(n) || n < 0.5 || n > 3600)
+            return notice('Use a delay from 0.5 to 3600 seconds.');
+          e.delay = n;
+        },
+        12
+      );
+      let input = delay.querySelector('input');
+      input.type = 'number';
+      input.min = 0.5;
+      input.max = 3600;
+      input.step = 0.5;
+      let hint = document.createElement('p');
+      hint.className = 'hint';
+      hint.textContent =
+        'The timer starts when the player enters the map and pauses during menus and conversations. Untick "Run only once" to repeat it at this interval.';
+      c.append(delay, hint);
+    }
     if (e.trigger === 'step') {
       let s = P().scenes.find((s) => s.id === e.scene);
       for (let k of ['x', 'y', 'w', 'h'])

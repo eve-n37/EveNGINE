@@ -19,6 +19,7 @@ try {
     ['appearance.test.js', []],
     ['rc.test.js', []],
     ['adventure.test.js', []],
+    ['expansion.test.js', []],
   ]) {
     const result = spawnSync(process.execPath, [path.join(__dirname, script), ...args], {
       encoding: 'utf8',
