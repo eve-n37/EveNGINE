@@ -211,13 +211,26 @@ invalid frame timing and so on. Click an issue to jump to it. Validation can't t
 area is actually reachable, so playtest your routes.
 
 **Playtest** runs the current map in the native game runtime, using exactly what's in the editor
-(even unsaved changes). Closing Studio also closes its playtests. Press **F3** in a playtest to show
+(even unsaved changes). On Linux, playtests open in their own window, just like on a Mac. Closing Studio also closes its playtests. Press **F3** in a playtest to show
 collision, water, the player's feet, exits and frame timing.
 
-**Export app** builds a standalone Mac game (`.app`) after validating the project. The app includes
-your project, the runtime, the font and SDL3; it doesn't need Studio, a browser or a compiler. If an
-app already exists at that location, macOS asks before replacing it, and a failed export leaves the
-old app untouched. Exported games run on macOS 12 or later.
+**Export app** builds a standalone game after validating the project. It doesn't need Studio, a
+browser or a compiler to run, and a failed export leaves any earlier export untouched.
+
+- **On a Mac**, you get an `.app` with your project, the runtime, the font and SDL3. If an app
+  already exists at that location, macOS asks before replacing it. Exported games run on macOS 12
+  or later.
+- **On Linux**, you get a folder named after what you type. It holds the game (an executable named
+  after the project ID), its project, the font, its own copy of SDL3 in `lib/`, `icon.png` and a
+  README. Keep the files together; the folder can be moved or zipped up. Players run
+  `./install-desktop-entry.sh` to add the game to their application menu. Exported games need only
+  a standard desktop Linux with X11 or Wayland, not WebKitGTK.
+
+You can also export from a terminal on Linux:
+
+```bash
+./evengine-studio --export "My Adventure.eve" "My Adventure"
+```
 
 ## Saving, undo and recovery
 

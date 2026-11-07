@@ -18,6 +18,41 @@ cmake --build build --config Release
 
 This produces `build/EveNGINE-Studio.app` using the bundled SDL3 framework.
 
+### Linux (full Studio app)
+
+Studio for Linux is a [GTK 3](https://www.gtk.org/) window hosting the editor in
+[WebKitGTK](https://webkitgtk.org/). Install a compiler, CMake 3.20 or later, and the GTK, WebKitGTK
+and SDL3 build dependencies. On Ubuntu 22.04 or later, or Debian 12 or later:
+
+```bash
+sudo apt install build-essential cmake pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxss-dev libxkbcommon-dev libwayland-dev wayland-protocols libegl-dev libasound2-dev libpulse-dev libdbus-1-dev libudev-dev
+```
+
+Then build:
+
+```bash
+cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release
+```
+
+```bash
+cmake --build build-linux
+```
+
+This produces `build-linux/evengine-studio` with its `resources/` folder beside it. Run it from
+there. If SDL3 3.2 or later isn't installed (most distributions don't package it yet), CMake
+downloads and builds the official SDL 3.2.20 source release and checks its SHA-256 hash. Set
+`-DEVE_FETCH_SDL=OFF` to require an installed SDL3 instead.
+
+To make a portable download (a `.tar.gz` with Studio, the templates and an exported sample game):
+
+```bash
+python3 tools/package_linux.py --build build-linux --output deliverables
+```
+
+The package needs at least the glibc version of the machine it was built on, and the script prints
+it. Build releases on the oldest distribution you want to support; Ubuntu 22.04 covers glibc 2.35
+and later.
+
 ### Without a desktop window (any platform)
 
 The engine, runtime and most tests build without a window or audio device. This is the quickest
@@ -31,14 +66,14 @@ cmake -S . -B build-headless -DLOTA_DESKTOP=OFF
 cmake --build build-headless
 ```
 
-A Linux desktop build needs SDL3 3.2 or later installed. Studio's native app is Mac-only.
-
 ### Build options
 
 | Option          | Default | Effect                                                    |
 | --------------- | ------- | --------------------------------------------------------- |
 | `LOTA_DESKTOP`  | `ON`    | Build the SDL3 desktop backend. `OFF` uses the headless one. |
 | `LOTA_SANITIZE` | `OFF`   | Build with address and undefined-behaviour sanitizers.    |
+| `EVE_FETCH_SDL` | `ON`    | Download and build SDL 3.2.20 when SDL3 isn't installed.  |
+| `EVE_LINUX_STUDIO` | `ON` | Build Studio for Linux when GTK 3 and WebKitGTK 4.1 are found. |
 
 ## Running tests
 
@@ -48,7 +83,9 @@ A Linux desktop build needs SDL3 3.2 or later installed. Studio's native app is 
 ctest --test-dir build-headless --output-on-failure
 ```
 
-Some loader tests need Python 3 and are skipped without it.
+Some loader tests need Python 3 and are skipped without it. A Linux desktop build also runs the
+SDL platform tests with SDL's dummy drivers, and `linux-studio`, which starts Studio (under
+`xvfb-run` when there's no display), drives every native action and plays the exported game.
 
 ### Editor model
 

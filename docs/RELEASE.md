@@ -39,7 +39,7 @@ exported as a standalone game.
 - **Official:** Apple Silicon Macs on macOS 12 or later.
 - **Unofficial:** Intel Macs. The download includes Intel binaries, but they aren't tested.
 - **Not verified:** Windows and Linux desktop packages. The engine builds and tests on Linux
-  without a desktop window.
+  without a desktop window. (Studio for Linux is coming in 1.1.)
 - The apps aren't signed with a Developer ID or notarized.
 
 ## Testing

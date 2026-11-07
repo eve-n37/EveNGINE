@@ -62,7 +62,8 @@ Exported Mac games use your icon in Finder and the Dock.
   the EveNGINE icon.
 
 The exporter builds every icon size macOS needs, up to 1024 × 1024, scaling with sharp edges to
-keep the pixel-art look.
+keep the pixel-art look. Linux exports include a 256 × 256 `icon.png`, used by the game's
+application-menu entry.
 
 ## UI colours
 

@@ -1,6 +1,12 @@
 # Changelog
 
-## 1.1.0 — adventure expansion (in development)
+## 1.1.0 — adventure expansion and Linux (in development)
+
+- **EveNGINE Studio for Linux**: a GTK 3 + WebKitGTK 4.1 app running the same editor, with open, save, autosave recovery, templates, PNG export, native playtests and game export. Projects and command-line arguments open in it, and it asks before closing with unsaved changes.
+- **Linux game export**: a relocatable folder with the game, its project, a bundled SDL3, an icon and a script that adds it to the application menu. `evengine-studio --export <project> <folder>` exports from a terminal.
+- `tools/package_linux.py` makes a portable `.tar.gz` with Studio, the templates and an exported sample game.
+- The SDL3 desktop backend now builds on Linux: CMake downloads the pinned SDL 3.2.20 source release when SDL3 isn't installed (`EVE_FETCH_SDL`), and the installed SDK includes it. The runtime and Studio link the C++ runtime statically so they don't need the build machine's version.
+- New `linux-studio` test drives the Linux app under Xvfb and plays its exported game.
 
 - Equipment: items can be weapons, armor or charms with attack, defense and maximum-health bonuses. Equip and unequip from the bag; the HUD shows attack and defense.
 - Ranged attacks: ranged weapons fire projectiles, optionally using an ammunition item. Enemies can use a ranged attack style with a longer reach.
