@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
+# Studio and exported games support macOS 12 and later, whichever macOS builds them.
+# (Must be set before project(); other platforms ignore it.)
+if(NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET)
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Minimum macOS version")
+endif()
 project(EveNGINESDK VERSION 1.1.0 LANGUAGES CXX)
 add_subdirectory(engine)
 add_executable(my-game starter/main.cpp)

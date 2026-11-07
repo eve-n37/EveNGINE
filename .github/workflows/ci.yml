@@ -66,7 +66,7 @@ jobs:
     # macOS minutes cost about 10x Linux on private repositories, so this job runs only on pushes
     # to main and manual runs (Actions → CI → Run workflow), not on every pull request update.
     if: github.event_name != 'pull_request'
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - name: Configure
@@ -84,6 +84,11 @@ jobs:
             archs=$(lipo -archs "$binary")
             echo "$binary: $archs"
             [[ " $archs " == *" arm64 "* && " $archs " == *" x86_64 "* ]]
+          done
+          for binary in "$app/Contents/MacOS/EveNGINE-Studio" "$app/Contents/Resources/Runtime"; do
+            minimum=$(otool -l -arch all "$binary" | awk '/minos/ {print $2}' | sort -u)
+            echo "$binary: minimum macOS $minimum"
+            test "$minimum" = 12.0
           done
           test -f "$app/Contents/Frameworks/SDL3.framework/SDL3"
           test -f "$app/Contents/Resources/ui/index.html"

@@ -116,7 +116,7 @@ python3 editor/tests/expansion_ui_test.py
 | Job                    | Runner       | What it does                                                         |
 | ---------------------- | ------------ | -------------------------------------------------------------------- |
 | Studio build, tests and package | Ubuntu 22.04 | Builds the Linux desktop app, runs `ctest` (including `linux-studio` under Xvfb), packages Studio, checks the unpacked package and uploads it as an artifact. |
-| macOS Studio app and tests | macOS 14 (Apple Silicon) | Builds the universal Studio app, runs `ctest` (including the export icon and controller tests), checks both architectures and the bundle contents, and uploads the zipped app as an artifact. |
+| macOS Studio app and tests | macOS 15 (Apple Silicon) | Builds the universal Studio app, runs `ctest` (including the export icon and controller tests), checks both architectures, the macOS 12 minimum and the bundle contents, and uploads the zipped app as an artifact. |
 | Headless engine with sanitizers | Ubuntu 24.04 | Runs `ctest` on a headless build with ASan and UBSan. |
 | Editor model and UI tests | Ubuntu 24.04 | Runs the Node.js model tests and `expansion_ui_test.py` in Chromium. |
 | Formatting             | Ubuntu 24.04 | Checks clang-format 18, Prettier 3.8 and Black.                      |
