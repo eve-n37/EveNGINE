@@ -168,7 +168,7 @@ if not a.appimagetool:
     raise SystemExit(print(appdir, "(%d bundled libraries)" % len(bundled)))
 image = a.output / ("EveNGINE-Studio-v%s-linux-%s.AppImage" % (a.version, arch))
 tool = [str(a.appimagetool.resolve()), "--appimage-extract-and-run"]
-command = tool + ["--no-appstream", str(appdir), str(image)]
+command = tool + ["--no-appstream", "--comp", "xz", str(appdir), str(image)]
 if a.runtime:
     command[2:2] = ["--runtime-file", str(a.runtime.resolve())]
 subprocess.run(command, check=True, env=dict(os.environ, ARCH=arch))
