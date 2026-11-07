@@ -1,6 +1,25 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 — adventure expansion and Linux (in development)
+
+- **EveNGINE Studio for Linux**: a GTK 3 + WebKitGTK 4.1 app running the same editor, with open, save, autosave recovery, templates, PNG export, native playtests and game export. Projects and command-line arguments open in it, and it asks before closing with unsaved changes.
+- **Linux game export**: a relocatable folder with the game, its project, a bundled SDL3, an icon and a script that adds it to the application menu. `evengine-studio --export <project> <folder>` exports from a terminal.
+- `tools/package_linux.py` makes a portable `.tar.gz` with Studio, the templates and an exported sample game.
+- The SDL3 desktop backend now builds on Linux: CMake downloads the pinned SDL 3.2.20 source release when SDL3 isn't installed (`EVE_FETCH_SDL`), and the installed SDK includes it. The runtime and Studio link the C++ runtime statically so they don't need the build machine's version.
+- New `linux-studio` test drives the Linux app under Xvfb and plays its exported game.
+- GitHub Actions workflow: Linux Studio build, tests and package (Ubuntu 22.04), the universal macOS Studio app and its tests (macOS 14), sanitizer tests, editor model and UI tests, and formatting checks.
+
+- Equipment: items can be weapons, armor or charms with attack, defense and maximum-health bonuses. Equip and unequip from the bag; the HUD shows attack and defense.
+- Ranged attacks: ranged weapons fire projectiles, optionally using an ammunition item. Enemies can use a ranged attack style with a longer reach.
+- Factions: enemies can belong to factions that are hostile or neutral toward the player and hostile to each other. Neutral enemies fight back once attacked.
+- NPC and enemy animations: per-direction walk frames for moving NPCs and enemies, and attack frames for enemies. Enemies flash when hit and the player blinks while invulnerable.
+- Timed events: a new trigger fires after a set time on a map, once or repeatedly.
+- Save format 6 adds equipped items and provoked enemies. Formats 2–5 still load.
+- New `Frontier-Watch.eve` sample, plus runtime, loader, model and editor UI tests for the new features.
+- Engine, SDK and app versions are now 1.1.0; the starter requests `find_package(EveNGINE 1.1)`.
+- Removed the unused `LOTA_GAME`, `LOTA_SAMPLES`, `LOTA_STARTER` and `LOTA_TESTS` CMake options, which pointed at files no longer in the repository.
+
+## Unreleased (1.0 documentation)
 
 - Rewrote the README and user guides. The Studio guide is current for 1.0, and new guides cover game setup (menus, controls, icons, UI colours), the C++ SDK and development (building, testing, formatting).
 - Removed `docs/RELEASE-CANDIDATE.md`, which duplicated the release notes, and merged `docs/APPEARANCE.md` into `docs/GAME-SETUP.md`.

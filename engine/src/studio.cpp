@@ -530,6 +530,7 @@ void StudioGame::interact(const Object &o) {
 void StudioGame::update(const Input &incoming, float dt) {
   Input in = incoming;
   toastTime = std::max(0.f, toastTime - dt);
+  reconcileEquipment();
   if (updateFrontend(in))
     return;
   if (in.hit(Action::Pause))
@@ -619,7 +620,10 @@ void StudioGame::update(const Input &incoming, float dt) {
     if (in.hit(Action::Interact) && !inventory.empty()) {
       auto item = inventory.begin();
       std::advance(item, std::clamp(bagRow, 0, int(inventory.size()) - 1));
-      useItem(item->first);
+      if (equipment.count(item->first))
+        equip(item->first);
+      else
+        useItem(item->first);
     }
     inventoryPage = bagRow / 8;
     int pages = std::max(1, int((inventory.size() + 7) / 8));
@@ -635,6 +639,9 @@ void StudioGame::update(const Input &incoming, float dt) {
     return;
   }
   updateTriggers();
+  if (!dialogueObject.empty())
+    return;
+  updateTimers(dt);
   if (!dialogueObject.empty())
     return;
   questEvent("visit", scene);
@@ -656,6 +663,9 @@ void StudioGame::update(const Input &incoming, float dt) {
   if (combatEnabled && in.hit(Action::Attack))
     playerAttack();
   updateActors(dt);
+  if (combatEnabled && health == 0)
+    return;
+  updateProjectiles(dt);
   if (combatEnabled && health == 0)
     return;
   auto s = liveScene(scene);
@@ -782,6 +792,8 @@ Canvas StudioGame::draw() const {
   });
   bool drawn = false;
   auto player = [&]() {
+    if (combatEnabled && hurtClock > 0 && std::fmod(hurtClock, .12f) < .06f)
+      return;
     auto r = pose();
     c.sprite(r, {feet.x - camera.x - r.w / 2, feet.y - camera.y - r.h});
   };
@@ -791,7 +803,16 @@ Canvas StudioGame::draw() const {
       player();
       drawn = true;
     }
-    c.sprite(sp.source, {o->position.x - camera.x, o->position.y - camera.y});
+    auto key = scene + ":" + o->id;
+    auto state = actorStates.find(key);
+    Rect frame;
+    if (state != actorStates.end() && state->second.flash > 0 &&
+        std::fmod(state->second.flash, .1f) < .05f) {
+    } else if (actorFrame(key, frame))
+      c.sprite(frame, {o->position.x + sp.source.w / 2 - frame.w / 2 - camera.x,
+                       o->position.y + sp.source.h - frame.h - camera.y});
+    else
+      c.sprite(sp.source, {o->position.x - camera.x, o->position.y - camera.y});
     auto collisionSprite = project.sprites.at(o->sprite);
     if (debug && collisionSprite.collider.w > 0 &&
         !(o->kind == "door" && activated.count(scene + ":" + o->id)))
@@ -880,7 +901,10 @@ Canvas StudioGame::draw() const {
       auto source = project.sprites.at(item.icon).source;
       float scale = std::min(12.f / source.w, 12.f / source.h);
       c.image(source, {52, float(67 + row * 16), source.w * scale, source.h * scale});
-      c.text(item.name.substr(0, 36), 70, 69 + row * 16, uiText);
+      c.text(item.name.substr(0, 28), 70, 69 + row * 16, uiText);
+      if (std::any_of(equipped.begin(), equipped.end(),
+                      [&](auto &e) { return e.second == entry.first; }))
+        c.text("EQUIPPED", 250, 69 + row * 16, uiAccent);
       c.text(std::to_string(entry.second), 322, 69 + row * 16, uiAccent);
       row++;
     }
@@ -904,7 +928,7 @@ bool StudioGame::save(const std::string &path, std::string &error) const {
     error = "Cannot create save file";
     return false;
   }
-  out << "EVE_STUDIO_SAVE " << (hasAdventure() ? 5 : 4) << "\n"
+  out << "EVE_STUDIO_SAVE " << (hasAdventure() ? 6 : 4) << "\n"
       << std::quoted(project.id) << " " << std::quoted(scene) << "\n"
       << std::setprecision(9) << feet.x << " " << feet.y << " " << score << "\n"
       << removed.size() << "\n";
@@ -997,8 +1021,7 @@ bool StudioGame::load(const std::string &path, std::string &error) {
       nextScore = old.score;
       nextRemoved = old.removed;
     } else {
-      require(magic == "EVE_STUDIO_SAVE" &&
-                  (version == 2 || version == 3 || version == 4 || version == 5),
+      require(magic == "EVE_STUDIO_SAVE" && version >= 2 && version <= 6,
               "Incompatible progress save");
       std::string projectId;
       input >> std::quoted(projectId) >> std::quoted(nextScene) >> nextFeet.x >> nextFeet.y >>
@@ -1090,8 +1113,10 @@ bool StudioGame::load(const std::string &path, std::string &error) {
                   "Invalid saved event");
         }
       }
-      if (version == 5)
-        nextAdventure = readAdventure(input);
+      if (version >= 5)
+        nextAdventure = readAdventure(input, version);
+      for (auto &e : nextAdventure.equipped)
+        require(nextInventory.count(e.second), "Saved equipment is not in the bag");
       input >> std::ws;
       require(input.eof(), "Trailing save data");
     }
@@ -1121,6 +1146,7 @@ bool StudioGame::load(const std::string &path, std::string &error) {
     flags = std::move(nextFlags);
     firedEvents = std::move(nextFired);
     insideTriggers.clear();
+    eventTimers.clear();
     eventScene = scene;
     progressDirty = false;
     dialogueTime = 0;

@@ -339,7 +339,7 @@ function renderActors() {
       ['health', 'Enemy health', 1, 999, 1],
       ['damage', 'Enemy damage', 1, 999, 1],
       ['speed', 'Pursuit speed', 1, 128, 1],
-      ['range', 'Attack reach', 8, 64, 1],
+      ['range', 'Attack reach', 8, c.style === 'ranged' ? 256 : 64, 1],
       ['aggro', 'Detection distance', 16, 512, 1],
       ['cooldown', 'Attack cooldown (seconds)', 0.1, 10, 0.1],
     ])

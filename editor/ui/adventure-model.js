@@ -54,7 +54,7 @@
             !integer(c.health, 1, 999) ||
             !integer(c.damage, 1, 999) ||
             !number(c.speed, 1, 128) ||
-            !number(c.range, 8, 64) ||
+            !number(c.range, 8, c.style === 'ranged' ? 256 : 64) ||
             !number(c.aggro, 16, 512) ||
             !number(c.cooldown, 0.1, 10) ||
             (c.rewardItem !== undefined && typeof c.rewardItem !== 'string') ||

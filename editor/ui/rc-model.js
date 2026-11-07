@@ -140,13 +140,23 @@
             ids.has(e.id) ||
             !text(e.name, 40) ||
             !s ||
-            !['enter', 'step', 'interact'].includes(e.trigger) ||
+            !['enter', 'step', 'interact', 'timer'].includes(e.trigger) ||
             (e.once !== undefined && typeof e.once !== 'boolean')
           )
             bad('Invalid event settings.');
           ids.add(e.id);
           if (e.trigger === 'interact' && !objects.has(e.scene + ':' + e.object))
             bad('Missing event trigger object.');
+          if (
+            e.trigger === 'timer' &&
+            !(
+              typeof e.delay === 'number' &&
+              Number.isFinite(e.delay) &&
+              e.delay >= 0.5 &&
+              e.delay <= 3600
+            )
+          )
+            bad('Timed events need a delay from 0.5 to 3600 seconds.');
           if (e.trigger === 'step') {
             let r = e.area;
             if (

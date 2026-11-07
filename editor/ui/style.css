@@ -1129,3 +1129,10 @@ nav > .tab {
 #mapCanvas {
   touch-action: none;
 }
+.storyCard .frameChip {
+  font-size: 12px;
+  padding: 2px 8px;
+}
+.storyCard h4 {
+  margin: 20px 0 8px;
+}

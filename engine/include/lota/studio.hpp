@@ -65,23 +65,44 @@ struct StudioEventAction {
 struct StudioEvent {
   std::string id, name, trigger, scene, object;
   Rect area;
+  float delay = 0;
   bool once = true;
   std::vector<StudioCondition> conditions;
   std::vector<StudioEventAction> actions;
 };
 struct StudioActor {
   std::string map, id, mode;
-  float speed = 24, wait = 1, range = 24, aggro = 96, cooldown = .8f;
-  int maxHealth = 3, damage = 1, rewardQuantity = 1;
-  std::string rewardItem;
+  float speed = 24, wait = 1, range = 24, aggro = 96, cooldown = .8f, projectileSpeed = 0;
+  int maxHealth = 3, damage = 1, rewardQuantity = 1, animationMs = 140;
+  std::string rewardItem, faction;
+  bool ranged = false;
   std::vector<Vec2> points;
+  std::map<std::string, std::vector<Rect>> walkFrames, attackFrames;
 };
 struct StudioActorState {
   Vec2 position;
   int health = 3, waypoint = 0;
-  bool lootClaimed = false;
-  float timer = 0, routeTimer = 0;
+  bool lootClaimed = false, provoked = false;
+  float timer = 0, routeTimer = 0, animationClock = 0, attackClock = -1, flash = 0;
+  std::string facing = "south";
   std::vector<Vec2> route;
+};
+struct StudioEquipment {
+  std::string slot, ammo;
+  int attack = 0, defense = 0, health = 0;
+  bool ranged = false;
+  float projectileSpeed = 160, projectileRange = 128;
+};
+struct StudioFaction {
+  std::string name;
+  bool hostileToPlayer = true;
+  std::set<std::string> hostile;
+};
+struct StudioProjectile {
+  Vec2 position, velocity;
+  float remaining = 0;
+  int damage = 1;
+  std::string owner, map;
 };
 struct StudioOffer {
   std::string item;
@@ -95,6 +116,7 @@ struct StudioAdventureState {
   int health = 10;
   std::map<std::string, StudioActorState> actors;
   std::map<std::string, std::vector<int>> stock;
+  std::map<std::string, std::string> equipped;
 };
 class StudioGame {
 public:
@@ -206,8 +228,32 @@ public:
   void drawAdventure(Canvas &canvas) const;
   void respawnPlayer();
   void writeAdventure(std::ostream &out) const;
-  StudioAdventureState readAdventure(std::istream &input) const;
+  StudioAdventureState readAdventure(std::istream &input, int version = 6) const;
   void restoreAdventure(const StudioAdventureState &state);
+  // 1.1 adventure expansion: equipment, ranged combat, factions, actor animations, timers.
+  std::map<std::string, StudioEquipment> equipment;
+  std::map<std::string, std::string> equipped;
+  std::map<std::string, StudioFaction> factions;
+  std::vector<StudioProjectile> projectiles;
+  std::map<std::string, float> eventTimers;
+  void loadExpansion(const Json &project);
+  void loadActorExtras(StudioActor &actor, const Json &object);
+  int playerMaxHealth() const;
+  int maxHealthWith(const std::map<std::string, std::string> &gear) const;
+  int playerAttackDamage() const;
+  int playerDefense() const;
+  const StudioEquipment *weapon() const;
+  bool equip(const std::string &item);
+  void reconcileEquipment();
+  void hurtPlayer(int damage);
+  bool hostileToPlayer(const std::string &actor) const;
+  bool hostileActors(const std::string &a, const std::string &b) const;
+  void fireProjectile(Vec2 from, Vec2 direction, float speed, float range, int damage,
+                      const std::string &owner);
+  void updateProjectiles(float dt);
+  void damageActor(const std::string &key, int damage, bool byPlayer);
+  void updateTimers(float dt);
+  bool actorFrame(const std::string &key, Rect &frame) const;
   explicit StudioGame(const std::string &path);
   void update(const Input &input, float dt);
   Canvas draw() const;

@@ -44,7 +44,7 @@ let pending = new Map(),
 function native(action, payload = {}) {
   return new Promise((resolve, reject) => {
     if (!window.webkit?.messageHandlers?.studio) {
-      reject(Error('Open EveNGINE-Studio.app for native playtest and Mac export.'));
+      reject(Error('Open the EveNGINE Studio desktop app for native playtests and game export.'));
       return;
     }
     let id = ++sequence;

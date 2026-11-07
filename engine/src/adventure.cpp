@@ -74,7 +74,8 @@ std::vector<Vec2> route(const Project &p, Scene s, Vec2 from, Vec2 to) {
 }
 } // namespace
 bool StudioGame::hasAdventure() const {
-  return combatEnabled || !actors.empty() || !shops.empty() || !healing.empty();
+  return combatEnabled || !actors.empty() || !shops.empty() || !healing.empty() ||
+         !equipment.empty();
 }
 void StudioGame::loadAdventure(const Json &j) {
   if (j.has("combat")) {
@@ -89,6 +90,7 @@ void StudioGame::loadAdventure(const Json &j) {
   for (auto &item : j["items"].array)
     if (item.has("heal"))
       healing[item["id"].text()] = integer(item["heal"], 1, 999);
+  loadExpansion(j);
   for (auto &map : j["scenes"].array)
     for (auto &object : map["objects"].array) {
       std::string key = map["id"].text() + ":" + object["id"].text();
@@ -107,7 +109,7 @@ void StudioGame::loadAdventure(const Json &j) {
           actor.maxHealth = integer(c["health"], 1, 999);
           actor.damage = integer(c["damage"], 1, 999);
           actor.speed = real(c["speed"], 1, 128);
-          actor.range = real(c["range"], 8, 64);
+          actor.range = real(c["range"], 8, c["style"].text() == "ranged" ? 256 : 64);
           actor.aggro = real(c["aggro"], 16, 512);
           actor.cooldown = real(c["cooldown"], .1f, 10);
           if (c.has("rewardItem")) {
@@ -142,9 +144,11 @@ void StudioGame::loadAdventure(const Json &j) {
             actor.points.push_back(top);
           }
         }
+        loadActorExtras(actor, object);
         require(actors.size() < 128, "Use at most 128 moving NPCs and enemies");
         actors[key] = actor;
-      }
+      } else
+        require(!object.has("animations"), "Only moving NPCs and enemies can animate");
       if (object.has("shop")) {
         require(object["kind"].text() == "npc", "Only NPCs can trade");
         auto &s = object["shop"];
@@ -172,6 +176,8 @@ void StudioGame::loadAdventure(const Json &j) {
   resetAdventure();
 }
 void StudioGame::resetAdventure() {
+  equipped.clear();
+  projectiles.clear();
   health = maxHealth;
   combatClock = hurtClock = 0;
   shopObject.clear();
@@ -228,11 +234,29 @@ bool StudioGame::claimLoot(const std::string &key) {
 void StudioGame::playerAttack() {
   if (!combatEnabled || combatClock > 0 || health == 0)
     return;
-  combatClock = attackDelay;
   Vec2 facing = direction == "east"    ? Vec2{1, 0}
                 : direction == "west"  ? Vec2{-1, 0}
                 : direction == "north" ? Vec2{0, -1}
                                        : Vec2{0, 1};
+  if (auto w = weapon(); w && w->ranged) {
+    if (!w->ammo.empty()) {
+      auto ammo = inventory.find(w->ammo);
+      if (ammo == inventory.end() || ammo->second < 1) {
+        toast = "Out of " + items.at(w->ammo).name + ".";
+        toastTime = 2;
+        combatClock = .25f;
+        return;
+      }
+      if (--ammo->second == 0)
+        inventory.erase(ammo);
+    }
+    combatClock = attackDelay;
+    fireProjectile({feet.x, feet.y - 8}, facing, w->projectileSpeed, w->projectileRange,
+                   playerAttackDamage(), "player");
+    progressDirty = true;
+    return;
+  }
+  combatClock = attackDelay;
   auto sight = collisionScene(scene, removed, activated);
   sight.objects.erase(std::remove_if(sight.objects.begin(), sight.objects.end(),
                                      [&](auto &o) { return actors.count(scene + ":" + o.id); }),
@@ -243,125 +267,163 @@ void StudioGame::playerAttack() {
       auto vector = normalized({target.x - feet.x, target.y - feet.y});
       if (distance(target, feet) <= attackRange &&
           vector.x * facing.x + vector.y * facing.y >= .25f &&
-          clearLine(project, sight, feet, target)) {
-        auto &state = actorStates.at(a.first);
-        state.health = std::max(0, state.health - attackDamage);
-        state.timer = .18f;
-        progressDirty = true;
-        if (state.health == 0) {
-          state.route.clear();
-          claimLoot(a.first);
-        } else {
-          toast = "Hit!";
-          toastTime = .5f;
-        }
-      }
+          clearLine(project, sight, feet, target))
+        damageActor(a.first, playerAttackDamage(), true);
     }
 }
 void StudioGame::updateActors(float dt) {
+  auto face = [](StudioActorState &state, Vec2 d) {
+    if (std::abs(d.x) < .001f && std::abs(d.y) < .001f)
+      return;
+    state.facing =
+        std::abs(d.x) > std::abs(d.y) ? (d.x > 0 ? "east" : "west") : (d.y > 0 ? "south" : "north");
+  };
   for (auto &entry : actors) {
     auto &actor = entry.second;
     auto &state = actorStates.at(entry.first);
     if (actor.map != scene)
       continue;
-    if (state.health == 0) {
-      if (!state.lootClaimed && distance(actorFeet(entry.first), feet) < 32 &&
-          (actor.rewardItem.empty() ||
-           (inventory.count(actor.rewardItem) ? inventory.at(actor.rewardItem) : 0) +
-                   actor.rewardQuantity <=
-               999))
-        claimLoot(entry.first);
-      continue;
+    state.flash = std::max(0.f, state.flash - dt);
+    if (state.attackClock >= 0) {
+      state.attackClock += dt;
+      auto frames = actor.attackFrames.find(state.facing);
+      float total = frames == actor.attackFrames.end()
+                        ? 0
+                        : frames->second.size() * actor.animationMs / 1000.f;
+      if (state.attackClock >= total)
+        state.attackClock = -1;
     }
-    state.timer = std::max(0.f, state.timer - dt);
-    state.routeTimer = std::max(0.f, state.routeTimer - dt);
-    auto from = actorFeet(entry.first);
-    Vec2 destination = from;
-    auto map = collisionScene(scene, removed, activated);
-    map.objects.erase(std::remove_if(map.objects.begin(), map.objects.end(),
-                                     [&](auto &o) {
-                                       return o.id == actor.id ||
-                                              actorStates.count(scene + ":" + o.id) &&
-                                                  actorStates.at(scene + ":" + o.id).health == 0;
-                                     }),
-                      map.objects.end());
-    if (actor.mode == "enemy") {
-      if (distance(from, feet) > actor.aggro) {
-        state.route.clear();
-        continue;
+    auto before = state.position;
+    // Returns false when the player was defeated and the update must stop.
+    auto step = [&]() -> bool {
+      if (state.health == 0) {
+        if (!state.lootClaimed && distance(actorFeet(entry.first), feet) < 32 &&
+            (actor.rewardItem.empty() ||
+             (inventory.count(actor.rewardItem) ? inventory.at(actor.rewardItem) : 0) +
+                     actor.rewardQuantity <=
+                 999))
+          claimLoot(entry.first);
+        return true;
       }
-      auto sight = map;
-      sight.objects.erase(std::remove_if(sight.objects.begin(), sight.objects.end(),
-                                         [&](auto &o) { return actors.count(scene + ":" + o.id); }),
-                          sight.objects.end());
-      if (distance(from, feet) <= actor.range && clearLine(project, sight, from, feet)) {
-        state.route.clear();
-        if (state.timer == 0 && hurtClock == 0) {
-          health = std::max(0, health - actor.damage);
-          state.timer = actor.cooldown;
-          hurtClock = .6f;
-          progressDirty = true;
-          toast = "You took damage.";
-          toastTime = 1;
-          if (health == 0) {
-            shopObject.clear();
-            dialogueObject.clear();
-            if (frontendStarted) {
-              frontend = "defeat";
-              menuIndex = 0;
-            }
-            return;
-          }
+      state.timer = std::max(0.f, state.timer - dt);
+      state.routeTimer = std::max(0.f, state.routeTimer - dt);
+      auto from = actorFeet(entry.first);
+      Vec2 destination = from;
+      auto map = collisionScene(scene, removed, activated);
+      map.objects.erase(std::remove_if(map.objects.begin(), map.objects.end(),
+                                       [&](auto &o) {
+                                         return o.id == actor.id ||
+                                                actorStates.count(scene + ":" + o.id) &&
+                                                    actorStates.at(scene + ":" + o.id).health == 0;
+                                       }),
+                        map.objects.end());
+      if (actor.mode == "enemy") {
+        std::string targetKey;
+        Vec2 target{};
+        bool found = false;
+        float best = actor.aggro;
+        if (hostileToPlayer(entry.first) && health > 0 && distance(from, feet) <= best) {
+          target = feet;
+          best = distance(from, feet);
+          found = true;
         }
-        continue;
+        for (auto &other : actors)
+          if (other.second.map == scene && other.second.mode == "enemy" &&
+              actorStates.at(other.first).health > 0 && hostileActors(entry.first, other.first)) {
+            auto at = actorFeet(other.first);
+            if (distance(from, at) < best) {
+              best = distance(from, at);
+              target = at;
+              targetKey = other.first;
+              found = true;
+            }
+          }
+        if (!found) {
+          state.route.clear();
+          return true;
+        }
+        auto sight = map;
+        sight.objects.erase(
+            std::remove_if(sight.objects.begin(), sight.objects.end(),
+                           [&](auto &o) { return actors.count(scene + ":" + o.id); }),
+            sight.objects.end());
+        if (distance(from, target) <= actor.range && clearLine(project, sight, from, target)) {
+          state.route.clear();
+          face(state, {target.x - from.x, target.y - from.y});
+          if (state.timer == 0 && (!targetKey.empty() || hurtClock == 0)) {
+            state.timer = actor.cooldown;
+            state.attackClock = 0;
+            if (actor.ranged)
+              fireProjectile({from.x, from.y - 8},
+                             normalized({target.x - from.x, target.y - from.y}),
+                             actor.projectileSpeed, actor.range + 24, actor.damage, entry.first);
+            else if (targetKey.empty()) {
+              hurtPlayer(actor.damage);
+              if (health == 0)
+                return false;
+            } else
+              damageActor(targetKey, actor.damage, false);
+          }
+          return true;
+        }
+        destination = target;
+      } else {
+        if (state.timer > 0)
+          return true;
+        auto point = actor.points.at(size_t(state.waypoint));
+        auto &objects = project.scenes.at(scene).objects;
+        auto o =
+            std::find_if(objects.begin(), objects.end(), [&](auto &o) { return o.id == actor.id; });
+        auto source = project.sprites.at(o->sprite).source;
+        destination = {point.x + source.w / 2, point.y + source.h};
+        if (distance(from, destination) < 1) {
+          state.waypoint = (state.waypoint + 1 +
+                            (actor.mode == "wander" && actor.points.size() > 1
+                                 ? std::rand() % int(actor.points.size() - 1)
+                                 : 0)) %
+                           int(actor.points.size());
+          state.timer = actor.wait;
+          state.route.clear();
+          progressDirty = true;
+          return true;
+        }
       }
-      destination = feet;
-    } else {
-      if (state.timer > 0)
-        continue;
-      auto point = actor.points.at(size_t(state.waypoint));
-      auto &objects = project.scenes.at(scene).objects;
-      auto o =
-          std::find_if(objects.begin(), objects.end(), [&](auto &o) { return o.id == actor.id; });
-      auto source = project.sprites.at(o->sprite).source;
-      destination = {point.x + source.w / 2, point.y + source.h};
-      if (distance(from, destination) < 1) {
-        state.waypoint = (state.waypoint + 1 +
-                          (actor.mode == "wander" && actor.points.size() > 1
-                               ? std::rand() % int(actor.points.size() - 1)
-                               : 0)) %
-                         int(actor.points.size());
-        state.timer = actor.wait;
-        state.route.clear();
+      if (state.route.empty() || state.routeTimer == 0) {
+        state.route = route(project, map, from, destination);
+        state.routeTimer = actor.mode == "enemy" ? .4f : 1.f;
+      }
+      if (state.route.empty())
+        return true;
+      auto next = state.route.front();
+      float remaining = distance(from, next);
+      if (remaining < 1) {
+        state.route.erase(state.route.begin());
+        return true;
+      }
+      auto d = normalized({next.x - from.x, next.y - from.y});
+      float stride = std::min(remaining, actor.speed * dt);
+      auto moved = moveBody(project, map, from, {d.x * stride, d.y * stride});
+      if (distance(moved, feet) < 12 && actor.mode != "enemy")
+        return true;
+      if (distance(moved, from) > .001f) {
+        state.position.x += moved.x - from.x;
+        state.position.y += moved.y - from.y;
         progressDirty = true;
-        continue;
+      } else {
+        state.route.clear();
+        state.routeTimer = .5f;
       }
-    }
-    if (state.route.empty() || state.routeTimer == 0) {
-      state.route = route(project, map, from, destination);
-      state.routeTimer = actor.mode == "enemy" ? .4f : 1.f;
-    }
-    if (state.route.empty())
-      continue;
-    auto target = state.route.front();
-    float remaining = distance(from, target);
-    if (remaining < 1) {
-      state.route.erase(state.route.begin());
-      continue;
-    }
-    auto d = normalized({target.x - from.x, target.y - from.y});
-    float step = std::min(remaining, actor.speed * dt);
-    auto moved = moveBody(project, map, from, {d.x * step, d.y * step});
-    if (distance(moved, feet) < 12 && actor.mode != "enemy")
-      continue;
-    if (distance(moved, from) > .001f) {
-      state.position.x += moved.x - from.x;
-      state.position.y += moved.y - from.y;
-      progressDirty = true;
-    } else {
-      state.route.clear();
-      state.routeTimer = .5f;
-    }
+      return true;
+    };
+    bool alive = step();
+    Vec2 delta{state.position.x - before.x, state.position.y - before.y};
+    if (std::abs(delta.x) > .001f || std::abs(delta.y) > .001f) {
+      face(state, delta);
+      state.animationClock += dt;
+    } else
+      state.animationClock = 0;
+    if (!alive)
+      return;
   }
 }
 bool StudioGame::trade(size_t row, bool sell, int quantity) {
@@ -413,12 +475,12 @@ bool StudioGame::trade(size_t row, bool sell, int quantity) {
 bool StudioGame::useItem(const std::string &item) {
   if (!combatEnabled || !healing.count(item) || !inventory.count(item) || inventory.at(item) < 1)
     return false;
-  if (health >= maxHealth) {
+  if (health >= playerMaxHealth()) {
     toast = "You are already at full health.";
     toastTime = 2;
     return false;
   }
-  health = std::min(maxHealth, health + healing.at(item));
+  health = std::min(playerMaxHealth(), health + healing.at(item));
   if (--inventory[item] == 0)
     inventory.erase(item);
   bagRow = std::clamp(bagRow, 0, std::max(0, int(inventory.size()) - 1));
@@ -449,8 +511,14 @@ bool StudioGame::updateShop(const Input &in) {
 void StudioGame::drawAdventure(Canvas &c) const {
   if (combatEnabled) {
     c.rect({6, 31, 145, 16}, uiPanel);
-    c.text("HEALTH " + std::to_string(health) + "/" + std::to_string(maxHealth), 12, 36,
+    c.text("HEALTH " + std::to_string(health) + "/" + std::to_string(playerMaxHealth()), 12, 36,
            hurtClock > 0 ? Color{255, 125, 110} : uiAccent);
+    if (!equipment.empty()) {
+      c.rect({155, 31, 110, 16}, uiPanel);
+      c.text("ATK " + std::to_string(playerAttackDamage()) + "  DEF " +
+                 std::to_string(playerDefense()),
+             161, 36, uiMuted);
+    }
     auto camera = cameraFor(project.scenes.at(scene), feet);
     for (auto &a : actors)
       if (a.second.map == scene && a.second.mode == "enemy") {
@@ -462,7 +530,12 @@ void StudioGame::drawAdventure(Canvas &c) const {
         c.rect({p.x - camera.x, p.y - camera.y - 5, 16.f * state.health / a.second.maxHealth, 3},
                {220, 90, 90, 255});
       }
-    if (combatClock > attackDelay - .12f) {
+    for (auto &p : projectiles)
+      if (p.map == scene)
+        c.rect({p.position.x - camera.x - 2, p.position.y - camera.y - 2, 4, 4},
+               p.owner == "player" ? uiAccent : Color{255, 110, 90, 255});
+    auto w = weapon();
+    if (combatClock > attackDelay - .12f && !(w && w->ranged)) {
       float x = feet.x - camera.x, y = feet.y - camera.y;
       c.rect(direction == "east"    ? Rect{x + 7, y - 8, 20, 3}
              : direction == "west"  ? Rect{x - 27, y - 8, 20, 3}
@@ -471,7 +544,9 @@ void StudioGame::drawAdventure(Canvas &c) const {
              uiAccent);
     }
     if (inventoryOpen)
-      c.text(controlLabel(Action::Interact) + " USE SELECTED HEALING ITEM", 52, 188, uiAccent);
+      c.text(controlLabel(Action::Interact) +
+                 (equipment.empty() ? " USE SELECTED HEALING ITEM" : " USE OR EQUIP SELECTED ITEM"),
+             52, 188, uiAccent);
   }
   if (shopObject.empty())
     return;
@@ -518,7 +593,8 @@ void StudioGame::respawnPlayer() {
         }
       }
 found:
-  health = maxHealth;
+  health = playerMaxHealth();
+  projectiles.clear();
   hurtClock = 2;
   combatClock = 0;
   frontend = "playing";
@@ -535,7 +611,8 @@ void StudioGame::writeAdventure(std::ostream &out) const {
   out << health << " " << actorStates.size() << "\n";
   for (auto &a : actorStates)
     out << std::quoted(a.first) << " " << a.second.position.x << " " << a.second.position.y << " "
-        << a.second.health << " " << a.second.waypoint << " " << int(a.second.lootClaimed) << "\n";
+        << a.second.health << " " << a.second.waypoint << " " << int(a.second.lootClaimed) << " "
+        << int(a.second.provoked) << "\n";
   out << shopStock.size() << "\n";
   for (auto &shop : shopStock) {
     out << std::quoted(shop.first) << " " << shop.second.size();
@@ -543,23 +620,29 @@ void StudioGame::writeAdventure(std::ostream &out) const {
       out << " " << std::quoted(shops.at(shop.first).offers.at(i).item) << " " << shop.second[i];
     out << "\n";
   }
+  out << equipped.size() << "\n";
+  for (auto &e : equipped)
+    out << std::quoted(e.first) << " " << std::quoted(e.second) << "\n";
 }
-StudioAdventureState StudioGame::readAdventure(std::istream &in) const {
+StudioAdventureState StudioGame::readAdventure(std::istream &in, int version) const {
   StudioAdventureState result;
   int count = -1;
   in >> result.health >> count;
-  require(in && result.health >= 0 && result.health <= maxHealth && count == int(actors.size()),
+  require(in && result.health >= 0 && count == int(actors.size()),
           "Invalid saved actors or health");
   for (int i = 0; i < count; i++) {
     std::string key;
     StudioActorState state;
-    int loot = -1;
+    int loot = -1, provoked = 0;
     in >> std::quoted(key) >> state.position.x >> state.position.y >> state.health >>
         state.waypoint >> loot;
+    if (version >= 6)
+      in >> provoked;
     require(in && actors.count(key) && !result.actors.count(key) &&
                 std::isfinite(state.position.x) && std::isfinite(state.position.y) &&
-                (loot == 0 || loot == 1),
+                (loot == 0 || loot == 1) && (provoked == 0 || provoked == 1),
             "Invalid actor save record");
+    state.provoked = provoked;
     auto &a = actors.at(key);
     auto &s = project.scenes.at(a.map);
     require(state.health >= 0 && state.health <= a.maxHealth &&
@@ -600,10 +683,25 @@ StudioAdventureState StudioGame::readAdventure(std::istream &in) const {
       stock.push_back(number);
     }
   }
+  if (version >= 6) {
+    in >> count;
+    require(in && count >= 0 && count <= 3, "Invalid saved equipment");
+    for (int i = 0; i < count; i++) {
+      std::string slot, item;
+      in >> std::quoted(slot) >> std::quoted(item);
+      require(in && equipment.count(item) && equipment.at(item).slot == slot &&
+                  !result.equipped.count(slot),
+              "Saved equipment changed");
+      result.equipped[slot] = item;
+    }
+  }
+  require(result.health <= maxHealthWith(result.equipped), "Invalid saved health");
   return result;
 }
 void StudioGame::restoreAdventure(const StudioAdventureState &state) {
   health = state.health;
+  equipped = state.equipped;
+  projectiles.clear();
   actorStates = state.actors;
   shopStock = state.stock;
   combatClock = hurtClock = 0;
