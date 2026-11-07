@@ -2,7 +2,7 @@
 # there is no display), drives every native bridge action with linux_studio_test.js, then checks
 # the files it wrote and runs the exported game.
 # Usage: linux_studio_test.py <evengine-studio> <Frontier-Watch.eve>
-import json, os, shutil, subprocess, sys, tempfile
+import json, os, shutil, subprocess, sys, tempfile, time
 from pathlib import Path
 
 studio, sample = map(Path, sys.argv[1:])
@@ -41,9 +41,32 @@ with tempfile.TemporaryDirectory() as tmp:
     command = [str(studio)]
     if not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
         command = ["xvfb-run", "-a", "-s", "-screen 0 1600x1000x24"] + command
-    result = subprocess.run(
-        command, env=env, capture_output=True, text=True, timeout=180
+    child = subprocess.Popen(
+        command, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
     )
+    # With EVE_STUDIO_EXPECT_SANDBOX set, check that WebKit's web process runs in its own
+    # bubblewrap sandbox (a separate mount namespace). WebKit skips the sandbox for root.
+    sandboxed = None
+    if os.environ.get("EVE_STUDIO_EXPECT_SANDBOX"):
+        ours = os.readlink("/proc/self/ns/mnt")
+        for _ in range(600):
+            pids = subprocess.run(
+                ["pgrep", "-f", "WebKitWebProcess"], capture_output=True, text=True
+            ).stdout.split()
+            spaces = set()
+            for pid in pids:
+                try:
+                    spaces.add(os.readlink("/proc/%s/ns/mnt" % pid))
+                except OSError:
+                    pass
+            if spaces:
+                sandboxed = ours not in spaces
+                break
+            if child.poll() is not None:
+                break
+            time.sleep(0.1)
+    out, err = child.communicate(timeout=180)
+    result = subprocess.CompletedProcess(command, child.returncode, out, err)
     # The playtest child shares stdout, so keep only the script's report lines.
     report = [
         l for l in result.stdout.splitlines() if l.startswith(("OK ", "PASS", "FAIL"))
@@ -55,6 +78,8 @@ with tempfile.TemporaryDirectory() as tmp:
         print(result.stdout[-3000:], result.stderr[-3000:], file=sys.stderr)
     ok("bridge script passes inside Studio", passed)
     ok("Studio exits cleanly", result.returncode == 0)
+    if os.environ.get("EVE_STUDIO_EXPECT_SANDBOX"):
+        ok("WebKit's web process is sandboxed", sandboxed is True)
 
     project = json.loads((folder / "direct.eve").read_text())
     ok("saved project is the opened sample", project["id"] == "frontier-watch")
