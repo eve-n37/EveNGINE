@@ -1,4 +1,4 @@
-name: Linux
+name: CI
 
 on:
   push:
@@ -56,6 +56,40 @@ jobs:
         with:
           name: EveNGINE-Studio-linux-x86_64
           path: deliverables/*.tar.gz
+          if-no-files-found: error
+
+  macos:
+    name: macOS Studio app and tests
+    # Apple Silicon runner; the universal build also produces the unofficial Intel slice.
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+      - name: Build
+        run: cmake --build build --config Release --parallel
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+        env:
+          SDL_AUDIODRIVER: dummy
+      - name: Check the app bundle
+        run: |
+          app=build/EveNGINE-Studio.app
+          for binary in "$app/Contents/MacOS/EveNGINE-Studio" "$app/Contents/Resources/Runtime"; do
+            archs=$(lipo -archs "$binary")
+            echo "$binary: $archs"
+            [[ " $archs " == *" arm64 "* && " $archs " == *" x86_64 "* ]]
+          done
+          test -f "$app/Contents/Frameworks/SDL3.framework/SDL3"
+          test -f "$app/Contents/Resources/ui/index.html"
+          test "$(plutil -extract CFBundleShortVersionString raw "$app/Contents/Info.plist")" = 1.1.0
+          "$app/Contents/Resources/Runtime" --project editor/examples/Frontier-Watch.eve --validate
+      - name: Zip the app
+        run: ditto -c -k --keepParent build/EveNGINE-Studio.app EveNGINE-Studio-macOS.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EveNGINE-Studio-macOS
+          path: EveNGINE-Studio-macOS.zip
           if-no-files-found: error
 
   sanitizers:

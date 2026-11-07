@@ -7,7 +7,7 @@
 - `tools/package_linux.py` makes a portable `.tar.gz` with Studio, the templates and an exported sample game.
 - The SDL3 desktop backend now builds on Linux: CMake downloads the pinned SDL 3.2.20 source release when SDL3 isn't installed (`EVE_FETCH_SDL`), and the installed SDK includes it. The runtime and Studio link the C++ runtime statically so they don't need the build machine's version.
 - New `linux-studio` test drives the Linux app under Xvfb and plays its exported game.
-- GitHub Actions workflow: Linux Studio build, tests and package (Ubuntu 22.04), sanitizer tests, editor model and UI tests, and formatting checks.
+- GitHub Actions workflow: Linux Studio build, tests and package (Ubuntu 22.04), the universal macOS Studio app and its tests (macOS 14), sanitizer tests, editor model and UI tests, and formatting checks.
 
 - Equipment: items can be weapons, armor or charms with attack, defense and maximum-health bonuses. Equip and unequip from the bag; the HUD shows attack and defense.
 - Ranged attacks: ranged weapons fire projectiles, optionally using an ammunition item. Enemies can use a ranged attack style with a longer reach.
