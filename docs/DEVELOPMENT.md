@@ -121,9 +121,9 @@ python3 editor/tests/expansion_ui_test.py
 | Editor model and UI tests | Ubuntu 24.04 | Runs the Node.js model tests and `expansion_ui_test.py` in Chromium. |
 | Formatting             | Ubuntu 24.04 | Checks clang-format 18, Prettier 3.8 and Black.                      |
 
-The macOS job runs only on pushes to `main` and manual runs, because macOS runner minutes cost about
-ten times as much as Linux ones on private repositories. To check a branch on macOS before merging,
-open **Actions → CI → Run workflow** and pick the branch.
+Every job, including macOS, runs on pull requests. macOS runner minutes cost about ten times as
+much as Linux ones on private repositories. To check a branch without opening a pull request, use
+**Actions → CI → Run workflow**.
 
 The Linux package is built on Ubuntu 22.04 so it runs on glibc 2.35 and later. Download it, or the
 zipped Mac app, from the run's **Artifacts** section. CI apps aren't signed or notarized.
