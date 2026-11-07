@@ -20,7 +20,7 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: version
         run: |
           version=$(sed -n 's/^project(EveNGINESDK VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
@@ -40,8 +40,8 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           pattern: EveNGINE-Studio-*
           path: dist
@@ -54,7 +54,7 @@ jobs:
           (cd dist && sha256sum ./* > SHA256SUMS.txt && cat SHA256SUMS.txt)
       - name: Keep the dry-run downloads
         if: github.ref_type != 'tag'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-dry-run
           path: dist
