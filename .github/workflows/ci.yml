@@ -22,7 +22,7 @@ jobs:
     # (Its runners also allow WebKit's bubblewrap sandbox, which the Studio test keeps enabled.)
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install build dependencies
         run: |
           sudo apt-get update
@@ -35,7 +35,7 @@ jobs:
       # Cache only the tarball: restoring FetchContent's stamp files as well would make CMake
       # skip extracting SDL. CMake re-checks the tarball's SHA-256 before using it.
       - name: Cache SDL3 download
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: build-linux/_deps/sdl3-subbuild/sdl3-populate-prefix/src/SDL3-3.2.20.tar.gz
           key: sdl3-3.2.20-tarball-${{ runner.os }}
@@ -56,7 +56,7 @@ jobs:
           package=$(echo unpacked/EveNGINE-Studio-*)
           "$package/Frontier Watch/frontier-watch" --validate
           python3 editor/tests/linux_studio_test.py "$package/evengine-studio" editor/examples/Frontier-Watch.eve
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: EveNGINE-Studio-linux-x86_64
           path: deliverables/*.tar.gz
@@ -67,7 +67,7 @@ jobs:
     # Apple Silicon runner; the universal build also produces the unofficial Intel slice.
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
       - name: Build
@@ -114,7 +114,7 @@ jobs:
           Templates/   editable example projects (open them with Open)
           EOF
           ditto -c -k --keepParent "$name" "$name.zip"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: EveNGINE-Studio-macOS
           path: EveNGINE-Studio-v*-macOS.zip
@@ -124,7 +124,7 @@ jobs:
     name: Headless engine with sanitizers
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Configure
         run: cmake -S . -B build-headless -DLOTA_DESKTOP=OFF -DLOTA_SANITIZE=ON
       - name: Build
@@ -136,11 +136,11 @@ jobs:
     name: Editor model and UI tests
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Editor model tests
@@ -155,7 +155,7 @@ jobs:
           LOTA_TEST_OUTPUT: ${{ runner.temp }}/ui-tests
       - name: Keep UI screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: editor-ui-screenshots
           path: ${{ runner.temp }}/ui-tests
@@ -165,11 +165,11 @@ jobs:
     name: Formatting
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Install formatters
