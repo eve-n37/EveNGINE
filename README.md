@@ -20,7 +20,8 @@ Grab the [v1.1.0 release](https://github.com/eve-n37/EveNGINE/releases/tag/v1.1.
 
 On Linux, Studio needs glibc 2.35 or later (Ubuntu 22.04, Debian 12, Fedora 36 and newer) and
 WebKitGTK 4.1 (`sudo apt install libwebkit2gtk-4.1-0` or `sudo dnf install webkit2gtk4.1`). Unpack
-it and run `./evengine-studio`.
+it and run `./evengine-studio`. On SteamOS and other read-only systems, see
+[Installing on Linux](docs/LINUX.md).
 
 On a Mac, Studio requires macOS 12 or later. Apple Silicon is officially supported. The download also includes
 Intel binaries, but Intel support is unofficial. The apps aren't notarized, so the first time you

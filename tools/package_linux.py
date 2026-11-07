@@ -132,6 +132,10 @@ Studio needs GTK 3 and WebKitGTK 4.1, which most desktops already have:
   Arch:                        sudo pacman -S webkit2gtk-4.1
 This build needs glibc %(glibc)s or newer.
 
+On SteamOS and other read-only systems, the package manager can't install WebKitGTK. Run
+Studio inside a Distrobox container instead; see docs/LINUX.md in the EveNGINE repository:
+https://github.com/eve-n37/EveNGINE/blob/main/docs/LINUX.md
+
 Templates/        editable example projects (open them with Open)
 Frontier Watch/   a sample game exported with Export app; run ./frontier-watch
 
