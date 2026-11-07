@@ -109,6 +109,20 @@ to choose where screenshots go.
 python3 editor/tests/expansion_ui_test.py
 ```
 
+## Continuous integration
+
+`.github/workflows/linux.yml` runs on pushes to `main`, on pull requests, and on demand:
+
+| Job                    | Runner       | What it does                                                         |
+| ---------------------- | ------------ | -------------------------------------------------------------------- |
+| Studio build, tests and package | Ubuntu 22.04 | Builds the Linux desktop app, runs `ctest` (including `linux-studio` under Xvfb), packages Studio, checks the unpacked package and uploads it as an artifact. |
+| Headless engine with sanitizers | Ubuntu 24.04 | Runs `ctest` on a headless build with ASan and UBSan. |
+| Editor model and UI tests | Ubuntu 24.04 | Runs the Node.js model tests and `expansion_ui_test.py` in Chromium. |
+| Formatting             | Ubuntu 24.04 | Checks clang-format 18, Prettier 3.8 and Black.                      |
+
+The Linux package is built on Ubuntu 22.04 so it runs on glibc 2.35 and later. Download it from the
+run's **Artifacts** section. macOS builds aren't covered yet.
+
 ## Code style
 
 Formatting is automatic. Format your changes before committing:

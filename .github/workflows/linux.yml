@@ -1,0 +1,120 @@
+name: Linux
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  studio:
+    name: Studio build, tests and package
+    # Build on the oldest supported Ubuntu so the package runs on glibc 2.35 and later.
+    # (Its runners also allow WebKit's bubblewrap sandbox, which the Studio test keeps enabled.)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cmake pkg-config xvfb xauth python3 \
+            libgtk-3-dev libwebkit2gtk-4.1-dev \
+            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxss-dev \
+            libxkbcommon-dev libwayland-dev wayland-protocols libegl-dev \
+            libasound2-dev libpulse-dev libdbus-1-dev libudev-dev
+      - name: Cache SDL3 download
+        uses: actions/cache@v4
+        with:
+          path: build-linux/_deps/sdl3-subbuild/sdl3-populate-prefix/src
+          key: sdl3-3.2.20-${{ runner.os }}
+      - name: Configure
+        run: cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build-linux --parallel
+      - name: Test
+        run: ctest --test-dir build-linux --output-on-failure
+        env:
+          SDL_AUDIODRIVER: dummy
+      - name: Package
+        run: python3 tools/package_linux.py --build build-linux --output deliverables
+      - name: Check the package runs from a fresh folder
+        run: |
+          mkdir unpacked
+          tar -xzf deliverables/*.tar.gz -C unpacked
+          package=$(echo unpacked/EveNGINE-Studio-*)
+          "$package/Frontier Watch/frontier-watch" --validate
+          python3 editor/tests/linux_studio_test.py "$package/evengine-studio" editor/examples/Frontier-Watch.eve
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EveNGINE-Studio-linux-x86_64
+          path: deliverables/*.tar.gz
+          if-no-files-found: error
+
+  sanitizers:
+    name: Headless engine with sanitizers
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build-headless -DLOTA_DESKTOP=OFF -DLOTA_SANITIZE=ON
+      - name: Build
+        run: cmake --build build-headless --parallel
+      - name: Test
+        run: ctest --test-dir build-headless --output-on-failure
+
+  editor:
+    name: Editor model and UI tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Editor model tests
+        run: node editor/tests/run-model-tests.js
+      - name: Install Playwright
+        run: |
+          python -m pip install playwright==1.64.1
+          python -m playwright install --with-deps chromium
+      - name: Editor UI tests (1.1 features)
+        run: python editor/tests/expansion_ui_test.py
+        env:
+          LOTA_TEST_OUTPUT: ${{ runner.temp }}/ui-tests
+      - name: Keep UI screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: editor-ui-screenshots
+          path: ${{ runner.temp }}/ui-tests
+          if-no-files-found: ignore
+
+  format:
+    name: Formatting
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install formatters
+        run: python -m pip install clang-format==18.1.3 black==26.5.1
+      - name: C++ and Objective-C
+        run: git ls-files '*.cpp' '*.hpp' '*.h' '*.m' ':!:engine/vendor/**' | xargs clang-format --dry-run --Werror
+      - name: JavaScript, CSS and HTML
+        run: npx --yes prettier@3.8.1 --check "**/*.{js,css,html}"
+      - name: Python
+        run: black --check .
