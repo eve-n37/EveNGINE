@@ -30,11 +30,13 @@ jobs:
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxss-dev \
             libxkbcommon-dev libwayland-dev wayland-protocols libegl-dev \
             libasound2-dev libpulse-dev libdbus-1-dev libudev-dev
+      # Cache only the tarball: restoring FetchContent's stamp files as well would make CMake
+      # skip extracting SDL. CMake re-checks the tarball's SHA-256 before using it.
       - name: Cache SDL3 download
         uses: actions/cache@v4
         with:
-          path: build-linux/_deps/sdl3-subbuild/sdl3-populate-prefix/src
-          key: sdl3-3.2.20-${{ runner.os }}
+          path: build-linux/_deps/sdl3-subbuild/sdl3-populate-prefix/src/SDL3-3.2.20.tar.gz
+          key: sdl3-3.2.20-tarball-${{ runner.os }}
       - name: Configure
         run: cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release
       - name: Build

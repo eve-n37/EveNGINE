@@ -69,6 +69,11 @@ if(LOTA_DESKTOP)
         URL_HASH SHA256=467600ae090dd28616fa37369faf4e3143198ff1da37729b552137e47f751a67
         DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
       FetchContent_MakeAvailable(SDL3)
+      if(NOT TARGET SDL3-shared)
+        # Happens when stale download stamps survive (for example from a CI cache) without the
+        # extracted sources.
+        message(FATAL_ERROR "The SDL3 download in ${FETCHCONTENT_BASE_DIR} is incomplete. Delete that folder and configure again.")
+      endif()
       # SDL3's own install rules put the library and its CMake package next to the SDK.
       set(EVE_SDL_FETCHED ON)
     else()
