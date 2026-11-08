@@ -151,6 +151,10 @@ std::string choose(GtkFileChooserAction action, const char *title,
       title, GTK_WINDOW(studio.window), action,
       action == GTK_FILE_CHOOSER_ACTION_OPEN ? "_Open" : "_Save", "_Cancel");
   auto chooser = GTK_FILE_CHOOSER(dialog);
+  // Start in the folder Studio was started from (the AppImage changes the working folder to its
+  // own read-only image), or the home folder.
+  auto from = std::getenv("EVE_STUDIO_WORKDIR");
+  gtk_file_chooser_set_current_folder(chooser, from ? from : g_get_home_dir());
   for (auto &f : filters) {
     GtkFileFilter *filter = gtk_file_filter_new();
     gtk_file_filter_set_name(filter, f.name);
