@@ -69,8 +69,9 @@ for name in ["WebKitWebProcess", "WebKitNetworkProcess", "WebKitGPUProcess"]:
 shutil.copytree(webkit_dir / "injected-bundle", helpers / "injected-bundle")
 pixbuf = system_lib / "gdk-pixbuf-2.0/2.10.0/loaders"
 loaders = lib / "gdk-pixbuf-2.0/loaders"
-loaders.parent.mkdir(parents=True)
-shutil.copytree(pixbuf, loaders)
+loaders.mkdir(parents=True)
+for loader in pixbuf.glob("*.so"):  # the folder can also hold static archives
+    shutil.copy2(loader, loaders)
 
 
 def dependencies(binary):
