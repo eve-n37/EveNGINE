@@ -8,7 +8,7 @@ There are two Linux downloads:
 - **`.tar.gz`**: a folder with Studio, the editable templates and a sample game. It uses the
   WebKitGTK installed on your system, so it's small and gets WebKit's security updates from
   your distribution.
-- **`.AppImage`**: one file (about 70 MB) with WebKitGTK and GTK 3 built in. It runs without installing
+- **`.AppImage`**: one file (about 75 MB) with WebKitGTK and GTK 3 built in. It runs without installing
   anything, including on SteamOS. It's larger, and its WebKitGTK only updates with new EveNGINE
   releases. The templates aren't inside; get them from the `.tar.gz` or the repository's
   `editor/examples` folder.
