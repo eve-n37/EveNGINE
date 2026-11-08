@@ -159,7 +159,7 @@ exec "$APPDIR/usr/bin/evengine-studio" "$@"
 (appdir / "evengine-studio.desktop").write_text(
     "[Desktop Entry]\nType=Application\nName=EveNGINE Studio\n"
     "Comment=Make 2D adventure games\nExec=evengine-studio %f\nIcon=evengine-studio\n"
-    "Categories=Development;Game;\nMimeType=application/x-evengine-project;\nTerminal=false\n"
+    "Categories=Development;\nMimeType=application/x-evengine-project;\nTerminal=false\n"
 )
 shutil.copy2(a.build / "resources/studio.png", appdir / "evengine-studio.png")
 os.symlink("evengine-studio.png", appdir / ".DirIcon")

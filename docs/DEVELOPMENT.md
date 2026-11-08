@@ -54,7 +54,7 @@ it. Build releases on the oldest distribution you want to support; Ubuntu 22.04 
 and later.
 
 The AppImage bundles WebKitGTK, GTK 3 and their libraries, for systems such as SteamOS where
-WebKitGTK can't be installed. It needs `patchelf` and
+WebKitGTK can't be installed. It needs `patchelf`, `desktop-file-validate` (from desktop-file-utils) and
 [appimagetool](https://github.com/AppImage/appimagetool):
 
 ```bash
