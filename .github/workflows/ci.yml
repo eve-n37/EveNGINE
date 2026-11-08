@@ -19,7 +19,6 @@ jobs:
   studio:
     name: Studio build, tests and package
     # Build on the oldest supported Ubuntu so the package runs on glibc 2.35 and later.
-    # (Its runners also allow WebKit's bubblewrap sandbox, which the Studio test keeps enabled.)
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v7
@@ -27,7 +26,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            build-essential cmake pkg-config xvfb xauth python3 \
+            build-essential cmake pkg-config xvfb xauth python3 patchelf desktop-file-utils \
             libgtk-3-dev libwebkit2gtk-4.1-dev \
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxss-dev \
             libxkbcommon-dev libwayland-dev wayland-protocols libegl-dev \
@@ -56,10 +55,33 @@ jobs:
           package=$(echo unpacked/EveNGINE-Studio-*)
           "$package/Frontier Watch/frontier-watch" --validate
           python3 editor/tests/linux_studio_test.py "$package/evengine-studio" editor/examples/Frontier-Watch.eve
+      # The AppImage bundles WebKitGTK for systems where it can't be installed, like SteamOS.
+      # appimagetool is pinned by checksum; the AppImage runtime only has a rolling release.
+      - name: Package AppImage
+        run: |
+          curl -fsSL -o appimagetool https://github.com/AppImage/appimagetool/releases/download/1.9.0/appimagetool-x86_64.AppImage
+          echo "46fdd785094c7f6e545b61afcfb0f3d98d8eab243f644b4b17698c01d06083d1  appimagetool" | sha256sum -c
+          curl -fsSL -o appimage-runtime https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64
+          sha256sum appimage-runtime
+          chmod +x appimagetool
+          python3 tools/package_appimage.py --build build-linux --output deliverables \
+            --appimagetool appimagetool --runtime appimage-runtime
+      - name: Check the AppImage runs without WebKitGTK installed
+        run: |
+          sudo apt-get remove -y libwebkit2gtk-4.1-0 libjavascriptcoregtk-4.1-0
+          ! ldconfig -p | grep -E "libwebkit2gtk|libjavascriptcoregtk"
+          image=$(echo deliverables/*.AppImage)
+          chmod +x "$image"
+          "$image" --version
+          python3 editor/tests/linux_studio_test.py "$image" editor/examples/Frontier-Watch.eve
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: 1
       - uses: actions/upload-artifact@v7
         with:
           name: EveNGINE-Studio-linux-x86_64
-          path: deliverables/*.tar.gz
+          path: |
+            deliverables/*.tar.gz
+            deliverables/*.AppImage
           if-no-files-found: error
 
   macos:

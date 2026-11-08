@@ -53,6 +53,18 @@ The package needs at least the glibc version of the machine it was built on, and
 it. Build releases on the oldest distribution you want to support; Ubuntu 22.04 covers glibc 2.35
 and later.
 
+The AppImage bundles WebKitGTK, GTK 3 and their libraries, for systems such as SteamOS where
+WebKitGTK can't be installed. It needs `patchelf`, `desktop-file-validate` (from desktop-file-utils) and
+[appimagetool](https://github.com/AppImage/appimagetool):
+
+```bash
+python3 tools/package_appimage.py --build build-linux --output deliverables --appimagetool appimagetool-x86_64.AppImage
+```
+
+Leave out `--appimagetool` to only assemble `deliverables/AppDir`, which you can test by running
+its `AppRun`. CI uninstalls the system WebKitGTK and runs the Linux Studio test against the
+AppImage.
+
 ### Without a desktop window (any platform)
 
 The engine, runtime and most tests build without a window or audio device. This is the quickest
@@ -153,7 +165,7 @@ Releases are built by `.github/workflows/release.yml`, so nobody needs to packag
    ```
 
 The workflow checks that the tag matches the CMake version, runs the whole CI suite on Linux and
-macOS, and creates a **draft** release with the Linux `.tar.gz`, the macOS `.zip` and
+macOS, and creates a **draft** release with the Linux `.tar.gz` and `.AppImage`, the macOS `.zip` and
 `SHA256SUMS.txt`. Review the draft on the repository's **Releases** page and click **Publish
 release**. If a step fails, fix it, delete the tag (`git push origin :v1.1.0` and `git tag -d
 v1.1.0`) and tag again.

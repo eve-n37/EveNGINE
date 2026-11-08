@@ -399,6 +399,14 @@ fs::path executableFolder() {
   auto self = fs::read_symlink("/proc/self/exe", error);
   return error ? fs::current_path() : self.parent_path();
 }
+// The AppImage starts Studio from inside its own folder, so paths typed on the command line are
+// resolved against the folder the user started it from (see tools/package_appimage.py).
+fs::path userPath(const std::string &path) {
+  fs::path p(path);
+  if (auto from = std::getenv("EVE_STUDIO_WORKDIR"); from && p.is_relative())
+    return fs::path(from) / p;
+  return fs::absolute(p);
+}
 int usage() {
   std::cerr << "Usage: evengine-studio [project.eve]\n"
                "       evengine-studio --export <project.eve> <game folder>\n"
@@ -428,6 +436,8 @@ int main(int argc, char **argv) {
   if (!args.empty() && args[0] == "--export") {
     if (args.size() != 3)
       return usage();
+    args[1] = userPath(args[1]).string();
+    args[2] = userPath(args[2]).string();
     try {
       auto json = canonicalJson(readFile(args[1]));
       auto project = temporaryProject(json);
@@ -450,7 +460,7 @@ int main(int argc, char **argv) {
   if (args.size() > 1 || (!args.empty() && args[0].rfind("--", 0) == 0))
     return usage();
   if (!args.empty())
-    studio.pendingPath = fs::absolute(args[0]).string();
+    studio.pendingPath = userPath(args[0]).string();
   if (!fs::is_regular_file(studio.resources / "ui" / "index.html")) {
     std::cerr << "EveNGINE Studio resources are missing: " << studio.resources << '\n';
     return 1;
@@ -459,7 +469,7 @@ int main(int argc, char **argv) {
     studio.testing = true;
     std::stringstream list(choices);
     for (std::string path; std::getline(list, path, ':');)
-      studio.testChoices.push_back(path);
+      studio.testChoices.push_back(userPath(path).string());
   }
   gtk_init(&argc, &argv);
   g_set_application_name("EveNGINE Studio");

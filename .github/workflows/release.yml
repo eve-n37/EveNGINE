@@ -50,6 +50,7 @@ jobs:
         run: |
           ls -l dist
           test -f "dist/EveNGINE-Studio-v${{ needs.version.outputs.version }}-linux-x86_64.tar.gz"
+          test -f "dist/EveNGINE-Studio-v${{ needs.version.outputs.version }}-linux-x86_64.AppImage"
           test -f "dist/EveNGINE-Studio-v${{ needs.version.outputs.version }}-macOS.zip"
           (cd dist && sha256sum ./* > SHA256SUMS.txt && cat SHA256SUMS.txt)
       - name: Keep the dry-run downloads
