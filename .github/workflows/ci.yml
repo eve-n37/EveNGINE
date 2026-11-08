@@ -60,9 +60,9 @@ jobs:
       # appimagetool is pinned by checksum; the AppImage runtime only has a rolling release.
       - name: Package AppImage
         run: |
-          curl -fsSL -o appimagetool https://github.com/AppImage/appimagetool/releases/download/1.9.0/appimagetool-x86_64.AppImage
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o appimagetool https://github.com/AppImage/appimagetool/releases/download/1.9.0/appimagetool-x86_64.AppImage
           echo "46fdd785094c7f6e545b61afcfb0f3d98d8eab243f644b4b17698c01d06083d1  appimagetool" | sha256sum -c
-          curl -fsSL -o appimage-runtime https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o appimage-runtime https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64
           sha256sum appimage-runtime
           chmod +x appimagetool
           python3 tools/package_appimage.py --build build-linux --output deliverables \
