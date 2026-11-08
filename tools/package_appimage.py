@@ -120,15 +120,21 @@ if old not in data:
 webkit.write_bytes(data.replace(old, new))
 print("Patched %d WebKit helper paths" % data.count(old))
 
-# Image loaders, listed relative to usr (AppRun's working folder).
+# Image loaders, listed relative to usr (AppRun's working folder). The query writes absolute
+# paths, so strip the AppDir's real location from them.
+root_usr = str(usr.resolve()) + "/"
 cache = subprocess.run(
     ["/usr/lib/%s/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" % triplet]
-    + [str(f) for f in sorted(loaders.glob("*.so"))],
+    + [str(f.resolve()) for f in sorted(loaders.glob("*.so"))],
     capture_output=True,
     text=True,
     check=True,
-).stdout
-(lib / "gdk-pixbuf-2.0/loaders.cache").write_text(cache.replace(str(usr) + "/", ""))
+).stdout.replace(root_usr, "")
+modules = re.findall(r'^"([^"]+\.so)"', cache, re.M)
+if not modules or any(m.startswith("/") or not (usr / m).is_file() for m in modules):
+    raise SystemExit("Bad image loader paths in loaders.cache: %s" % modules)
+(lib / "gdk-pixbuf-2.0/loaders.cache").write_text(cache)
+print("Listed %d image loaders" % len(modules))
 
 # GTK's settings schemas (the file chooser needs them).
 schemas = usr / "share/glib-2.0/schemas"
