@@ -16,8 +16,60 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  web:
+    name: Web runtime and browser test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      # Pinned Emscripten release from the official SDK.
+      - name: Install Emscripten
+        run: |
+          git clone --depth 1 --branch 4.0.10 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
+          "$RUNNER_TEMP/emsdk/emsdk" install 4.0.10
+          "$RUNNER_TEMP/emsdk/emsdk" activate 4.0.10
+      - name: Build the web runtime
+        run: |
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          emcmake cmake -S web -B build-web -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-web --parallel
+          mkdir web-runtime
+          cp build-web/evengine.js build-web/evengine.wasm web-runtime/
+          ls -l web-runtime
+      - name: Export a sample game for the web
+        run: |
+          cmake -S . -B build-headless -DLOTA_DESKTOP=OFF
+          cmake --build build-headless --target evengine-web-export-cli --parallel
+          cp editor/web/index.html web-runtime/
+          build-headless/evengine-web-export-cli editor/examples/Frontier-Watch.eve web-runtime \
+            editor/examples/font.pam editor/native/Studio.png web-game
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install Playwright
+        run: |
+          python -m pip install playwright==1.64.1 pillow==12.0.0
+          python -m playwright install --with-deps chromium
+      - name: Play the exported game in a browser
+        run: python editor/tests/web_game_test.py web-game "$RUNNER_TEMP/web-shots"
+      - name: Keep browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-game-screenshots
+          path: ${{ runner.temp }}/web-shots
+          if-no-files-found: ignore
+      # Both Studio apps carry this runtime so they can export web games.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: web-game-runtime
+          path: |
+            build-web/evengine.js
+            build-web/evengine.wasm
+          if-no-files-found: error
+
   studio:
     name: Studio build, tests and package
+    needs: web
     # Build on the oldest supported Ubuntu so the package runs on glibc 2.35 and later.
     runs-on: ubuntu-22.04
     steps:
@@ -38,8 +90,12 @@ jobs:
         with:
           path: build-linux/_deps/sdl3-subbuild/sdl3-populate-prefix/src/SDL3-3.2.20.tar.gz
           key: sdl3-3.2.20-tarball-${{ runner.os }}
+      - uses: actions/download-artifact@v8
+        with:
+          name: web-game-runtime
+          path: web-runtime
       - name: Configure
-        run: cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release -DEVE_WEB_RUNTIME_DIR="$PWD/web-runtime"
       - name: Build
         run: cmake --build build-linux --parallel
       - name: Test
@@ -54,6 +110,7 @@ jobs:
           tar -xzf deliverables/*.tar.gz -C unpacked
           package=$(echo unpacked/EveNGINE-Studio-*)
           "$package/Frontier Watch/frontier-watch" --validate
+          test -f "$package/resources/web/evengine.wasm"
           python3 editor/tests/linux_studio_test.py "$package/evengine-studio" editor/examples/Frontier-Watch.eve
       # The AppImage bundles WebKitGTK for systems where it can't be installed, like SteamOS.
       # appimagetool is pinned by checksum; the AppImage runtime only has a rolling release.
@@ -95,14 +152,18 @@ jobs:
 
   macos:
     name: macOS Studio app and tests
-    # Waits for the Linux job, whose game runtime goes inside the Mac app for Linux exports.
-    needs: studio
+    # Waits for the Linux and web jobs, whose game runtimes go inside the Mac app.
+    needs: [web, studio]
     # Apple Silicon runner; the universal build also produces the unofficial Intel slice.
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: web-game-runtime
+          path: web-runtime
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DEVE_WEB_RUNTIME_DIR="$PWD/web-runtime"
       - name: Build
         run: cmake --build build --config Release --parallel
       - name: Test
@@ -138,6 +199,7 @@ jobs:
           test -f "$app/Contents/Frameworks/SDL3.framework/SDL3"
           test -f "$app/Contents/Resources/ui/index.html"
           test -f "$app/Contents/Resources/studio.png"
+          for file in index.html evengine.js evengine.wasm; do test -f "$app/Contents/Resources/web/$file"; done
           file "$app/Contents/Resources/linux-x86_64/runtime" | grep -q "ELF 64-bit LSB.*x86-64"
           file "$app/Contents/Resources/linux-x86_64/libSDL3.so.0" | grep -q "ELF 64-bit LSB shared object, x86-64"
           test "$(plutil -extract CFBundleShortVersionString raw "$app/Contents/Info.plist")" = "$version"

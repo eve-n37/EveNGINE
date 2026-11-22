@@ -62,6 +62,14 @@ function exportTargets() {
     ['folder', 'Folder'],
   ];
   targets.push(['linux', 'Linux (x86_64)', host === 'linux' ? linux.reverse() : linux]);
+  targets.push([
+    'web',
+    'Web browser',
+    [
+      ['zip', 'ZIP (for itch.io and other sites)'],
+      ['folder', 'Folder'],
+    ],
+  ]);
   return targets;
 }
 function rememberedExport() {

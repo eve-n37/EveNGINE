@@ -238,6 +238,16 @@ untouched. Names, versions and window settings come from **Game → Setup → Ex
   `./install-desktop-entry.sh` to add the game to their application menu. Exported games need an
   x86_64 desktop Linux with X11 or Wayland, but not WebKitGTK. Linux export from a Mac uses the
   Linux runtime that release downloads of Studio include.
+- **For a web browser**, choose a format:
+  - **ZIP**: everything in a `.zip` with `index.html` at the top, ready to upload to
+    [itch.io](https://itch.io) (create an HTML project and tick **This file will be played in the
+    browser**) or a similar site.
+  - **Folder**: the same files in a folder, to put on any web host.
+
+  Players click **Play** to start, which also lets the browser play sound. Saves stay in the
+  player's browser. Web games have to be opened through a web server: double-clicking
+  `index.html` won't work. To try one on your own computer, run `python3 -m http.server` in its
+  folder and open [http://localhost:8000](http://localhost:8000).
 
 You can also export from a terminal on Linux:
 

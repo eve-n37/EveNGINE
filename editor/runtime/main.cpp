@@ -2,6 +2,74 @@
 #include "lota/platform.hpp"
 #include <iostream>
 #include <filesystem>
+#include <memory>
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
+namespace {
+// Everything one running game needs between frames. Kept on the heap because in a browser main()
+// returns before the first frame.
+struct Session {
+  explicit Session(const std::string &path) : game(path) {}
+  lota::StudioGame game;
+  std::unique_ptr<lota::Platform> platform;
+  bool fullscreen = false, suppressCapture = false;
+  lota::Input input;
+  double previous = 0, accumulator = 0;
+  // Runs one frame. Returns false once the game has quit.
+  bool frame() {
+    if (game.quit || !platform->poll(input))
+      return false;
+    if (platform->takeCloseRequest())
+      game.requestWindowClose();
+    if (game.quit)
+      return false;
+    game.controllerMode = platform->usingGamepad();
+    auto key = platform->takeKeyPress();
+    if (!game.pendingBinding.empty() && !key.empty()) {
+      game.captureBinding(key);
+      platform->configureInput(game.keyBindings, game.buttonBindings);
+      // A captured key must be released before it can confirm another menu action.
+      input = lota::Input{};
+      for (auto &binding : game.keyBindings)
+        if (binding.second == key)
+          input.held[size_t(binding.first)] = true;
+      suppressCapture = true;
+    }
+    if (suppressCapture) {
+      input.consume();
+      if (std::none_of(input.held.begin(), input.held.end(), [](bool held) { return held; }))
+        suppressCapture = false;
+    }
+    if (game.fullscreen != fullscreen) {
+      if (platform->setFullscreen(game.fullscreen))
+        fullscreen = game.fullscreen;
+      else {
+        game.fullscreen = fullscreen;
+        game.toast = "Fullscreen is unavailable.";
+        game.toastTime = 3;
+      }
+    }
+    double now = platform->seconds();
+    game.frameMs = float((now - previous) * 1000);
+    accumulator += std::clamp(now - previous, 0., .1);
+    previous = now;
+    while (accumulator >= lota::Tick) {
+      game.update(input, lota::Tick);
+      input.consume();
+      accumulator -= lota::Tick;
+    }
+    platform->setMusic(game.music(), game.musicVolume * game.userMusic);
+    for (auto &id : game.soundEvents)
+      platform->playSound(game.audioAssets.at(id), game.sfxVolume * game.userEffects);
+    game.soundEvents.clear();
+    platform->present(game.draw());
+    platform->idle();
+    return true;
+  }
+};
+} // namespace
 
 int main(int argc, char **argv) {
   try {
@@ -30,7 +98,8 @@ int main(int argc, char **argv) {
       else
         throw std::runtime_error("Unknown option");
     }
-    lota::StudioGame game(path);
+    auto session = std::make_unique<Session>(path);
+    auto &game = session->game;
     if (!scene.empty()) {
       if (!game.project.scenes.count(scene))
         throw std::runtime_error("Unknown playtest map");
@@ -53,62 +122,29 @@ int main(int argc, char **argv) {
                 << game.clips.size() << " clips\n";
       return 0;
     }
-    auto platform = lota::createPlatform(game.atlas, game.appName, game.windowScale);
-    if (!game.audioAssets.empty() && !platform->audioAvailable())
+    session->platform = lota::createPlatform(game.atlas, game.appName, game.windowScale);
+    if (!game.audioAssets.empty() && !session->platform->audioAvailable())
       std::cerr << "Audio device unavailable; continuing silently.\n";
-    game.beginSession(platform->savePath(game.project.id), !scene.empty());
-    platform->configureInput(game.keyBindings, game.buttonBindings);
-    platform->confirmWindowClose(true);
-    bool fullscreen = false, suppressCapture = false;
-    lota::Input input;
-    double previous = platform->seconds(), accumulator = 0;
-    while (!game.quit && platform->poll(input)) {
-      if (platform->takeCloseRequest())
-        game.requestWindowClose();
-      if (game.quit)
-        break;
-      game.controllerMode = platform->usingGamepad();
-      auto key = platform->takeKeyPress();
-      if (!game.pendingBinding.empty() && !key.empty()) {
-        game.captureBinding(key);
-        platform->configureInput(game.keyBindings, game.buttonBindings);
-        // A captured key must be released before it can confirm another menu action.
-        input = lota::Input{};
-        for (auto &binding : game.keyBindings)
-          if (binding.second == key)
-            input.held[size_t(binding.first)] = true;
-        suppressCapture = true;
-      }
-      if (suppressCapture) {
-        input.consume();
-        if (std::none_of(input.held.begin(), input.held.end(), [](bool held) { return held; }))
-          suppressCapture = false;
-      }
-      if (game.fullscreen != fullscreen) {
-        if (platform->setFullscreen(game.fullscreen))
-          fullscreen = game.fullscreen;
-        else {
-          game.fullscreen = fullscreen;
-          game.toast = "Fullscreen is unavailable.";
-          game.toastTime = 3;
-        }
-      }
-      double now = platform->seconds();
-      game.frameMs = float((now - previous) * 1000);
-      accumulator += std::clamp(now - previous, 0., .1);
-      previous = now;
-      while (accumulator >= lota::Tick) {
-        game.update(input, lota::Tick);
-        input.consume();
-        accumulator -= lota::Tick;
-      }
-      platform->setMusic(game.music(), game.musicVolume * game.userMusic);
-      for (auto &id : game.soundEvents)
-        platform->playSound(game.audioAssets.at(id), game.sfxVolume * game.userEffects);
-      game.soundEvents.clear();
-      platform->present(game.draw());
-      platform->idle();
+    game.beginSession(session->platform->savePath(game.project.id), !scene.empty());
+    session->platform->configureInput(game.keyBindings, game.buttonBindings);
+    session->platform->confirmWindowClose(true);
+    session->previous = session->platform->seconds();
+#ifdef __EMSCRIPTEN__
+    // The browser calls frame() once per display refresh; main returns straight away.
+    emscripten_set_main_loop_arg(
+        [](void *data) {
+          auto *s = static_cast<Session *>(data);
+          if (!s->frame()) {
+            emscripten_cancel_main_loop();
+            EM_ASM(if (typeof eveGameEnded == = 'function') eveGameEnded(););
+          }
+        },
+        session.release(), 0, false);
+    return 0;
+#else
+    while (session->frame()) {
     }
+#endif
     return 0;
   } catch (const std::exception &error) {
     std::cerr << error.what() << '\n';

@@ -1,6 +1,7 @@
 // EveNGINE Studio for Linux: hosts the HTML editor in WebKitGTK and answers the same native
 // bridge actions as the macOS shell (editor/native/main.m).
 #include "../export/linux_export.hpp"
+#include "../export/web_export.hpp"
 #include "lota/json.hpp"
 #include <gtk/gtk.h>
 #include <webkit2/webkit2.h>
@@ -87,6 +88,12 @@ std::string canonicalJson(const std::string &text) {
   if (out.empty())
     throw std::runtime_error("This file is not an EveNGINE project.");
   return out;
+}
+// Adds an extension the file chooser left off.
+std::string withExtension(const std::string &path, const std::string &extension) {
+  bool has = path.size() >= extension.size() &&
+             path.compare(path.size() - extension.size(), extension.size(), extension) == 0;
+  return has ? path : path + extension;
 }
 std::string property(JSCValue *object, const char *name) {
   JSCValue *v = jsc_value_object_get_property(object, name);
@@ -303,20 +310,50 @@ void handle(JSCValue *body) {
                               "Esc opens Pause.\"}");
       }
       auto target = property(body, "target"), format = property(body, "format");
-      if ((!target.empty() && target != "linux") ||
-          (!format.empty() && format != "folder" && format != "tar.gz"))
-        throw std::runtime_error("This copy of Studio can't make that kind of export.");
-      bool archive = format == "tar.gz";
       auto parsed = lota::Json::parse(json);
       auto name = parsed["title"].text("My Adventure");
       if (parsed.has("export") && parsed["export"].has("appName"))
         name = parsed["export"]["appName"].text(name);
+      if (target == "web") {
+        if (format != "zip" && format != "folder")
+          throw std::runtime_error("This copy of Studio can't make that kind of export.");
+        auto web = studio.resources / "web";
+        if (!fs::exists(web / "evengine.wasm"))
+          throw std::runtime_error("This copy of Studio doesn't include the web runtime. Release "
+                                   "downloads of Studio do.");
+        bool zip = format == "zip";
+        auto destination = zip ? choose(GTK_FILE_CHOOSER_ACTION_SAVE, "Export web game",
+                                        {{"ZIP archives", {"*.zip"}}}, name + ".zip")
+                               : choose(GTK_FILE_CHOOSER_ACTION_SAVE, "Export web game",
+                                        {{"Game folders", {"*"}}}, name + " (web)");
+        if (destination.empty())
+          return reply(request, cancelled);
+        if (zip)
+          destination = withExtension(destination, ".zip");
+        std::string error;
+        eve::WebExportSources sources{
+            (web / "evengine.js").string(), (web / "evengine.wasm").string(),
+            (web / "index.html").string(), (studio.resources / "font.pam").string(),
+            (studio.resources / "studio.png").string()};
+        if (!eve::exportWebGame(json, sources, destination, error, zip))
+          throw std::runtime_error(error);
+        return reply(request, "{\"message\":" +
+                                  quote("Exported " + fs::path(destination).filename().string() +
+                                        ". Upload it to a web host to play.") +
+                                  "}");
+      }
+      if ((!target.empty() && target != "linux") ||
+          (!format.empty() && format != "folder" && format != "tar.gz"))
+        throw std::runtime_error("This copy of Studio can't make that kind of export.");
+      bool archive = format == "tar.gz";
       auto destination = archive ? choose(GTK_FILE_CHOOSER_ACTION_SAVE, "Export Linux game",
                                           {{"Compressed archives", {"*.tar.gz"}}}, name + ".tar.gz")
                                  : choose(GTK_FILE_CHOOSER_ACTION_SAVE, "Export Linux game",
                                           {{"Game folders", {"*"}}}, name);
       if (destination.empty())
         return reply(request, cancelled);
+      if (archive)
+        destination = withExtension(destination, ".tar.gz");
       std::string error;
       eve::LinuxExportSources sources{(studio.resources / "runtime").string(),
                                       (studio.resources / "font.pam").string(),

@@ -60,8 +60,14 @@ if(LOTA_DESKTOP)
     target_link_options(lota_platform INTERFACE "$<BUILD_INTERFACE:-Wl,-rpath,${LOTA_SDL_FRAMEWORK}/..>" "$<BUILD_INTERFACE:-Wl,-rpath,@executable_path/../Frameworks>")
     install(DIRECTORY "${LOTA_SDL_FRAMEWORK}" DESTINATION Frameworks USE_SOURCE_PERMISSIONS)
   elseif(NOT SDL3_FOUND)
-    set(SDL_SHARED ON CACHE BOOL "" FORCE)
-    set(SDL_STATIC OFF CACHE BOOL "" FORCE)
+    if(EMSCRIPTEN)
+      # Browsers can't load shared libraries, so web builds link SDL3 statically.
+      set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+      set(SDL_STATIC ON CACHE BOOL "" FORCE)
+    else()
+      set(SDL_SHARED ON CACHE BOOL "" FORCE)
+      set(SDL_STATIC OFF CACHE BOOL "" FORCE)
+    endif()
     set(SDL_TESTS OFF CACHE BOOL "" FORCE)
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vendor/SDL3-3.2.20/CMakeLists.txt")
       add_subdirectory(vendor/SDL3-3.2.20 EXCLUDE_FROM_ALL)
@@ -74,7 +80,7 @@ if(LOTA_DESKTOP)
         URL_HASH SHA256=467600ae090dd28616fa37369faf4e3143198ff1da37729b552137e47f751a67
         DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
       FetchContent_MakeAvailable(SDL3)
-      if(NOT TARGET SDL3-shared)
+      if(NOT TARGET SDL3-shared AND NOT TARGET SDL3-static)
         # Happens when stale download stamps survive (for example from a CI cache) without the
         # extracted sources.
         message(FATAL_ERROR "The SDL3 download in ${FETCHCONTENT_BASE_DIR} is incomplete. Delete that folder and configure again.")
@@ -90,10 +96,14 @@ if(LOTA_DESKTOP)
     # Link the fetched library by file: SDL3::SDL3 only exists in this build tree, so the SDK
     # export must not name it.
     # (The installed LotAEngineConfig adds the SDL3::SDL3 link after find_dependency.)
-    add_dependencies(lota_platform SDL3-shared)
     target_include_directories(lota_platform PUBLIC $<BUILD_INTERFACE:${sdl3_SOURCE_DIR}/include>)
-    target_link_libraries(lota_platform PUBLIC
-      $<BUILD_INTERFACE:${sdl3_BINARY_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}SDL3${CMAKE_SHARED_LIBRARY_SUFFIX}>)
+    if(EMSCRIPTEN)
+      target_link_libraries(lota_platform PUBLIC $<BUILD_INTERFACE:SDL3-static>)
+    else()
+      add_dependencies(lota_platform SDL3-shared)
+      target_link_libraries(lota_platform PUBLIC
+        $<BUILD_INTERFACE:${sdl3_BINARY_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}SDL3${CMAKE_SHARED_LIBRARY_SUFFIX}>)
+    endif()
   else()
     target_link_libraries(lota_platform PUBLIC SDL3::SDL3)
   endif()

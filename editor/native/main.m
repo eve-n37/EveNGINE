@@ -2,6 +2,7 @@
 #import <WebKit/WebKit.h>
 #import "GameAppearance.h"
 #include "../export/linux_export.hpp"
+#include "../export/web_export.hpp"
 @interface StudioDelegate : NSObject <NSApplicationDelegate, NSWindowDelegate,
                                       WKScriptMessageHandler, WKNavigationDelegate, WKUIDelegate>
 @property NSWindow *window;
@@ -253,8 +254,8 @@
         }
       } else {
         NSString *target = body[@"target"] ?: @"mac", *format = body[@"format"] ?: @"app";
-        if ([target isEqual:@"linux"]) {
-          [self exportLinux:request project:body[@"project"] format:format];
+        if ([target isEqual:@"linux"] || [target isEqual:@"web"]) {
+          [self exportOther:request target:target project:body[@"project"] format:format];
           return;
         }
         if (![target isEqual:@"mac"] || ![@[ @"app", @"zip", @"dmg" ] containsObject:format]) {
@@ -310,25 +311,33 @@
                             userInfo:@{NSLocalizedDescriptionKey : @"Unknown editor action"}];
   [self reply:request data:@{@"error" : error.localizedDescription ?: @"Operation failed"}];
 }
-// Exports a Linux game folder or .tar.gz with the prebuilt Linux runtime and SDL3 that release
-// builds of Studio carry in Resources/linux-x86_64.
-- (void)exportLinux:(id)request project:(NSDictionary *)project format:(NSString *)format {
-  NSURL *linux = [self.resources URLByAppendingPathComponent:@"linux-x86_64"];
-  NSURL *runtime = [linux URLByAppendingPathComponent:@"runtime"],
-        *sdl = [linux URLByAppendingPathComponent:@"libSDL3.so.0"];
-  NSFileManager *fm = NSFileManager.defaultManager;
-  if (![@[ @"tar.gz", @"folder" ] containsObject:format]) {
+// Exports a Linux game (folder or .tar.gz) or a web game (folder or .zip) with the shared C++
+// exporters. Release builds carry the Linux runtime and SDL3 in Resources/linux-x86_64 and the web
+// runtime in Resources/web.
+- (void)exportOther:(id)request
+             target:(NSString *)target
+            project:(NSDictionary *)project
+             format:(NSString *)format {
+  BOOL web = [target isEqual:@"web"];
+  NSArray *formats = web ? @[ @"zip", @"folder" ] : @[ @"tar.gz", @"folder" ];
+  if (![formats containsObject:format]) {
     [self reply:request data:@{@"error" : @"This copy of Studio can't make that kind of export."}];
     return;
   }
-  if (![fm fileExistsAtPath:runtime.path] || ![fm fileExistsAtPath:sdl.path]) {
-    [self reply:request
-           data:@{
-             @"error" : @"This copy of Studio doesn't include the Linux runtime. Release "
-                        @"downloads of Studio do."
-           }];
-    return;
-  }
+  NSURL *runtimeFolder =
+      [self.resources URLByAppendingPathComponent:web ? @"web" : @"linux-x86_64"];
+  NSArray *needed =
+      web ? @[ @"evengine.js", @"evengine.wasm", @"index.html" ] : @[ @"runtime", @"libSDL3.so.0" ];
+  for (NSString *file in needed)
+    if (![NSFileManager.defaultManager
+            fileExistsAtPath:[runtimeFolder URLByAppendingPathComponent:file].path]) {
+      NSString *message = web ? @"This copy of Studio doesn't include the web runtime. Release "
+                                @"downloads of Studio do."
+                              : @"This copy of Studio doesn't include the Linux runtime. Release "
+                                @"downloads of Studio do.";
+      [self reply:request data:@{@"error" : message}];
+      return;
+    }
   NSError *error = nil;
   NSData *json = [NSJSONSerialization dataWithJSONObject:project
                                                  options:NSJSONWritingPrettyPrinted
@@ -337,28 +346,39 @@
     [self reply:request data:@{@"error" : error.localizedDescription ?: @"Invalid project."}];
     return;
   }
-  BOOL archive = [format isEqual:@"tar.gz"];
+  BOOL packed = ![format isEqual:@"folder"];
   NSString *name = EveExportAppName(project);
+  NSString *extension = packed ? [@"." stringByAppendingString:format] : @"";
   NSSavePanel *panel = [NSSavePanel savePanel];
-  panel.title = @"Export Linux game";
-  panel.nameFieldStringValue = archive ? [name stringByAppendingString:@".tar.gz"] : name;
+  panel.title = web ? @"Export web game" : @"Export Linux game";
+  panel.nameFieldStringValue = [(web && !packed ? [name stringByAppendingString:@" (web)"] : name)
+      stringByAppendingString:extension];
   if ([panel runModal] != NSModalResponseOK) {
     [self reply:request data:@{@"cancelled" : @YES}];
     return;
   }
   NSURL *destination = panel.URL;
-  if (archive && ![destination.lastPathComponent hasSuffix:@".tar.gz"])
+  if (packed && ![destination.lastPathComponent hasSuffix:extension])
     destination = [destination.URLByDeletingLastPathComponent
         URLByAppendingPathComponent:[destination.lastPathComponent
-                                        stringByAppendingString:@".tar.gz"]];
+                                        stringByAppendingString:extension]];
   NSString *text = [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
+  const char *font =
+                 [self.resources URLByAppendingPathComponent:@"font.pam"].fileSystemRepresentation,
+             *icon = [self.resources URLByAppendingPathComponent:@"studio.png"]
+                         .fileSystemRepresentation;
   char message[1024] = {0};
-  if (!eveExportLinuxGame(
-          text.UTF8String, runtime.fileSystemRepresentation,
-          [self.resources URLByAppendingPathComponent:@"font.pam"].fileSystemRepresentation,
-          sdl.fileSystemRepresentation,
-          [self.resources URLByAppendingPathComponent:@"studio.png"].fileSystemRepresentation,
-          destination.fileSystemRepresentation, archive, message, sizeof message)) {
+  int ok =
+      web ? eveExportWebGame(text.UTF8String, runtimeFolder.fileSystemRepresentation, font, icon,
+                             destination.fileSystemRepresentation, packed, message, sizeof message)
+          : eveExportLinuxGame(
+                text.UTF8String,
+                [runtimeFolder URLByAppendingPathComponent:@"runtime"].fileSystemRepresentation,
+                font,
+                [runtimeFolder URLByAppendingPathComponent:@"libSDL3.so.0"]
+                    .fileSystemRepresentation,
+                icon, destination.fileSystemRepresentation, packed, message, sizeof message);
+  if (!ok) {
     [self reply:request data:@{@"error" : @(message)}];
     return;
   }

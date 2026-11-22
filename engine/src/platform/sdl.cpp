@@ -5,6 +5,10 @@
 #include <SDL3/SDL_main.h>
 #include <stdexcept>
 #include <vector>
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include <sys/stat.h>
+#endif
 
 namespace lota {
 namespace {
@@ -20,6 +24,7 @@ class SDLPlatform final : public Platform {
   SDL_Gamepad *gamepad = nullptr;
   std::array<bool, size_t(Action::Count)> keyboard{}, controller{};
   bool running = true, closeConfirmation = false, closeRequested = false;
+  double lastSync = 0;
   bool customInput = false, padActive = false;
   std::string rawKey;
   std::map<Action, std::string> configuredKeys, configuredButtons;
@@ -377,16 +382,33 @@ public:
     SDL_PutAudioStreamData(audio, wave.data(), int(wave.size() * sizeof(float)));
   }
   std::string savePath(const std::string &project) override {
+#ifdef __EMSCRIPTEN__
+    // The web page mounts browser storage (IndexedDB) at /saves before the game starts.
+    std::string folder = "/saves/" + project;
+    mkdir(folder.c_str(), 0755);
+    return folder + "/save.dat";
+#else
     char *path = SDL_GetPrefPath("LotAEngine", project.c_str());
     if (!path)
       throw std::runtime_error("Cannot find save directory");
     std::string result = std::string(path) + "save.dat";
     SDL_free(path);
     return result;
+#endif
   }
   void idle() override {
     pumpMusic();
+#ifdef __EMSCRIPTEN__
+    // The browser paces frames, so don't sleep. Copy saves to browser storage every few seconds;
+    // the page also does it when the player leaves.
+    double now = seconds();
+    if (now - lastSync > 2) {
+      lastSync = now;
+      EM_ASM(if (typeof eveSyncSaves == = 'function') eveSyncSaves(););
+    }
+#else
     SDL_Delay(1);
+#endif
   }
 };
 } // namespace

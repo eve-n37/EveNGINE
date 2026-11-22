@@ -6,6 +6,19 @@ if(NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET)
 endif()
 project(EveNGINESDK VERSION 1.1.0 LANGUAGES CXX)
 add_subdirectory(engine)
+# Folder with Emscripten's evengine.js and evengine.wasm (see web/CMakeLists.txt). When set,
+# Studio carries them so it can export web games.
+set(EVE_WEB_RUNTIME_DIR "" CACHE PATH "Folder with the web runtime (evengine.js, evengine.wasm)")
+set(EVE_WEB_RUNTIME_COPY "")
+if(EVE_WEB_RUNTIME_DIR)
+  if(NOT EXISTS "${EVE_WEB_RUNTIME_DIR}/evengine.wasm" OR NOT EXISTS "${EVE_WEB_RUNTIME_DIR}/evengine.js")
+    message(FATAL_ERROR "EVE_WEB_RUNTIME_DIR must hold evengine.js and evengine.wasm")
+  endif()
+  set(EVE_WEB_RUNTIME_COPY "${EVE_WEB_RUNTIME_DIR}/evengine.js" "${EVE_WEB_RUNTIME_DIR}/evengine.wasm")
+endif()
+# Game exporters shared by Studio on Linux and on a Mac (Linux and web games).
+add_library(eve-export STATIC editor/export/linux_export.cpp editor/export/web_export.cpp editor/export/common.cpp editor/export/archive.cpp editor/export/png.cpp)
+target_link_libraries(eve-export PUBLIC LotA::Core)
 add_executable(my-game starter/main.cpp)
 target_link_libraries(my-game PRIVATE LotA::Core LotA::Platform)
 add_custom_command(TARGET my-game POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/starter/content" "$<TARGET_FILE_DIR:my-game>/starter/content")
@@ -26,10 +39,9 @@ target_link_libraries(lota-studio-tests PRIVATE LotA::Studio)
 add_test(NAME studio-runtime-regression COMMAND lota-studio-tests "${CMAKE_CURRENT_SOURCE_DIR}/editor/examples/Mosslight.lota" "${CMAKE_CURRENT_BINARY_DIR}")
 if(APPLE)
   enable_language(OBJC)
-  add_executable(LotAStudio MACOSX_BUNDLE editor/native/main.m editor/native/GameAppearance.m
-    editor/export/linux_export.cpp editor/export/png.cpp)
+  add_executable(LotAStudio MACOSX_BUNDLE editor/native/main.m editor/native/GameAppearance.m)
   target_compile_options(LotAStudio PRIVATE $<$<COMPILE_LANGUAGE:OBJC>:-fobjc-arc -fblocks>)
-  target_link_libraries(LotAStudio PRIVATE "-framework Cocoa" "-framework WebKit" LotA::Core)
+  target_link_libraries(LotAStudio PRIVATE "-framework Cocoa" "-framework WebKit" eve-export)
   set_target_properties(LotAStudio PROPERTIES OUTPUT_NAME "EveNGINE-Studio" MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/editor/native/Info.plist")
   add_dependencies(LotAStudio lota-studio-runtime)
   add_executable(evengine-export-tests editor/tests/export_test.m editor/native/GameAppearance.m)
@@ -43,6 +55,8 @@ if(APPLE)
     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/editor/examples/font.pam" "$<TARGET_BUNDLE_DIR:LotAStudio>/Contents/Resources/font.pam"
     COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:lota-studio-runtime>" "$<TARGET_BUNDLE_DIR:LotAStudio>/Contents/Resources/Runtime"
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/engine/vendor/SDL3.framework" "$<TARGET_BUNDLE_DIR:LotAStudio>/Contents/Frameworks/SDL3.framework"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_BUNDLE_DIR:LotAStudio>/Contents/Resources/web"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/editor/web/index.html" ${EVE_WEB_RUNTIME_COPY} "$<TARGET_BUNDLE_DIR:LotAStudio>/Contents/Resources/web/"
     DEPENDS LotAStudio lota-studio-runtime)
 endif()
 
@@ -54,8 +68,8 @@ if(LOTA_DESKTOP AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
    pkg_check_modules(EVE_GTK IMPORTED_TARGET gtk+-3.0 webkit2gtk-4.1)
   endif()
   if(EVE_GTK_FOUND)
-   add_executable(evengine-studio editor/linux/main.cpp editor/export/linux_export.cpp editor/export/png.cpp)
-   target_link_libraries(evengine-studio PRIVATE PkgConfig::EVE_GTK LotA::Core)
+   add_executable(evengine-studio editor/linux/main.cpp)
+   target_link_libraries(evengine-studio PRIVATE PkgConfig::EVE_GTK eve-export)
    target_link_options(evengine-studio PRIVATE -static-libstdc++ -static-libgcc)
    set(EVE_STUDIO_RESOURCES "$<TARGET_FILE_DIR:evengine-studio>/resources")
    add_custom_target(evengine-studio-resources ALL
@@ -65,6 +79,8 @@ if(LOTA_DESKTOP AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
      COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:lota-studio-runtime>" "${EVE_STUDIO_RESOURCES}/runtime"
      COMMAND ${CMAKE_COMMAND} -E make_directory "${EVE_STUDIO_RESOURCES}/lib"
      COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:SDL3::SDL3>" "${EVE_STUDIO_RESOURCES}/lib/libSDL3.so.0"
+     COMMAND ${CMAKE_COMMAND} -E make_directory "${EVE_STUDIO_RESOURCES}/web"
+     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/editor/web/index.html" ${EVE_WEB_RUNTIME_COPY} "${EVE_STUDIO_RESOURCES}/web/"
      DEPENDS evengine-studio lota-studio-runtime)
   else()
    message(WARNING "GTK 3 or WebKitGTK 4.1 not found; skipping EveNGINE Studio for Linux. Install libgtk-3-dev and libwebkit2gtk-4.1-dev, or set -DEVE_LINUX_STUDIO=OFF.")
@@ -128,10 +144,15 @@ if(APPLE)
 elseif(LOTA_DESKTOP AND TARGET SDL3::SDL3)
  set(EVE_LINUX_EXPORT_TEST_MODE "$<TARGET_FILE:SDL3::SDL3>")
 endif()
-add_executable(evengine-linux-export-cli editor/tests/linux_export_cli.cpp editor/export/linux_export.cpp editor/export/png.cpp)
-target_link_libraries(evengine-linux-export-cli PRIVATE LotA::Core)
+add_executable(evengine-linux-export-cli editor/tests/linux_export_cli.cpp)
+target_link_libraries(evengine-linux-export-cli PRIVATE eve-export)
 if(Python3_Interpreter_FOUND AND NOT WIN32)
  add_test(NAME studio-linux-export COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/editor/tests/linux_export_test.py" "$<TARGET_FILE:evengine-linux-export-cli>" "$<TARGET_FILE:lota-studio-runtime>" "${CMAKE_CURRENT_SOURCE_DIR}" ${EVE_LINUX_EXPORT_TEST_MODE})
+endif()
+add_executable(evengine-web-export-cli editor/tests/web_export_cli.cpp)
+target_link_libraries(evengine-web-export-cli PRIVATE eve-export)
+if(Python3_Interpreter_FOUND)
+ add_test(NAME studio-web-export COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/editor/tests/web_export_test.py" "$<TARGET_FILE:evengine-web-export-cli>" "${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
 add_executable(evengine-export-settings-tests editor/tests/export_settings_runtime_test.cpp)
 target_link_libraries(evengine-export-settings-tests PRIVATE EveNGINE::Studio)

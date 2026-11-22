@@ -1,27 +1,11 @@
 #include "png.hpp"
+#include "archive.hpp"
 #include <algorithm>
-#include <array>
 #include <cstdint>
 #include <fstream>
 #include <stdexcept>
 namespace eve {
 namespace {
-uint32_t crc(const unsigned char *data, size_t size, uint32_t value = 0) {
-  static const auto table = [] {
-    std::array<uint32_t, 256> t{};
-    for (uint32_t n = 0; n < 256; n++) {
-      uint32_t c = n;
-      for (int k = 0; k < 8; k++)
-        c = c & 1 ? 0xedb88320u ^ (c >> 1) : c >> 1;
-      t[n] = c;
-    }
-    return t;
-  }();
-  value = ~value;
-  for (size_t i = 0; i < size; i++)
-    value = table[(value ^ data[i]) & 0xff] ^ (value >> 8);
-  return ~value;
-}
 void put32(std::string &out, uint32_t v) {
   for (int shift = 24; shift >= 0; shift -= 8)
     out += char((v >> shift) & 0xff);
@@ -30,7 +14,7 @@ void chunk(std::string &out, const char *type, const std::string &data) {
   put32(out, uint32_t(data.size()));
   std::string body = std::string(type, 4) + data;
   out += body;
-  put32(out, crc(reinterpret_cast<const unsigned char *>(body.data()), body.size()));
+  put32(out, crc32(body.data(), body.size()));
 }
 } // namespace
 void writePng(const std::string &path, int width, int height,
