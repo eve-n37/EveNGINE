@@ -1,6 +1,7 @@
 from pathlib import Path
 import json, subprocess, os
 from playwright.sync_api import sync_playwright
+from ui_navigation import open_tool
 
 root = Path(__file__).resolve().parents[1]
 output = Path(os.environ.get("LOTA_TEST_OUTPUT", str(root.parent / "build-ui-tests")))
@@ -56,7 +57,7 @@ with sync_playwright() as pw:
         "map inspector applies",
         'studioTest.project().scenes[0].title==="Edited Meadow"',
     )
-    page.locator("[data-view=pixels]").click()
+    open_tool(page, "artwork", "pixels")
     page.wait_for_selector("#pixelCanvas")
     page.locator("#palette button").nth(20).click()
     box = page.locator("#pixelCanvas").bounding_box()
@@ -92,7 +93,7 @@ with sync_playwright() as pw:
     assert Image.open(exported).getpixel((2, 2)) == (250, 12, 32, 255)
     checks.append("PNG export preserves pixels")
     page.screenshot(path=str(output / "EveNGINE-Studio-v0.6.0-sprite.png"))
-    page.locator("[data-view=animation]").click()
+    open_tool(page, "artwork", "animation")
     page.locator("#frameMs").fill("220")
     page.locator("#frameMs").press("Tab")
     check(
@@ -109,7 +110,8 @@ with sync_playwright() as pw:
         "timeline removes frame", "studioTest.project().animations[0].frames.length===4"
     )
     page.screenshot(path=str(output / "EveNGINE-Studio-v0.6.0-animation.png"))
-    # Add map through modal.
+    # Add map through modal; the map list lives in the Maps section.
+    open_tool(page, "maps", "map")
     page.locator("#addMap").click()
     page.locator("#dialogBody input").nth(0).fill("Tiny Room")
     page.locator("#dialogBody input").nth(1).fill("12")
@@ -147,17 +149,17 @@ with sync_playwright() as pw:
     page.locator("#dialogOk").click()
     page.wait_for_timeout(150)
     check("recovery restores edited project", "studioTest.project().scenes.length===3")
-    page.locator("[data-view=map]").click()
+    open_tool(page, "maps", "map")
     page.locator("#maps button").first.click()
     page.locator("#mapTools button[data-tool=select]").click()
     page.locator("#validate").click()
     page.screenshot(path=str(output / "EveNGINE-Studio-v0.6.0-inspector.png"))
     page.evaluate("studioTest.load(LotaModel.createProject())")
-    page.locator("[data-view=map]").click()
+    open_tool(page, "maps", "map")
     page.screenshot(path=str(output / "EveNGINE-Studio-v0.6.0-map.png"))
-    page.locator("[data-view=pixels]").click()
+    open_tool(page, "artwork", "pixels")
     page.screenshot(path=str(output / "EveNGINE-Studio-v0.6.0-sprite.png"))
-    page.locator("[data-view=animation]").click()
+    open_tool(page, "artwork", "animation")
     page.screenshot(path=str(output / "EveNGINE-Studio-v0.6.0-animation.png"))
     assert not errors, errors
     browser.close()
