@@ -1,4 +1,6 @@
 :root {
+  --radius: 3px;
+  --radius-lg: 4px;
   color-scheme: dark;
   --bg: #111922;
   --panel: #19232e;
@@ -36,7 +38,7 @@ button {
   color: var(--text);
   background: #202e3b;
   border: 1px solid var(--edge);
-  border-radius: 6px;
+  border-radius: var(--radius);
   padding: 7px 12px;
   cursor: pointer;
   white-space: nowrap;
@@ -86,13 +88,6 @@ header {
   min-width: 192px;
   font-size: 19px;
 }
-.brand small {
-  display: block;
-  font-size: 8px;
-  letter-spacing: 1.7px;
-  color: var(--muted);
-  margin-top: 4px;
-}
 .mark {
   display: grid;
   place-items: center;
@@ -103,7 +98,7 @@ header {
   color: #233d2d;
   width: 36px;
   height: 39px;
-  border-radius: 9px 2px;
+  border-radius: 4px 2px;
 }
 .project {
   padding: 0 16px;
@@ -351,7 +346,7 @@ textarea {
   background: #111c27;
   color: var(--text);
   border: 1px solid #354651;
-  border-radius: 5px;
+  border-radius: var(--radius);
   padding: 7px;
 }
 textarea {
@@ -382,7 +377,7 @@ textarea {
 .health {
   padding: 10px;
   border: 1px solid var(--edge);
-  border-radius: 6px;
+  border-radius: var(--radius);
   font-size: 11px;
   line-height: 1.6;
   margin-bottom: 14px;
@@ -467,7 +462,7 @@ input[type='color'] {
   padding: 16px 26px;
   background: #192630;
   border: 1px solid var(--edge);
-  border-radius: 9px;
+  border-radius: var(--radius-lg);
 }
 .animationTop h2 {
   font-size: 24px;
@@ -487,7 +482,7 @@ input[type='color'] {
 }
 .animationTop canvas {
   background: radial-gradient(#2b3f45, #16232b);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   width: 280px;
   height: 252px;
 }
@@ -514,7 +509,7 @@ input[type='color'] {
 dialog {
   width: 460px;
   border: 1px solid #627969;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: #192630;
   color: var(--text);
   padding: 25px;
@@ -565,11 +560,6 @@ dialog h2 {
   line-height: 1.6;
   margin: 7px 0;
 }
-.eyebrow {
-  font-size: 9px;
-  letter-spacing: 2px;
-  color: var(--accent);
-}
 .assetFilters {
   display: grid;
   grid-template-columns: minmax(160px, 1fr) 125px 140px;
@@ -594,7 +584,7 @@ dialog h2 {
   height: 80px;
   margin: 0 auto 12px;
   background: #152229;
-  border-radius: 5px;
+  border-radius: var(--radius);
 }
 .assetCard strong {
   display: block;
@@ -616,7 +606,7 @@ dialog h2 {
   padding: 18px 20px;
   background: #1c2c36;
   border: 1px solid var(--edge);
-  border-radius: 9px;
+  border-radius: var(--radius-lg);
 }
 .audioMix input {
   width: 100%;
@@ -638,7 +628,7 @@ dialog h2 {
   gap: 12px;
   background: #192630;
   border: 1px solid var(--edge);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   margin: 9px 0;
   padding: 12px;
 }
@@ -729,7 +719,7 @@ dialog h2 {
 }
 .builtinCard {
   border: 1px solid var(--edge);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   background: #192630;
   padding: 12px;
   display: flex;
@@ -743,7 +733,7 @@ dialog h2 {
   object-fit: contain;
   align-self: center;
   background: #152229;
-  border-radius: 5px;
+  border-radius: var(--radius);
 }
 .builtinCard strong {
   font-size: 12px;
@@ -768,7 +758,7 @@ dialog h2 {
   align-items: center;
   background: #192630;
   border: 1px solid var(--edge);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   padding: 14px;
   margin: 12px 0;
 }
@@ -803,7 +793,7 @@ dialog h2 {
 #itemList > p {
   padding: 24px;
   background: #192630;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 nav {
   overflow-x: auto;
@@ -834,7 +824,7 @@ nav > .tab {
 .storyCard {
   padding: 20px;
   border: 1px solid #43534d;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   margin: 16px 0;
   background: #202d28;
 }
@@ -884,7 +874,7 @@ nav {
 .appearanceCard {
   padding: 20px;
   border: 1px solid var(--edge);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #192630;
 }
 .appearanceCard h3 {
@@ -944,7 +934,7 @@ nav {
   width: 100%;
   height: auto;
   image-rendering: pixelated;
-  border-radius: 6px;
+  border-radius: var(--radius);
 }
 .rcColumns {
   display: grid;
@@ -959,7 +949,7 @@ nav {
 .rcTileGrid > div {
   background: #ffffff08;
   padding: 8px;
-  border-radius: 6px;
+  border-radius: var(--radius);
 }
 .rcWorldScroll {
   overflow: auto;
@@ -979,7 +969,7 @@ nav {
   padding: 6px;
   border: 1px solid #78968b;
   background: #253b34;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 4px 12px #0006;
 }
 .rcMapCard strong {
@@ -1090,7 +1080,7 @@ nav > .tab {
 .setupSection {
   margin: 14px 0;
   border: 1px solid var(--edge);
-  border-radius: 9px;
+  border-radius: var(--radius-lg);
   background: #192630;
 }
 .setupSection > summary {
