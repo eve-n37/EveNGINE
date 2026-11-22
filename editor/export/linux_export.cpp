@@ -1,6 +1,9 @@
-#include "export.hpp"
+#include "linux_export.hpp"
+#include "png.hpp"
 #include "lota/json.hpp"
-#include <gdk-pixbuf/gdk-pixbuf.h>
+#include <spawn.h>
+#include <sys/wait.h>
+#include <cstring>
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
@@ -73,34 +76,64 @@ bool writeIcon(const lota::Json &project, const fs::path &output) {
   if (!visible)
     return false;
   const int target = 256;
-  GdkPixbuf *image = gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE, 8, target, target);
-  need(image, "Cannot create game icon image.");
-  auto *out = gdk_pixbuf_get_pixels(image);
-  int stride = gdk_pixbuf_get_rowstride(image);
+  std::vector<unsigned char> image(size_t(target) * target * 4);
   // Nearest-neighbour scaling keeps pixel art sharp.
   for (int y = 0; y < target; y++)
     for (int x = 0; x < target; x++)
       std::copy_n(&source[(size_t(y * size / target) * size + x * size / target) * 4], 4,
-                  out + y * stride + x * 4);
-  GError *problem = nullptr;
-  bool ok = gdk_pixbuf_save(image, output.c_str(), "png", &problem, nullptr);
-  g_object_unref(image);
-  std::string message = problem ? problem->message : "Cannot write game icon.";
-  if (problem)
-    g_error_free(problem);
-  need(ok, message);
+                  &image[(size_t(y) * target + x) * 4]);
+  writePng(output.string(), target, target, image);
   return true;
+}
+// The name players see: the export setting, else the game title.
+std::string appName(const lota::Json &project) {
+  if (project.has("export") && project["export"].type == lota::Json::Object &&
+      project["export"].has("appName") && !project["export"]["appName"].text().empty())
+    return project["export"]["appName"].text();
+  return project["title"].text("My Game");
+}
+// A folder name for the game inside an archive: the app name without path separators.
+std::string folderName(std::string name) {
+  for (char &c : name)
+    if (c == '/' || c == '\\' || c == ':' || static_cast<unsigned char>(c) < 0x20)
+      c = '-';
+  if (name.empty() || name == "." || name == "..")
+    name = "Game";
+  return name;
+}
+// Runs tar without a shell. COPYFILE_DISABLE stops macOS tar adding ._ metadata files.
+void makeTarball(const fs::path &folder, const fs::path &output) {
+  std::string tool = fs::exists("/usr/bin/tar") ? "/usr/bin/tar" : "/bin/tar";
+  std::vector<std::string> args{tool,
+                                "-czf",
+                                output.string(),
+                                "-C",
+                                folder.parent_path().string(),
+                                folder.filename().string()};
+  std::vector<char *> argv;
+  for (auto &a : args)
+    argv.push_back(a.data());
+  argv.push_back(nullptr);
+  std::string copyfile = "COPYFILE_DISABLE=1";
+  std::vector<char *> env{copyfile.data(), nullptr};
+  pid_t pid;
+  need(posix_spawn(&pid, tool.c_str(), nullptr, nullptr, argv.data(), env.data()) == 0,
+       "Cannot run tar to make the archive.");
+  int status = 0;
+  while (waitpid(pid, &status, 0) < 0 && errno == EINTR) {
+  }
+  need(WIFEXITED(status) && WEXITSTATUS(status) == 0, "tar couldn't make the archive.");
 }
 } // namespace
 
 bool exportLinuxGame(const std::string &projectJson, const LinuxExportSources &sources,
-                     const std::string &destination, std::string &error) {
+                     const std::string &destination, std::string &error, bool archive) {
   fs::path dest = fs::absolute(destination), stage;
   try {
     auto project = lota::Json::parse(projectJson);
     need(project.type == lota::Json::Object && project["format"].text() == "lota-studio",
          "Invalid project.");
-    auto id = project["id"].text(), title = project["title"].text("My Game");
+    auto id = project["id"].text(), title = appName(project);
     need(!id.empty() && id.size() <= 64 &&
              id.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                   "0123456789_-") == std::string::npos &&
@@ -111,19 +144,21 @@ bool exportLinuxGame(const std::string &projectJson, const LinuxExportSources &s
     need(!dest.filename().empty(), "Choose a folder name for the exported game.");
     std::random_device random;
     stage = dest.parent_path() / (".eve-export-" + std::to_string(random()));
-    fs::create_directories(stage / "lib");
-    auto exe = stage / id;
+    // An archive holds one folder named after the game; a plain export is that folder.
+    fs::path game = archive ? stage / folderName(title) : stage;
+    fs::create_directories(game / "lib");
+    auto exe = game / id;
     fs::copy_file(sources.runtime, exe);
     fs::permissions(exe, fs::perms::owner_all | fs::perms::group_read | fs::perms::group_exec |
                              fs::perms::others_read | fs::perms::others_exec);
-    writeText(stage / "project.lota", projectJson);
-    fs::copy_file(sources.font, stage / "font.pam");
+    writeText(game / "project.lota", projectJson);
+    fs::copy_file(sources.font, game / "font.pam");
     // Copy the real file behind any libSDL3.so symlink under the soname the runtime needs.
-    fs::copy_file(fs::canonical(sources.sdlLibrary), stage / "lib" / "libSDL3.so.0");
-    if (!writeIcon(project, stage / "icon.png") && fs::is_regular_file(sources.defaultIcon))
-      fs::copy_file(sources.defaultIcon, stage / "icon.png");
+    fs::copy_file(fs::canonical(sources.sdlLibrary), game / "lib" / "libSDL3.so.0");
+    if (!writeIcon(project, game / "icon.png") && fs::is_regular_file(sources.defaultIcon))
+      fs::copy_file(sources.defaultIcon, game / "icon.png");
     auto name = desktopText(title);
-    writeText(stage / "install-desktop-entry.sh",
+    writeText(game / "install-desktop-entry.sh",
               "#!/bin/sh\n"
               "# Adds this game to your application menu. Run it again after moving the folder.\n"
               "set -e\n"
@@ -145,10 +180,10 @@ bool exportLinuxGame(const std::string &projectJson, const LinuxExportSources &s
                   ".desktop\"\n"
                   "echo 'Added '" +
                   shellQuote(name) + "' to your applications menu.'\n");
-    fs::permissions(stage / "install-desktop-entry.sh",
+    fs::permissions(game / "install-desktop-entry.sh",
                     fs::perms::owner_exec | fs::perms::group_exec | fs::perms::others_exec,
                     fs::perm_options::add);
-    writeText(stage / "README.txt",
+    writeText(game / "README.txt",
               name +
                   "\n\nMade with EveNGINE Studio 1.1.\n\n"
                   "Run ./" +
@@ -157,18 +192,25 @@ bool exportLinuxGame(const std::string &projectJson, const LinuxExportSources &s
                   "Run ./install-desktop-entry.sh to add the game to your application menu.\n"
                   "Saves are kept in ~/.local/share/LotAEngine/" +
                   id + "/.\n");
+    fs::path result = stage;
+    if (archive) {
+      result = stage / "game.tar.gz";
+      makeTarball(game, result);
+    }
     if (fs::exists(dest)) {
       auto old = dest.parent_path() / (".eve-replaced-" + std::to_string(random()));
       fs::rename(dest, old);
       try {
-        fs::rename(stage, dest);
+        fs::rename(result, dest);
       } catch (...) {
         fs::rename(old, dest);
         throw;
       }
       fs::remove_all(old);
     } else
-      fs::rename(stage, dest);
+      fs::rename(result, dest);
+    if (archive)
+      fs::remove_all(stage);
     error.clear();
     return true;
   } catch (const std::exception &e) {
@@ -180,3 +222,16 @@ bool exportLinuxGame(const std::string &projectJson, const LinuxExportSources &s
   }
 }
 } // namespace eve
+extern "C" int eveExportLinuxGame(const char *projectJson, const char *runtime, const char *font,
+                                  const char *sdlLibrary, const char *defaultIcon,
+                                  const char *destination, int archive, char *error,
+                                  size_t errorSize) {
+  std::string message;
+  bool ok = eve::exportLinuxGame(projectJson, {runtime, font, sdlLibrary, defaultIcon}, destination,
+                                 message, archive != 0);
+  if (!ok && error && errorSize) {
+    std::strncpy(error, message.c_str(), errorSize - 1);
+    error[errorSize - 1] = '\0';
+  }
+  return ok;
+}

@@ -55,7 +55,13 @@ function exportTargets() {
         ['dmg', 'Disk image (.dmg)'],
       ],
     ]);
-  if (host === 'linux') targets.push(['linux', 'Linux', [['folder', 'Folder']]]);
+  // A .tar.gz keeps the game's executable permissions however it is copied, so it's the default
+  // on a Mac. On Linux a plain folder works as well.
+  let linux = [
+    ['tar.gz', 'Archive (.tar.gz)'],
+    ['folder', 'Folder'],
+  ];
+  targets.push(['linux', 'Linux (x86_64)', host === 'linux' ? linux.reverse() : linux]);
   return targets;
 }
 function rememberedExport() {

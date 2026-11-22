@@ -26,9 +26,10 @@ target_link_libraries(lota-studio-tests PRIVATE LotA::Studio)
 add_test(NAME studio-runtime-regression COMMAND lota-studio-tests "${CMAKE_CURRENT_SOURCE_DIR}/editor/examples/Mosslight.lota" "${CMAKE_CURRENT_BINARY_DIR}")
 if(APPLE)
   enable_language(OBJC)
-  add_executable(LotAStudio MACOSX_BUNDLE editor/native/main.m editor/native/GameAppearance.m)
-  target_compile_options(LotAStudio PRIVATE -fobjc-arc -fblocks)
-  target_link_libraries(LotAStudio PRIVATE "-framework Cocoa" "-framework WebKit")
+  add_executable(LotAStudio MACOSX_BUNDLE editor/native/main.m editor/native/GameAppearance.m
+    editor/export/linux_export.cpp editor/export/png.cpp)
+  target_compile_options(LotAStudio PRIVATE $<$<COMPILE_LANGUAGE:OBJC>:-fobjc-arc -fblocks>)
+  target_link_libraries(LotAStudio PRIVATE "-framework Cocoa" "-framework WebKit" LotA::Core)
   set_target_properties(LotAStudio PROPERTIES OUTPUT_NAME "EveNGINE-Studio" MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/editor/native/Info.plist")
   add_dependencies(LotAStudio lota-studio-runtime)
   add_executable(evengine-export-tests editor/tests/export_test.m editor/native/GameAppearance.m)
@@ -38,6 +39,7 @@ if(APPLE)
   add_custom_target(evengine-studio-resources ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/editor/ui" "$<TARGET_BUNDLE_DIR:LotAStudio>/Contents/Resources/ui"
     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/editor/native/Studio.icns" "$<TARGET_BUNDLE_DIR:LotAStudio>/Contents/Resources/Studio.icns"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/editor/native/Studio.png" "$<TARGET_BUNDLE_DIR:LotAStudio>/Contents/Resources/studio.png"
     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/editor/examples/font.pam" "$<TARGET_BUNDLE_DIR:LotAStudio>/Contents/Resources/font.pam"
     COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:lota-studio-runtime>" "$<TARGET_BUNDLE_DIR:LotAStudio>/Contents/Resources/Runtime"
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/engine/vendor/SDL3.framework" "$<TARGET_BUNDLE_DIR:LotAStudio>/Contents/Frameworks/SDL3.framework"
@@ -52,7 +54,7 @@ if(LOTA_DESKTOP AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
    pkg_check_modules(EVE_GTK IMPORTED_TARGET gtk+-3.0 webkit2gtk-4.1)
   endif()
   if(EVE_GTK_FOUND)
-   add_executable(evengine-studio editor/linux/main.cpp editor/linux/export.cpp)
+   add_executable(evengine-studio editor/linux/main.cpp editor/export/linux_export.cpp editor/export/png.cpp)
    target_link_libraries(evengine-studio PRIVATE PkgConfig::EVE_GTK LotA::Core)
    target_link_options(evengine-studio PRIVATE -static-libstdc++ -static-libgcc)
    set(EVE_STUDIO_RESOURCES "$<TARGET_FILE_DIR:evengine-studio>/resources")
@@ -118,6 +120,19 @@ endif()
 add_executable(evengine-adventure-tests editor/tests/adventure_runtime_test.cpp)
 target_link_libraries(evengine-adventure-tests PRIVATE EveNGINE::Studio)
 add_test(NAME studio-adventure COMMAND evengine-adventure-tests "${CMAKE_CURRENT_SOURCE_DIR}/editor/examples/Adventure-Candidate.eve" "${CMAKE_CURRENT_BINARY_DIR}")
+# The shared Linux exporter, used by Studio on Linux and on a Mac. Desktop Linux runtimes need the
+# real SDL3 to run; on a Mac the test runtime isn't a Linux program, so exported games aren't run.
+set(EVE_LINUX_EXPORT_TEST_MODE "")
+if(APPLE)
+ set(EVE_LINUX_EXPORT_TEST_MODE "--no-run")
+elseif(LOTA_DESKTOP AND TARGET SDL3::SDL3)
+ set(EVE_LINUX_EXPORT_TEST_MODE "$<TARGET_FILE:SDL3::SDL3>")
+endif()
+add_executable(evengine-linux-export-cli editor/tests/linux_export_cli.cpp editor/export/linux_export.cpp editor/export/png.cpp)
+target_link_libraries(evengine-linux-export-cli PRIVATE LotA::Core)
+if(Python3_Interpreter_FOUND AND NOT WIN32)
+ add_test(NAME studio-linux-export COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/editor/tests/linux_export_test.py" "$<TARGET_FILE:evengine-linux-export-cli>" "$<TARGET_FILE:lota-studio-runtime>" "${CMAKE_CURRENT_SOURCE_DIR}" ${EVE_LINUX_EXPORT_TEST_MODE})
+endif()
 add_executable(evengine-export-settings-tests editor/tests/export_settings_runtime_test.cpp)
 target_link_libraries(evengine-export-settings-tests PRIVATE EveNGINE::Studio)
 add_test(NAME studio-export-settings COMMAND evengine-export-settings-tests "${CMAKE_CURRENT_SOURCE_DIR}/editor/examples/Frontier-Watch.eve" "${CMAKE_CURRENT_BINARY_DIR}")

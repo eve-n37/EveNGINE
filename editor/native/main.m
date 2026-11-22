@@ -1,6 +1,7 @@
 #import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
 #import "GameAppearance.h"
+#include "../export/linux_export.hpp"
 @interface StudioDelegate : NSObject <NSApplicationDelegate, NSWindowDelegate,
                                       WKScriptMessageHandler, WKNavigationDelegate, WKUIDelegate>
 @property NSWindow *window;
@@ -252,6 +253,10 @@
         }
       } else {
         NSString *target = body[@"target"] ?: @"mac", *format = body[@"format"] ?: @"app";
+        if ([target isEqual:@"linux"]) {
+          [self exportLinux:request project:body[@"project"] format:format];
+          return;
+        }
         if (![target isEqual:@"mac"] || ![@[ @"app", @"zip", @"dmg" ] containsObject:format]) {
           [self reply:request
                  data:@{@"error" : @"This copy of Studio can't make that kind of export."}];
@@ -304,6 +309,62 @@
                                 code:3
                             userInfo:@{NSLocalizedDescriptionKey : @"Unknown editor action"}];
   [self reply:request data:@{@"error" : error.localizedDescription ?: @"Operation failed"}];
+}
+// Exports a Linux game folder or .tar.gz with the prebuilt Linux runtime and SDL3 that release
+// builds of Studio carry in Resources/linux-x86_64.
+- (void)exportLinux:(id)request project:(NSDictionary *)project format:(NSString *)format {
+  NSURL *linux = [self.resources URLByAppendingPathComponent:@"linux-x86_64"];
+  NSURL *runtime = [linux URLByAppendingPathComponent:@"runtime"],
+        *sdl = [linux URLByAppendingPathComponent:@"libSDL3.so.0"];
+  NSFileManager *fm = NSFileManager.defaultManager;
+  if (![@[ @"tar.gz", @"folder" ] containsObject:format]) {
+    [self reply:request data:@{@"error" : @"This copy of Studio can't make that kind of export."}];
+    return;
+  }
+  if (![fm fileExistsAtPath:runtime.path] || ![fm fileExistsAtPath:sdl.path]) {
+    [self reply:request
+           data:@{
+             @"error" : @"This copy of Studio doesn't include the Linux runtime. Release "
+                        @"downloads of Studio do."
+           }];
+    return;
+  }
+  NSError *error = nil;
+  NSData *json = [NSJSONSerialization dataWithJSONObject:project
+                                                 options:NSJSONWritingPrettyPrinted
+                                                   error:&error];
+  if (!json) {
+    [self reply:request data:@{@"error" : error.localizedDescription ?: @"Invalid project."}];
+    return;
+  }
+  BOOL archive = [format isEqual:@"tar.gz"];
+  NSString *name = EveExportAppName(project);
+  NSSavePanel *panel = [NSSavePanel savePanel];
+  panel.title = @"Export Linux game";
+  panel.nameFieldStringValue = archive ? [name stringByAppendingString:@".tar.gz"] : name;
+  if ([panel runModal] != NSModalResponseOK) {
+    [self reply:request data:@{@"cancelled" : @YES}];
+    return;
+  }
+  NSURL *destination = panel.URL;
+  if (archive && ![destination.lastPathComponent hasSuffix:@".tar.gz"])
+    destination = [destination.URLByDeletingLastPathComponent
+        URLByAppendingPathComponent:[destination.lastPathComponent
+                                        stringByAppendingString:@".tar.gz"]];
+  NSString *text = [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
+  char message[1024] = {0};
+  if (!eveExportLinuxGame(
+          text.UTF8String, runtime.fileSystemRepresentation,
+          [self.resources URLByAppendingPathComponent:@"font.pam"].fileSystemRepresentation,
+          sdl.fileSystemRepresentation,
+          [self.resources URLByAppendingPathComponent:@"studio.png"].fileSystemRepresentation,
+          destination.fileSystemRepresentation, archive, message, sizeof message)) {
+    [self reply:request data:@{@"error" : @(message)}];
+    return;
+  }
+  [self reply:request
+         data:@{@"message" : [@"Exported " stringByAppendingString:destination.lastPathComponent]}];
+  [NSWorkspace.sharedWorkspace activateFileViewerSelectingURLs:@[ destination ]];
 }
 - (BOOL)windowShouldClose:(NSWindow *)sender {
   if (!self.hasUnsavedChanges)

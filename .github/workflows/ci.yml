@@ -76,6 +76,15 @@ jobs:
           python3 editor/tests/linux_studio_test.py "$image" editor/examples/Frontier-Watch.eve
         env:
           APPIMAGE_EXTRACT_AND_RUN: 1
+      # Mac Studio carries this runtime and SDL3 so it can export Linux games.
+      - name: Keep the Linux game runtime for the Mac app
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-game-runtime
+          path: |
+            build-linux/resources/runtime
+            build-linux/resources/lib/libSDL3.so.0
+          if-no-files-found: error
       - uses: actions/upload-artifact@v7
         with:
           name: EveNGINE-Studio-linux-x86_64
@@ -86,6 +95,8 @@ jobs:
 
   macos:
     name: macOS Studio app and tests
+    # Waits for the Linux job, whose game runtime goes inside the Mac app for Linux exports.
+    needs: studio
     # Apple Silicon runner; the universal build also produces the unofficial Intel slice.
     runs-on: macos-15
     steps:
@@ -98,6 +109,18 @@ jobs:
         run: ctest --test-dir build --output-on-failure
         env:
           SDL_AUDIODRIVER: dummy
+      - uses: actions/download-artifact@v8
+        with:
+          name: linux-game-runtime
+          path: linux-game-runtime
+      - name: Add the Linux game runtime
+        run: |
+          linux=build/EveNGINE-Studio.app/Contents/Resources/linux-x86_64
+          mkdir -p "$linux"
+          cp linux-game-runtime/runtime "$linux/runtime"
+          cp linux-game-runtime/lib/libSDL3.so.0 "$linux/libSDL3.so.0"
+          # Artifacts don't keep permissions; the exporter sets them again on the copy it makes.
+          chmod 755 "$linux/runtime"
       - name: Check the app bundle
         run: |
           version=$(sed -n 's/^project(EveNGINESDK VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
@@ -114,6 +137,9 @@ jobs:
           done
           test -f "$app/Contents/Frameworks/SDL3.framework/SDL3"
           test -f "$app/Contents/Resources/ui/index.html"
+          test -f "$app/Contents/Resources/studio.png"
+          file "$app/Contents/Resources/linux-x86_64/runtime" | grep -q "ELF 64-bit LSB.*x86-64"
+          file "$app/Contents/Resources/linux-x86_64/libSDL3.so.0" | grep -q "ELF 64-bit LSB shared object, x86-64"
           test "$(plutil -extract CFBundleShortVersionString raw "$app/Contents/Info.plist")" = "$version"
           "$app/Contents/Resources/Runtime" --project editor/examples/Frontier-Watch.eve --validate
       - name: Package

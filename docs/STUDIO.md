@@ -228,11 +228,16 @@ untouched. Names, versions and window settings come from **Game → Setup → Ex
 
   If a file already exists at that location, macOS asks before replacing it. Exported games run on
   macOS 12 or later.
-- **On Linux**, you get a folder named after what you type. It holds the game (an executable named
-  after the project ID), its project, the font, its own copy of SDL3 in `lib/`, `icon.png` and a
-  README. Keep the files together; the folder can be moved or zipped up. Players run
-  `./install-desktop-entry.sh` to add the game to their application menu. Exported games need only
-  a standard desktop Linux with X11 or Wayland, not WebKitGTK.
+- **For Linux** (from a Mac or from Linux), choose a format:
+  - **Archive (.tar.gz)**: the game folder in a compressed archive. Use this to share the game,
+    especially from a Mac: it keeps the permissions that let players run the game.
+  - **Folder**: the game folder itself.
+
+  The folder holds the game (an executable named after the project ID), its project, the font, its
+  own copy of SDL3 in `lib/`, `icon.png` and a README. Keep the files together. Players run
+  `./install-desktop-entry.sh` to add the game to their application menu. Exported games need an
+  x86_64 desktop Linux with X11 or Wayland, but not WebKitGTK. Linux export from a Mac uses the
+  Linux runtime that release downloads of Studio include.
 
 You can also export from a terminal on Linux:
 

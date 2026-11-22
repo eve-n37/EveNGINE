@@ -1,6 +1,7 @@
 // EveNGINE Studio for Linux: hosts the HTML editor in WebKitGTK and answers the same native
 // bridge actions as the macOS shell (editor/native/main.m).
-#include "export.hpp"
+#include "../export/linux_export.hpp"
+#include "lota/json.hpp"
 #include <gtk/gtk.h>
 #include <webkit2/webkit2.h>
 #include <csignal>
@@ -301,8 +302,19 @@ void handle(JSCValue *body) {
         return reply(request, "{\"message\":\"Native playtest launched. F3 shows collision; "
                               "Esc opens Pause.\"}");
       }
-      auto destination = choose(GTK_FILE_CHOOSER_ACTION_SAVE, "Export Linux game",
-                                {{"Game folders", {"*"}}}, "My Adventure");
+      auto target = property(body, "target"), format = property(body, "format");
+      if ((!target.empty() && target != "linux") ||
+          (!format.empty() && format != "folder" && format != "tar.gz"))
+        throw std::runtime_error("This copy of Studio can't make that kind of export.");
+      bool archive = format == "tar.gz";
+      auto parsed = lota::Json::parse(json);
+      auto name = parsed["title"].text("My Adventure");
+      if (parsed.has("export") && parsed["export"].has("appName"))
+        name = parsed["export"]["appName"].text(name);
+      auto destination = archive ? choose(GTK_FILE_CHOOSER_ACTION_SAVE, "Export Linux game",
+                                          {{"Compressed archives", {"*.tar.gz"}}}, name + ".tar.gz")
+                                 : choose(GTK_FILE_CHOOSER_ACTION_SAVE, "Export Linux game",
+                                          {{"Game folders", {"*"}}}, name);
       if (destination.empty())
         return reply(request, cancelled);
       std::string error;
@@ -310,8 +322,12 @@ void handle(JSCValue *body) {
                                       (studio.resources / "font.pam").string(),
                                       (studio.resources / "lib" / "libSDL3.so.0").string(),
                                       (studio.resources / "studio.png").string()};
-      if (!eve::exportLinuxGame(json, sources, destination, error))
+      if (!eve::exportLinuxGame(json, sources, destination, error, archive))
         throw std::runtime_error(error);
+      if (archive)
+        return reply(
+            request,
+            "{\"message\":" + quote("Exported " + fs::path(destination).filename().string()) + "}");
       return reply(request, "{\"message\":" +
                                 quote("Exported " + fs::path(destination).filename().string() +
                                       ". Run it from that folder.") +
