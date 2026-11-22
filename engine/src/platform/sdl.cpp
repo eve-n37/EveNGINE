@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "lota/platform.hpp"
 #include <SDL3/SDL.h>
 #define SDL_MAIN_HANDLED
@@ -119,11 +120,11 @@ class SDLPlatform final : public Platform {
   }
 
 public:
-  SDLPlatform(const Atlas &atlas, const std::string &title) {
+  SDLPlatform(const Atlas &atlas, const std::string &title, int scale) {
     SDL_SetMainReady();
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
       throw std::runtime_error(SDL_GetError());
-    window = SDL_CreateWindow(title.c_str(), Width * 3, Height * 3, SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow(title.c_str(), Width * scale, Height * scale, SDL_WINDOW_RESIZABLE);
     if (window)
       renderer = SDL_CreateRenderer(window, nullptr);
     if (renderer)
@@ -389,8 +390,8 @@ public:
   }
 };
 } // namespace
-std::unique_ptr<Platform> createPlatform(const Atlas &atlas, const std::string &title) {
-  return std::make_unique<SDLPlatform>(atlas, title);
+std::unique_ptr<Platform> createPlatform(const Atlas &atlas, const std::string &title, int scale) {
+  return std::make_unique<SDLPlatform>(atlas, title, std::clamp(scale, 1, 6));
 }
 std::string defaultProjectPath() {
   const char *base = SDL_GetBasePath();

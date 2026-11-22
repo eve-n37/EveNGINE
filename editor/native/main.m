@@ -251,21 +251,44 @@
           return;
         }
       } else {
+        NSString *target = body[@"target"] ?: @"mac", *format = body[@"format"] ?: @"app";
+        if (![target isEqual:@"mac"] || ![@[ @"app", @"zip", @"dmg" ] containsObject:format]) {
+          [self reply:request
+                 data:@{@"error" : @"This copy of Studio can't make that kind of export."}];
+          return;
+        }
+        NSString *name = EveExportAppName(body[@"project"]);
         NSSavePanel *panel = [NSSavePanel savePanel];
-        panel.allowedFileTypes = @[ @"app" ];
-        panel.nameFieldStringValue = @"My Adventure.app";
+        panel.allowedFileTypes = @[ format ];
+        panel.nameFieldStringValue = [name stringByAppendingPathExtension:format];
         if ([panel runModal] != NSModalResponseOK) {
           [self reply:request data:@{@"cancelled" : @YES}];
           return;
         }
-        NSURL *destination = panel.URL;
-        BOOL ok = EveExportGame(
-            body[@"project"], [self.resources URLByAppendingPathComponent:@"Runtime"],
-            [self.resources URLByAppendingPathComponent:@"font.pam"],
-            [[self.resources.URLByDeletingLastPathComponent
-                URLByAppendingPathComponent:@"Frameworks"]
-                URLByAppendingPathComponent:@"SDL3.framework"],
-            [self.resources URLByAppendingPathComponent:@"Studio.icns"], destination, &error);
+        NSURL *destination = panel.URL, *folder = nil;
+        // Packages are made from an app exported to a temporary folder first.
+        NSURL *app = destination;
+        if (![format isEqual:@"app"]) {
+          folder = [NSFileManager.defaultManager.temporaryDirectory
+              URLByAppendingPathComponent:[@"eve-export-"
+                                              stringByAppendingString:NSUUID.UUID.UUIDString]];
+          [NSFileManager.defaultManager createDirectoryAtURL:folder
+                                 withIntermediateDirectories:YES
+                                                  attributes:nil
+                                                       error:nil];
+          app = [folder URLByAppendingPathComponent:[name stringByAppendingPathExtension:@"app"]];
+        }
+        BOOL ok =
+            EveExportGame(body[@"project"], [self.resources URLByAppendingPathComponent:@"Runtime"],
+                          [self.resources URLByAppendingPathComponent:@"font.pam"],
+                          [[self.resources.URLByDeletingLastPathComponent
+                              URLByAppendingPathComponent:@"Frameworks"]
+                              URLByAppendingPathComponent:@"SDL3.framework"],
+                          [self.resources URLByAppendingPathComponent:@"Studio.icns"], app, &error);
+        if (ok && folder)
+          ok = EvePackageGame(app, format, name, destination, &error);
+        if (folder)
+          [NSFileManager.defaultManager removeItemAtURL:folder error:nil];
         if (ok) {
           [self reply:request
                  data:@{

@@ -172,7 +172,9 @@ public:
       frontend = "playing", settingsReturn = "title", confirmAction, pendingBinding;
   std::string titleArtwork, titleLabel, subtitle, menuNew = "New game", menuContinue = "Continue",
                                                   menuSettings = "Settings", menuQuit = "Quit";
-  int menuIndex = 0;
+  int menuIndex = 0, windowScale = 3;
+  std::string appName;
+  bool defaultFullscreen = false;
   bool canContinue = false, progressDirty = false, fullscreen = false, frontendStarted = false,
        controllerMode = false, eventBlocked = false;
   float userMusic = 1, userEffects = 1, typewriterSpeed = 0, dialogueTime = 0;

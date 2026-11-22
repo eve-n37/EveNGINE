@@ -27,6 +27,7 @@ public:
   virtual std::string savePath(const std::string &project) = 0;
   virtual void idle() = 0;
 };
-std::unique_ptr<Platform> createPlatform(const Atlas &atlas, const std::string &title);
+std::unique_ptr<Platform> createPlatform(const Atlas &atlas, const std::string &title,
+                                         int scale = 3);
 std::string defaultProjectPath();
 } // namespace lota

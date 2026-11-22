@@ -76,6 +76,7 @@ function renderSetup() {
   );
   renderMenus();
   renderAppearance();
+  renderExportSettings();
   $('menusWorkspace').hidden = $('appearanceWorkspace').hidden = false;
   let combat = $('setupCombat');
   combat.replaceChildren(

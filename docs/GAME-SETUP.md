@@ -91,3 +91,21 @@ turned on. See the [adventure guide](ADVENTURE.md#combat-and-healing).
 
 Sets how quickly dialogue text appears. 0 shows it instantly. See the
 [story guide](STORY.md#portraits-colours-and-text-reveal).
+
+## Export settings
+
+**Game → Setup → Export** controls how exported games are named and how they open. Leave a field
+empty to use the default.
+
+| Setting              | Default                     | Used for                                                       |
+| -------------------- | --------------------------- | -------------------------------------------------------------- |
+| **App name**         | The game title              | The app's file name, its name in the Dock and the window title |
+| **Bundle ID**        | `dev.lota.game.<project ID>` | How macOS tells your game apart from others. Use `com.yourname.game` |
+| **Version**          | `1.0.0`                     | Shown in Finder's Get Info. One to three numbers, like `1.2` or `1.0.3` |
+| **Window size**      | 3× (1200 × 720)             | The window's size when the game opens. Players can still resize it |
+| **Start fullscreen** | Off                         | Opens the game fullscreen. A player's own choice in Settings wins |
+| **Mac architecture** | Universal                   | **Apple Silicon only** or **Intel only** makes a smaller download |
+
+Keep the bundle ID the same between releases so macOS treats each version as the same game. Saves
+belong to the project ID, so changing the bundle ID doesn't lose them. Playtests always open in a
+window.

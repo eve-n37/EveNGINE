@@ -93,10 +93,14 @@ dialogue, quests, events, shops and combat.
 
 ```cpp
 evengine::StudioGame game("MyGame.eve");
-auto platform = evengine::createPlatform(game.atlas, game.project.title);
+// appName and windowScale come from the project's export settings (defaults: title and 3).
+auto platform = evengine::createPlatform(game.atlas, game.appName, game.windowScale);
 // Each tick:   game.update(input, evengine::Tick);
 // Each frame:  platform->present(game.draw());
 ```
+
+`createPlatform` opens a window of 400 × 240 pixels times the scale, from 1 to 6. The scale is
+optional and defaults to 3.
 
 Audio from a Studio project is covered in the [audio API guide](AUDIO-API.md).
 

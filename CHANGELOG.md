@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Export settings** in Game → Setup → Export: app name, bundle ID, version, window size, start fullscreen and Mac architecture (universal, Apple Silicon only or Intel only). They're saved in the project as an optional `export` block. Projects without one export as before, except the default app version is now `1.0.0` instead of the engine version.
+- **Export** (was **Export app**) asks for a platform and format. On a Mac it can make an app, a `.zip` or a `.dmg` with an Applications shortcut. Single-architecture exports are thinned by Studio itself, so it needs no developer tools.
+- Engine: `createPlatform` takes an optional window scale (default 3). Exported games honour the project's window size and fullscreen default.
 - Studio: removed the decorative taglines above each workspace heading, under the logo and in the canvas footer, and made corners squarer (3px for controls, 4px for panels and dialogs, from a shared `--radius` scale).
 - **Linux AppImage**: `EveNGINE-Studio-v<version>-linux-x86_64.AppImage` is a single file that brings its own WebKitGTK and GTK 3, for SteamOS and other systems where WebKitGTK can't be installed. `tools/package_appimage.py` builds it, and CI tests it with the system WebKitGTK uninstalled. Releases now include it.
 - New `docs/LINUX.md` covers installing Studio on each distribution, including SteamOS and other read-only systems.

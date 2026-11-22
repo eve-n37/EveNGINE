@@ -116,6 +116,19 @@ void StudioGame::loadReleaseFeatures(const Json &j) {
       if (m.has(pair.first))
         *pair.second = str(m[pair.first], 80);
   }
+  appName = project.title;
+  if (j.has("export")) {
+    auto &e = j["export"];
+    need(e.type == Json::Object, "Invalid export settings");
+    if (e.has("appName"))
+      appName = str(e["appName"], 80);
+    if (e.has("windowScale"))
+      windowScale = number(e["windowScale"], 1, 6);
+    if (e.has("fullscreen")) {
+      need(e["fullscreen"].type == Json::Bool, "Invalid export fullscreen setting");
+      defaultFullscreen = e["fullscreen"].boolean();
+    }
+  }
   if (j.has("dialogueSettings")) {
     auto &d = j["dialogueSettings"];
     need(d.type == Json::Object, "Invalid dialogue settings");
@@ -477,6 +490,9 @@ void StudioGame::beginSession(const std::string &path, bool playtest) {
   progressPath = path;
   preferencesPath = path + ".settings";
   frontendStarted = true;
+  // Exported games open fullscreen by default when asked to; a player's saved choice wins.
+  if (!playtest)
+    fullscreen = defaultFullscreen;
   loadPreferences();
   StudioGame probe(projectPath);
   std::string error;

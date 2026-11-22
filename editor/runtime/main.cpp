@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
                 << game.clips.size() << " clips\n";
       return 0;
     }
-    auto platform = lota::createPlatform(game.atlas, game.project.title);
+    auto platform = lota::createPlatform(game.atlas, game.appName, game.windowScale);
     if (!game.audioAssets.empty() && !platform->audioAvailable())
       std::cerr << "Audio device unavailable; continuing silently.\n";
     game.beginSession(platform->savePath(game.project.id), !scene.empty());

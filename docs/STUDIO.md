@@ -214,12 +214,20 @@ area is actually reachable, so playtest your routes.
 (even unsaved changes). On Linux, playtests open in their own window, just like on a Mac. Closing Studio also closes its playtests. Press **F3** in a playtest to show
 collision, water, the player's feet, exits and frame timing.
 
-**Export app** builds a standalone game after validating the project. It doesn't need Studio, a
-browser or a compiler to run, and a failed export leaves any earlier export untouched.
+**Export** validates the project, then asks for a platform and format. The game it builds doesn't
+need Studio, a browser or a compiler to run, and a failed export leaves any earlier export
+untouched. Names, versions and window settings come from **Game → Setup → Export** (see the
+[game setup guide](GAME-SETUP.md#export-settings)).
 
-- **On a Mac**, you get an `.app` with your project, the runtime, the font and SDL3. If an app
-  already exists at that location, macOS asks before replacing it. Exported games run on macOS 12
-  or later.
+- **On a Mac**, choose a format:
+  - **App**: an `.app` with your project, the runtime, the font and SDL3.
+  - **ZIP archive**: the app in a `.zip`, ready to upload to a store such as
+    [itch.io](https://itch.io).
+  - **Disk image (.dmg)**: the app plus a shortcut to Applications, so players drag it across to
+    install it.
+
+  If a file already exists at that location, macOS asks before replacing it. Exported games run on
+  macOS 12 or later.
 - **On Linux**, you get a folder named after what you type. It holds the game (an executable named
   after the project ID), its project, the font, its own copy of SDL3 in `lib/`, `icon.png` and a
   README. Keep the files together; the folder can be moved or zipped up. Players run

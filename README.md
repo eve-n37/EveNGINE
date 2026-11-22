@@ -36,7 +36,7 @@ Security**.
 2. Choose **New**. Pick **Blank map** or one of the demo templates.
 3. Paint terrain, place objects, set a spawn point and add exits between maps.
 4. Click **Playtest** to play the current project in the native runtime, even before saving.
-5. **Save** keeps a portable `.eve` project. **Export app** builds a standalone Mac game.
+5. **Save** keeps a portable `.eve` project. **Export** builds a standalone Mac game as an app, a `.zip` or a `.dmg`.
 
 Want to see everything working together? Open `editor/examples/Adventure-Candidate.eve`. It has a
 branching quest, merchants, a patrolling NPC, combat, events and a custom title screen.

@@ -416,6 +416,9 @@
       root.EveRCModel || (typeof require !== 'undefined' ? require('./rc-model.js') : null)
     )?.validate(p, bad);
     expansionModel()?.validate(p, bad);
+    (
+      root.EveExportModel || (typeof require !== 'undefined' ? require('./export-model.js') : null)
+    )?.validate(p, bad);
     context = { view: 'setup' };
     if (
       !p.player ||

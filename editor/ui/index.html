@@ -24,7 +24,7 @@
       ><button id="redo" title="Command / Control Shift Z">↷</button>
       <div class="spacer"></div>
       <button id="validate">Validate</button><button id="play" class="primary">▶ Playtest</button
-      ><button id="export">Export app</button>
+      ><button id="export">Export</button>
     </header>
     <nav id="primaryNavigation" aria-label="Editor sections">
       <button class="workspaceTab" data-workspace="maps">Maps</button
@@ -448,6 +448,10 @@
             <summary>Player combat</summary>
             <div id="setupCombat"></div>
           </details>
+          <details class="setupSection">
+            <summary>Export</summary>
+            <div id="setupExport"></div>
+          </details>
         </div>
         <div class="canvasFooter">
           <span id="cursor">Ready</span><span id="sceneInfo"></span><span class="spacer"></span
@@ -505,6 +509,7 @@
     <script src="adventure-model.js"></script>
     <script src="expansion-model.js"></script>
     <script src="rc-model.js"></script>
+    <script src="export-model.js"></script>
     <script src="model.js"></script>
     <script src="builtins-data.js"></script>
     <script src="demo-project.js"></script>
@@ -520,5 +525,6 @@
     <script src="adventure-demo.js"></script>
     <script src="rc3-editor.js"></script>
     <script src="expansion-editor.js"></script>
+    <script src="export-editor.js"></script>
   </body>
 </html>

@@ -182,6 +182,87 @@ int main(int argc, char **argv) {
       [adventureValidate waitUntilExit];
       Check(adventureValidate.terminationStatus == 0,
             @"exported adventure project validates independently");
+      // Export settings: names, version, bundle ID and a single-architecture build.
+      NSMutableDictionary *configured = [adventure mutableCopy];
+      configured[@"export"] = @{
+        @"appName" : @"Lantern: Night/Day",
+        @"bundleId" : @"com.example.lantern",
+        @"version" : @"2.4.1",
+        @"macArchitecture" : @"arm64"
+      };
+      Check([EveExportAppName(configured) isEqual:@"Lantern- Night-Day"],
+            @"app names are safe file names");
+      NSURL *thin = [output URLByAppendingPathComponent:@"Thin.app"];
+      Check(EveExportGame(configured, runtime, font, framework, fallback, thin, &error),
+            [NSString stringWithFormat:@"configured export: %@", error]);
+      NSDictionary *thinPlist = [NSDictionary
+          dictionaryWithContentsOfURL:[thin URLByAppendingPathComponent:@"Contents/Info.plist"]];
+      Check([thinPlist[@"CFBundleName"] isEqual:@"Lantern- Night-Day"] &&
+                [thinPlist[@"CFBundleIdentifier"] isEqual:@"com.example.lantern"] &&
+                [thinPlist[@"CFBundleShortVersionString"] isEqual:@"2.4.1"],
+            @"export settings reach Info.plist");
+      NSDictionary *defaultPlist = [NSDictionary
+          dictionaryWithContentsOfURL:[adventureApp
+                                          URLByAppendingPathComponent:@"Contents/Info.plist"]];
+      Check([defaultPlist[@"CFBundleShortVersionString"] isEqual:@"1.0.0"] &&
+                [defaultPlist[@"CFBundleIdentifier"] hasPrefix:@"dev.lota.game."],
+            @"projects without export settings get default version and bundle ID");
+      for (NSString *binary in
+           @[ @"Contents/MacOS/Game", @"Contents/Frameworks/SDL3.framework/Versions/A/SDL3" ]) {
+        NSData *bytes = [NSData dataWithContentsOfURL:[thin URLByAppendingPathComponent:binary]];
+        const uint32_t *words = bytes.bytes;
+        Check(bytes.length > 8 && words[0] == 0xfeedfacf && words[1] == 0x0100000c,
+              [@"arm64 only: " stringByAppendingString:binary]);
+      }
+      Check([fm isExecutableFileAtPath:[thin URLByAppendingPathComponent:@"Contents/MacOS/Game"]
+                                           .path],
+            @"thinned runtime stays executable");
+#if defined(__arm64__)
+      NSTask *thinValidate = [NSTask new];
+      thinValidate.executableURL = [thin URLByAppendingPathComponent:@"Contents/MacOS/Game"];
+      thinValidate.arguments = @[ @"--validate" ];
+      Check([thinValidate launchAndReturnError:&error], @"thinned runtime launches");
+      [thinValidate waitUntilExit];
+      Check(thinValidate.terminationStatus == 0, @"thinned runtime loads its thinned SDL3");
+#endif
+      // Packages.
+      NSURL *zip = [output URLByAppendingPathComponent:@"Lantern.zip"],
+            *dmg = [output URLByAppendingPathComponent:@"Lantern.dmg"];
+      [fm removeItemAtURL:zip error:nil];
+      [fm removeItemAtURL:dmg error:nil];
+      Check(EvePackageGame(thin, @"zip", @"Lantern", zip, &error),
+            [NSString stringWithFormat:@"zip package: %@", error]);
+      NSURL *unzipped = [output URLByAppendingPathComponent:@"Unzipped"];
+      [fm removeItemAtURL:unzipped error:nil];
+      NSTask *unzip = [NSTask new];
+      unzip.executableURL = [NSURL fileURLWithPath:@"/usr/bin/ditto"];
+      unzip.arguments = @[ @"-x", @"-k", zip.path, unzipped.path ];
+      [unzip launchAndReturnError:&error];
+      [unzip waitUntilExit];
+      NSURL *unzippedFramework = [unzipped
+          URLByAppendingPathComponent:@"Thin.app/Contents/Frameworks/SDL3.framework/SDL3"];
+      Check(unzip.terminationStatus == 0 &&
+                [fm isExecutableFileAtPath:
+                        [unzipped URLByAppendingPathComponent:@"Thin.app/Contents/MacOS/Game"]
+                            .path] &&
+                [[fm destinationOfSymbolicLinkAtPath:unzippedFramework.path error:nil] length],
+            @"zip keeps the app, its permissions and framework links");
+      Check(EvePackageGame(thin, @"dmg", @"Lantern", dmg, &error),
+            [NSString stringWithFormat:@"dmg package: %@", error]);
+      NSTask *verify = [NSTask new];
+      verify.executableURL = [NSURL fileURLWithPath:@"/usr/bin/hdiutil"];
+      verify.arguments = @[ @"imageinfo", dmg.path ];
+      verify.standardOutput = NSFileHandle.fileHandleWithNullDevice;
+      [verify launchAndReturnError:&error];
+      [verify waitUntilExit];
+      Check(verify.terminationStatus == 0, @"dmg is a valid disk image");
+      Check(!EvePackageGame(thin, @"rar", @"Lantern", [output URLByAppendingPathComponent:@"x.rar"],
+                            &error),
+            @"unknown package formats are rejected");
+      NSUInteger leftovers = 0;
+      for (NSString *item in [fm contentsOfDirectoryAtPath:output.path error:nil])
+        leftovers += [item hasPrefix:@".eve-"];
+      Check(leftovers == 0, @"exports leave no staging folders behind");
       printf("%d export checks passed\n", checks);
       return 0;
     } @catch (NSException *e) {
