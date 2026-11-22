@@ -50,12 +50,13 @@ def different(a, b):
     return sum(1 for p, q in zip(a.getdata(), b.getdata()) if p != q)
 
 
-errors = []
+errors, console = [], []
 try:
     with sync_playwright() as p:
         browser = p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
         page = browser.new_page(viewport={"width": 1280, "height": 800})
         page.on("pageerror", lambda e: errors.append(str(e)))
+        page.on("console", lambda m: console.append(m.type + ": " + m.text))
         page.goto(url)
         page.wait_for_function(
             "!document.getElementById('play').disabled", timeout=60000
@@ -95,6 +96,10 @@ try:
         )
         check(not errors, "no page errors: " + "; ".join(errors))
         browser.close()
+except Exception:
+    print("Browser console:", *console[-40:], sep="\n  ")
+    print("Page errors:", *errors, sep="\n  ")
+    raise
 finally:
     server.shutdown()
 print(checks, "web game checks passed")

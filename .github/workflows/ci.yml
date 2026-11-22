@@ -58,8 +58,10 @@ jobs:
           name: web-game-screenshots
           path: ${{ runner.temp }}/web-shots
           if-no-files-found: ignore
-      # Both Studio apps carry this runtime so they can export web games.
+      # Both Studio apps carry this runtime so they can export web games. Kept even when the
+      # browser test fails, so the failure can be reproduced from the artifact.
       - uses: actions/upload-artifact@v7
+        if: always()
         with:
           name: web-game-runtime
           path: |
