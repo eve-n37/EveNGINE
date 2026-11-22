@@ -2,6 +2,7 @@ from pathlib import Path
 import json, os, wave, struct, math
 from PIL import Image
 from playwright.sync_api import sync_playwright
+from ui_navigation import open_tool
 
 root = Path(__file__).resolve().parents[1]
 output = Path(
@@ -54,7 +55,7 @@ with sync_playwright() as pw:
     page.evaluate(
         "studioTest.load(" + (root / "examples/Mosslight.eve").read_text() + ")"
     )
-    page.locator("[data-view=assets]").click()
+    open_tool(page, "artwork", "assets")
     page.locator("#assetSearch").fill("south")
     assert page.locator(".assetCard").count() == 4
     checks.append("asset browser searches names")
@@ -75,7 +76,7 @@ with sync_playwright() as pw:
         "browser double click opens artwork",
         'document.getElementById("pixelWorkspace").hidden===false',
     )
-    page.locator("[data-view=assets]").click()
+    open_tool(page, "artwork", "assets")
     # Sheet import: two opaque tiles, alpha preserved, exact grid.
     image = output / "tilesheet.png"
     im = Image.new("RGBA", (32, 16), (66, 110, 77, 255))
@@ -162,7 +163,7 @@ with sync_playwright() as pw:
     page.locator("#assetKind").select_option("all")
     page.screenshot(path=str(output / "EveNGINE-Studio-v0.6.0-assets.png"))
     # Reverse drag map selection and four-layer copying.
-    page.locator("[data-view=map]").click()
+    open_tool(page, "maps", "map")
     page.locator("#maps button").first.click()
     page.evaluate("studioTest.zoom(1)")
     page.locator("[data-tool=region]").click()
@@ -238,7 +239,7 @@ with sync_playwright() as pw:
                 for i in range(4000)
             )
         )
-    page.locator("[data-view=audio]").click()
+    open_tool(page, "audio", "audio")
     page.locator("#audioInput").set_input_files(sound)
     page.wait_for_function("()=>studioTest.project().audio.assets.length===3")
     check(

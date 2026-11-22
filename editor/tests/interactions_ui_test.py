@@ -1,6 +1,7 @@
 from pathlib import Path
 import json, os
 from playwright.sync_api import sync_playwright
+from ui_navigation import open_tool
 
 root = Path(__file__).resolve().parents[1]
 output = Path(
@@ -49,7 +50,7 @@ with sync_playwright() as pw:
         page.wait_for_timeout(80)
 
     def use(name):
-        page.locator("[data-view=library]").click()
+        open_tool(page, "artwork", "library")
         page.locator("#builtinSearch").fill(name)
         page.locator(".builtinCard").filter(
             has=page.get_by_text(name, exact=True)
@@ -61,7 +62,7 @@ with sync_playwright() as pw:
         page.mouse.click(box["x"] + x, box["y"] + y)
 
     page.evaluate("studioTest.load(LotaModel.createBlankProject())")
-    page.locator("[data-view=library]").click()
+    open_tool(page, "artwork", "library")
     assert page.locator(".builtinCard").count() == 118
     checks.append("built-in catalog displays all artwork and stamps")
     page.screenshot(path=str(output / "EveNGINE-Studio-v0.6.0-library.png"))
@@ -92,7 +93,7 @@ with sync_playwright() as pw:
         "explorer preset assigns four walking clips",
         'studioTest.project().animations.every(a=>a.frames.every(f=>f.sprite.startsWith("eve-hero-")))',
     )
-    page.locator("[data-view=items]").click()
+    open_tool(page, "story", "items")
     page.locator("#newItem").click()
     modal()
     page.locator("#dialogBody input").fill("Bronze key")
@@ -146,7 +147,7 @@ with sync_playwright() as pw:
     )
     assert "switch links" in page.locator("#notice").inner_text()
     checks.append("protected deletion explains references")
-    page.locator("[data-view=items]").click()
+    open_tool(page, "story", "items")
     page.locator(".itemRow>button").click()
     check("assigned item cannot be deleted", "studioTest.project().items.length===1")
     page.screenshot(path=str(output / "EveNGINE-Studio-v0.6.0-items.png"))
