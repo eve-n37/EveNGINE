@@ -404,7 +404,7 @@ public:
     double now = seconds();
     if (now - lastSync > 2) {
       lastSync = now;
-      EM_ASM(if (typeof eveSyncSaves == = 'function') eveSyncSaves(););
+      emscripten_run_script("if (typeof eveSyncSaves === 'function') eveSyncSaves();");
     }
 #else
     SDL_Delay(1);

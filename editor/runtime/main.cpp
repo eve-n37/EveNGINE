@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
           auto *s = static_cast<Session *>(data);
           if (!s->frame()) {
             emscripten_cancel_main_loop();
-            EM_ASM(if (typeof eveGameEnded == = 'function') eveGameEnded(););
+            emscripten_run_script("if (typeof eveGameEnded === 'function') eveGameEnded();");
           }
         },
         session.release(), 0, false);
