@@ -9,6 +9,10 @@ if(NOT EMSCRIPTEN)
   message(FATAL_ERROR "Configure this folder with emcmake (Emscripten).")
 endif()
 set(LOTA_DESKTOP ON CACHE BOOL "" FORCE)
+# The engine uses C++ exceptions in normal operation (for example, a missing save file is caught
+# and ignored), and Emscripten doesn't catch them unless asked to.
+add_compile_options(-fexceptions)
+add_link_options(-fexceptions)
 add_subdirectory(../engine engine)
 add_executable(evengine-web ../editor/runtime/main.cpp)
 target_link_libraries(evengine-web PRIVATE LotA::Studio LotA::Platform)
