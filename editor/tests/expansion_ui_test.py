@@ -3,6 +3,7 @@
 from pathlib import Path
 import json, os
 from playwright.sync_api import sync_playwright
+from ui_navigation import open_tool
 
 root = Path(__file__).resolve().parents[1]
 output = Path(
@@ -47,8 +48,7 @@ with sync_playwright() as pw:
     page.evaluate(
         "studioTest.load(" + (root / "examples/Frontier-Watch.eve").read_text() + ")"
     )
-    page.locator("#primaryNavigation [data-workspace=story]").click()
-    page.locator("[data-section=actors]").click()
+    open_tool(page, "story", "actors")
     check("NPCs & trading opens", "!document.getElementById('actorWorkspace').hidden")
     check(
         "factions card lists project factions",
@@ -140,7 +140,7 @@ with sync_playwright() as pw:
         path=str(output / "expansion-actors.png")
     )
 
-    page.locator("[data-section=items]").click()
+    open_tool(page, "story", "items")
     page.wait_for_timeout(50)
     items = page.evaluate("studioTest.project().items.map(i => i.id)")
 
@@ -170,7 +170,7 @@ with sync_playwright() as pw:
         % items.index("sling"),
     )
 
-    page.locator("[data-section=events]").click()
+    open_tool(page, "story", "events")
     page.wait_for_timeout(50)
     delay = page.locator("[data-event=watch-horn] label:has-text('Delay') input")
     check(
