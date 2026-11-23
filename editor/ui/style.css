@@ -1126,3 +1126,8 @@ nav > .tab {
 .storyCard h4 {
   margin: 20px 0 8px;
 }
+.worldRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}

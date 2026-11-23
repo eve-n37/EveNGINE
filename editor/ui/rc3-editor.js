@@ -77,6 +77,7 @@ function renderSetup() {
   renderMenus();
   renderAppearance();
   renderExportSettings();
+  renderWorldSettings();
   $('menusWorkspace').hidden = $('appearanceWorkspace').hidden = false;
   let combat = $('setupCombat');
   combat.replaceChildren(
@@ -414,6 +415,7 @@ inspect = function () {
               o.quantity ||= 1;
             }
             if (o.kind === 'switch') o.targets ||= [];
+            worldKindDefaults(o);
           });
       if (['npc', 'enemy'].includes(o.kind))
         $('inspector').append(
@@ -575,6 +577,9 @@ function renderContext() {
       'Icon & UI colors',
       'Title & controls',
       'Player combat',
+      'Time & weather',
+      'Leveling',
+      'Export',
     ].entries()) {
       let b = storyButton(label, () => openSetup(i));
       b.className = 'mapRow';

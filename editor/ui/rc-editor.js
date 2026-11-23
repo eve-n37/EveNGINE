@@ -144,12 +144,18 @@ function renderMenus() {
     controls.append(row);
   }
 }
-function eventTargets(type) {
+function eventTargets(type, scene) {
   if (type === 'giveItem') return (P().items || []).map((i) => [i.id, i.name]);
   if (type === 'startQuest') return (P().quests || []).map((q) => [q.id, q.name]);
   if (type === 'setFlag') return (P().flags || []).map((f) => [f.id, f.name]);
   if (type === 'changeMap') return P().scenes.map((s) => [s.id, s.title]);
   if (type === 'sound') return (P().audio?.assets || []).map((a) => [a.id, a.name]);
+  if (type === 'setWeather' || type === 'resetPuzzle')
+    return P().scenes.map((s) => [s.id, s.title]);
+  if (type === 'cutscene')
+    return (P().cutscenes || [])
+      .filter((c) => !scene || c.scene === scene)
+      .map((c) => [c.id, c.name]);
   if (type === 'open' || type === 'dialogue')
     return P().scenes.flatMap((s) =>
       s.objects
@@ -160,10 +166,14 @@ function eventTargets(type) {
     );
   return [];
 }
-function freshAction(type = 'message') {
+function freshAction(type = 'message', scene) {
   let a = { type };
   if (type === 'message') a.text = 'Something has changed.';
+  else if (type === 'setTime') a.hour = 6;
+  else if (type === 'giveXp') a.quantity = 10;
   else {
+    a.target = eventTargets(type, scene)[0]?.[0] || '';
+    if (type === 'setWeather') a.weather = 'rain';
     a.target = eventTargets(type)[0]?.[0] || '';
     if (type === 'giveItem') a.quantity = 1;
     if (type === 'setFlag') a.value = true;
@@ -337,10 +347,17 @@ function renderEvents() {
             ['flag', 'Story flag'],
             ['item', 'Inventory item'],
             ['quest', 'Quest state'],
+            ...(P().time ? [['time', 'Time of day']] : []),
           ],
           condition.kind,
           (v) => {
             condition.kind = v;
+            if (v === 'time') {
+              for (let k of Object.keys(condition)) if (k !== 'kind') delete condition[k];
+              condition.from = 19;
+              condition.to = 6;
+              return;
+            }
             condition.target =
               eventTargets(
                 v === 'flag' ? 'setFlag' : v === 'item' ? 'giveItem' : 'startQuest'
@@ -350,18 +367,20 @@ function renderEvents() {
             condition.state = 'active';
           }
         ),
-        storySelect(
-          'Condition target',
-          eventTargets(
-            condition.kind === 'flag'
-              ? 'setFlag'
-              : condition.kind === 'item'
-                ? 'giveItem'
-                : 'startQuest'
-          ),
-          condition.target,
-          (v) => (condition.target = v)
-        )
+        condition.kind === 'time'
+          ? timeRange(condition)
+          : storySelect(
+              'Condition target',
+              eventTargets(
+                condition.kind === 'flag'
+                  ? 'setFlag'
+                  : condition.kind === 'item'
+                    ? 'giveItem'
+                    : 'startQuest'
+              ),
+              condition.target,
+              (v) => (condition.target = v)
+            )
       );
       if (condition.kind === 'flag')
         row.append(rcCheck('Must be enabled', condition.value, (v) => (condition.value = v)));
@@ -428,10 +447,17 @@ function renderEvents() {
             ['changeMap', 'Change map'],
             ['setFlag', 'Set story flag'],
             ['sound', 'Play sound'],
+            ...(P().time ? [['setTime', 'Set the time']] : []),
+            ['setWeather', 'Change weather'],
+            ['resetPuzzle', 'Reset push blocks'],
+            ...(P().leveling ? [['giveXp', 'Give XP']] : []),
+            ...((P().cutscenes || []).some((c) => c.scene === e.scene)
+              ? [['cutscene', 'Play cutscene']]
+              : []),
           ],
           a.type,
           (v) => {
-            let next = freshAction(v);
+            let next = freshAction(v, e.scene);
             Object.keys(a).forEach((k) => delete a[k]);
             Object.assign(a, next);
           }
@@ -439,9 +465,13 @@ function renderEvents() {
       );
       if (a.type === 'message')
         row.append(storyText('Message', a.text, (v) => (a.text = v), 180, true));
+      else if (a.type === 'setTime')
+        row.append(rc3Number('Hour (0–23.99)', a.hour, (v) => (a.hour = v), 0, 23.99, 0.25));
+      else if (a.type === 'giveXp')
+        row.append(rcNumber('XP', a.quantity, (v) => (a.quantity = v), 1, 99999));
       else
         row.append(
-          storySelect('Action target', eventTargets(a.type), a.target, (v) => {
+          storySelect('Action target', eventTargets(a.type, e.scene), a.target, (v) => {
             a.target = v;
             if (a.type === 'changeMap') {
               let s = P().scenes.find((s) => s.id === v);
@@ -454,6 +484,10 @@ function renderEvents() {
         row.append(rcNumber('Quantity', a.quantity, (v) => (a.quantity = v), 1, 99));
       if (a.type === 'setFlag')
         row.append(rcCheck('Enabled after action', a.value, (v) => (a.value = v)));
+      if (a.type === 'setWeather')
+        row.append(
+          storySelect('Weather', EveWorldModel.weathers, a.weather, (v) => (a.weather = v))
+        );
       if (a.type === 'changeMap') {
         let s = P().scenes.find((s) => s.id === a.target);
         row.append(

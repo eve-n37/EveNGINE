@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **Day and night**: a clock with a configurable day length, a night colour and an optional HUD clock; indoor maps stay lit. Events get a **Time of day** condition and a **Set the time** action.
+- **Weather**: rain, snow or fog per map, changeable during play with the **Change weather** action.
+- **Puzzles**: push blocks that move a tile at a time, and pressure plates that set a flag and open doors while pressed (or for good). **Reset push blocks** puts a map's blocks back.
+- **Leveling**: XP from enemies, quests and the **Give XP** action raises the level, adding health, attack and defence per level.
+- **Cutscenes**: Story → Cutscenes builds sequences of lines, moves, turns, camera pans, fades, waits, sounds and flags, played by the **Play cutscene** action and skippable with the pause key.
+- **Vehicles**: boats (water only) and carts (land only) with their own speed. E gets in and out.
+- New **Puzzles & travel** built-in pack (push block, pressure plate, boat, handcart), the `Lantern-Isles.eve` sample and the [World guide](docs/WORLD.md).
+- Save format 7 for projects that use these features. Other projects keep writing formats 4 and 6, and all earlier saves load.
 - **Export settings** in Game → Setup → Export: app name, bundle ID, version, window size, start fullscreen and Mac architecture (universal, Apple Silicon only or Intel only). They're saved in the project as an optional `export` block. Projects without one export as before, except the default app version is now `1.0.0` instead of the engine version.
 - **Export** (was **Export app**) asks for a platform and format. On a Mac it can make an app, a `.zip` or a `.dmg` with an Applications shortcut. Single-architecture exports are thinned by Studio itself, so it needs no developer tools.
 - **Linux export from a Mac**: Mac Studio now includes the Linux runtime and SDL3, and exports Linux games as a `.tar.gz` (the default, which keeps executable permissions) or a folder. Linux Studio gets the `.tar.gz` option too. Exported Linux games use the app name from the export settings.

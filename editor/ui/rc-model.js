@@ -54,6 +54,7 @@
       text = (v, n, empty = false) =>
         typeof v === 'string' && v.length <= n && (empty || v.length > 0),
       num = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi,
+      hours = (v, hi) => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= hi,
       arr = (v, n) => Array.isArray(v) && v.length <= n,
       obj = (v) => v && typeof v === 'object' && !Array.isArray(v),
       sprite = (v) => p.sprites.some((s) => s.id === v),
@@ -184,7 +185,9 @@
                       : c.kind === 'quest'
                         ? quests.has(c.target) &&
                           ['available', 'active', 'ready', 'completed'].includes(c.state)
-                        : false)
+                        : c.kind === 'time'
+                          ? obj(p.time) && hours(c.from, 24) && hours(c.to, 24) && c.from !== c.to
+                          : false)
                 )
                   bad('Invalid event condition.');
           }
@@ -217,6 +220,22 @@
                   break;
                 case 'sound':
                   valid = (p.audio?.assets || []).some((s) => s.id === a.target);
+                  break;
+                case 'setTime':
+                  valid = obj(p.time) && hours(a.hour, 23.999);
+                  break;
+                case 'setWeather':
+                  valid =
+                    scenes.has(a.target) && ['none', 'rain', 'snow', 'fog'].includes(a.weather);
+                  break;
+                case 'resetPuzzle':
+                  valid = scenes.has(a.target);
+                  break;
+                case 'giveXp':
+                  valid = Number.isInteger(a.quantity) && a.quantity >= 1 && a.quantity <= 99999;
+                  break;
+                case 'cutscene':
+                  valid = (p.cutscenes || []).some((c) => c.id === a.target && c.scene === e.scene);
                   break;
                 case 'changeMap': {
                   let d = scenes.get(a.target);

@@ -348,6 +348,9 @@
             'door',
             'switch',
             'enemy',
+            'block',
+            'plate',
+            'vehicle',
           ].includes(o.kind) ||
           !inMap(s, o.x, o.y) ||
           typeof o.text !== 'string' ||
@@ -418,6 +421,9 @@
     expansionModel()?.validate(p, bad);
     (
       root.EveExportModel || (typeof require !== 'undefined' ? require('./export-model.js') : null)
+    )?.validate(p, bad);
+    (
+      root.EveWorldModel || (typeof require !== 'undefined' ? require('./world-model.js') : null)
     )?.validate(p, bad);
     context = { view: 'setup' };
     if (

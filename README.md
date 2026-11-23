@@ -62,6 +62,7 @@ factions, NPC animations and a timed event.
 | [Studio guide](docs/STUDIO.md)                  | The editor: maps, artwork, audio, playtesting, exporting |
 | [Story guide](docs/STORY.md)                    | Items, interactions, dialogue, quests, events and flags  |
 | [Adventure guide](docs/ADVENTURE.md)            | NPC movement, shops, combat and healing                  |
+| [World guide](docs/WORLD.md)                    | Day and night, weather, puzzles, leveling, cutscenes, vehicles |
 | [Game setup guide](docs/GAME-SETUP.md)          | Menus, controls, app icons and UI colours                |
 | [SDK guide](docs/SDK.md)                        | Using the C++ engine in your own projects                |
 | [Audio API](docs/AUDIO-API.md)                  | The native audio interface                               |

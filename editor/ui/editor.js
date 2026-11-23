@@ -682,9 +682,19 @@ function inspect() {
       ) +
       '</select></label><label class="field"><span>Behaviour</span><select data-field="kind">' +
       options(
-        ['decoration', 'collectible', 'sign', 'npc', 'chest', 'door', 'switch', 'enemy'].map(
-          (x) => [x, x]
-        ),
+        [
+          'decoration',
+          'collectible',
+          'sign',
+          'npc',
+          'chest',
+          'door',
+          'switch',
+          'enemy',
+          'block',
+          'plate',
+          'vehicle',
+        ].map((x) => [x, x]),
         o.kind
       ) +
       '</select></label><label class="field"><span>Interaction text</span><textarea data-field="text">' +

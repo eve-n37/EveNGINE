@@ -157,6 +157,19 @@ function renderQuests() {
       card.append(
         storyNumber('Reward quantity', q.rewardQuantity || 1, (v) => (q.rewardQuantity = v))
       );
+    if (P().leveling)
+      card.append(
+        rcNumber(
+          'Reward XP',
+          q.rewardXp || 0,
+          (v) => {
+            if (v) q.rewardXp = v;
+            else delete q.rewardXp;
+          },
+          0,
+          99999
+        )
+      );
     list.append(card);
   }
   if (!list.childElementCount)

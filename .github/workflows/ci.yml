@@ -261,8 +261,10 @@ jobs:
         run: |
           python -m pip install playwright==1.64.1
           python -m playwright install --with-deps chromium
-      - name: Editor UI tests (1.1 features)
-        run: python editor/tests/expansion_ui_test.py
+      - name: Editor UI tests (1.1 and 1.2 features)
+        run: |
+          python editor/tests/expansion_ui_test.py
+          python editor/tests/world_ui_test.py
         env:
           LOTA_TEST_OUTPUT: ${{ runner.temp }}/ui-tests
       - name: Keep UI screenshots

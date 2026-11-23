@@ -18,7 +18,9 @@ Open `EveNGINE-Studio.app` and choose **New**. Pick a template:
 
 To try every feature together, use **Open** on `Adventure-Candidate.eve` (in the download's
 Templates folder, or `editor/examples/` in the source). `Frontier-Watch.eve` adds the 1.1
-features: equipment, a sling, rival factions and an animated NPC.
+features: equipment, a sling, rival factions and an animated NPC. `Lantern-Isles.eve` adds day and
+night, weather, a push-block puzzle, leveling, a cutscene, a boat and a cart (see the
+[world guide](WORLD.md)).
 
 A project is a single `.eve` file. All artwork, maps, stamps, audio and settings live inside it, so
 you can move or share it on its own. Older `.lota` files still open.
@@ -62,6 +64,7 @@ Pick a tile, then use **Brush**, **Erase** or **Fill**. A whole brush stroke und
 
 - **Object**: pick a sprite, choose Object, then click to place it. Set its behaviour (sign, NPC,
   chest, door and so on) in the inspector. See the [story guide](STORY.md#objects-and-interactions).
+  Push blocks, pressure plates and vehicles are covered in the [world guide](WORLD.md).
 - **Spawn**: where the player starts. The player's 10 × 7 pixel foot area must be clear.
 - **Exit**: a trigger that sends the player to another map. Set its size, destination and arrival
   position in the inspector. For a return trip, add an exit on the other map too.
