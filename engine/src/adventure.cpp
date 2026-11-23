@@ -200,6 +200,9 @@ Scene StudioGame::liveScene(const std::string &map) const {
     auto a = actorStates.find(map + ":" + o.id);
     if (a != actorStates.end())
       o.position = a->second.position;
+    auto moved = movedObjects.find(map + ":" + o.id);
+    if (moved != movedObjects.end())
+      o.position = moved->second;
   }
   s.objects.erase(std::remove_if(s.objects.begin(), s.objects.end(),
                                  [&](auto &o) {
@@ -509,17 +512,25 @@ bool StudioGame::updateShop(const Input &in) {
   return true;
 }
 void StudioGame::drawAdventure(Canvas &c) const {
-  if (combatEnabled) {
+  if (combatEnabled && cutscene.empty()) {
     c.rect({6, 31, 145, 16}, uiPanel);
     c.text("HEALTH " + std::to_string(health) + "/" + std::to_string(playerMaxHealth()), 12, 36,
            hurtClock > 0 ? Color{255, 125, 110} : uiAccent);
-    if (!equipment.empty()) {
+    if (!equipment.empty() || leveling.enabled) {
       c.rect({155, 31, 110, 16}, uiPanel);
       c.text("ATK " + std::to_string(playerAttackDamage()) + "  DEF " +
                  std::to_string(playerDefense()),
              161, 36, uiMuted);
     }
-    auto camera = cameraFor(project.scenes.at(scene), feet);
+    if (leveling.enabled) {
+      c.rect({269, 31, 125, 16}, uiPanel);
+      bool top = level >= leveling.maxLevel;
+      c.text("LV " + std::to_string(level) +
+                 (top ? "  MAX"
+                      : "  XP " + std::to_string(xp) + "/" + std::to_string(xpForLevel(level + 1))),
+             275, 36, uiAccent);
+    }
+    auto camera = cameraPosition();
     for (auto &a : actors)
       if (a.second.map == scene && a.second.mode == "enemy") {
         auto &state = actorStates.at(a.first);
@@ -580,6 +591,7 @@ void StudioGame::drawAdventure(Canvas &c) const {
          22, 201, uiMuted);
 }
 void StudioGame::respawnPlayer() {
+  riding.clear();
   scene = project.start;
   feet = project.scenes.at(scene).spawn;
   auto collision = collisionScene(scene, removed, activated);
@@ -624,7 +636,7 @@ void StudioGame::writeAdventure(std::ostream &out) const {
   for (auto &e : equipped)
     out << std::quoted(e.first) << " " << std::quoted(e.second) << "\n";
 }
-StudioAdventureState StudioGame::readAdventure(std::istream &in, int version) const {
+StudioAdventureState StudioGame::readAdventure(std::istream &in, int version, int atLevel) const {
   StudioAdventureState result;
   int count = -1;
   in >> result.health >> count;
@@ -695,7 +707,7 @@ StudioAdventureState StudioGame::readAdventure(std::istream &in, int version) co
       result.equipped[slot] = item;
     }
   }
-  require(result.health <= maxHealthWith(result.equipped), "Invalid saved health");
+  require(result.health <= maxHealthWith(result.equipped, atLevel), "Invalid saved health");
   return result;
 }
 void StudioGame::restoreAdventure(const StudioAdventureState &state) {

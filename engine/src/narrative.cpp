@@ -241,6 +241,9 @@ bool StudioGame::completeQuest(const std::string &name) {
   toast = "Quest completed: " + q.name;
   toastTime = 3;
   cue("chest");
+  auto reward = questXp.find(name);
+  if (reward != questXp.end())
+    gainXp(reward->second);
   return true;
 }
 std::vector<size_t> StudioGame::availableChoices() const {

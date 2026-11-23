@@ -180,7 +180,8 @@ StudioGame::StudioGame(const std::string &path) {
       o.kind = a["kind"].text();
       require(o.kind == "decoration" || o.kind == "collectible" || o.kind == "sign" ||
                   o.kind == "npc" || o.kind == "chest" || o.kind == "door" || o.kind == "switch" ||
-                  o.kind == "enemy",
+                  o.kind == "enemy" || o.kind == "block" || o.kind == "plate" ||
+                  o.kind == "vehicle",
               "Unknown object kind");
       o.text = text(a["text"], 720);
       o.position = point(a);
@@ -361,8 +362,10 @@ StudioGame::StudioGame(const std::string &path) {
   }
   loadAppearance(j);
   loadNarrative(j);
+  loadWorld(j);
   loadReleaseFeatures(j);
   loadAdventure(j);
+  loadWorldLate(j);
   scene = project.start;
   feet = project.scenes.at(scene).spawn;
 }
@@ -414,7 +417,8 @@ Scene StudioGame::collisionScene(const std::string &name, const std::vector<std:
                                    return (actorStates.count(key) &&
                                            actorStates.at(key).health == 0) ||
                                           std::find(gone.begin(), gone.end(), key) != gone.end() ||
-                                          (o.kind == "door" && active.count(key));
+                                          (o.kind == "door" && active.count(key)) ||
+                                          vehicles.count(key) || plates.count(key);
                                  }),
                   s.objects.end());
   return s;
@@ -422,7 +426,8 @@ Scene StudioGame::collisionScene(const std::string &name, const std::vector<std:
 std::string StudioGame::visibleSprite(const Object &o) const {
   auto key = scene + ":" + o.id;
   auto i = interactions.find(key);
-  return activated.count(key) && i != interactions.end() && !i->second.openSprite.empty()
+  return (activated.count(key) || pressedPlates.count(key)) && i != interactions.end() &&
+                 !i->second.openSprite.empty()
              ? i->second.openSprite
              : o.sprite;
 }
@@ -442,6 +447,11 @@ bool StudioGame::giveItem(const std::string &name, int quantity) {
 }
 void StudioGame::interact(const Object &o) {
   auto key = scene + ":" + o.id;
+  if (o.kind == "vehicle") {
+    if (!runEvents("interact", key))
+      board(key);
+    return;
+  }
   if (o.kind == "enemy") {
     claimLoot(key);
     return;
@@ -537,6 +547,9 @@ void StudioGame::update(const Input &incoming, float dt) {
     in.pressed[size_t(Action::Quit)] = true;
   if (in.hit(Action::Debug))
     debug = !debug;
+  // A cutscene takes over input until it ends; Escape skips it.
+  if (updateCutscene(in, dt))
+    return;
   if (in.hit(Action::Quit)) {
     if (!shopObject.empty())
       shopObject.clear();
@@ -638,8 +651,9 @@ void StudioGame::update(const Input &incoming, float dt) {
     clock = 0;
     return;
   }
+  updateClock(dt);
   updateTriggers();
-  if (!dialogueObject.empty())
+  if (!dialogueObject.empty() || !cutscene.empty())
     return;
   updateTimers(dt);
   if (!dialogueObject.empty())
@@ -660,7 +674,8 @@ void StudioGame::update(const Input &incoming, float dt) {
     clock += dt * (in.down(Action::Run) ? runMultiplier : 1);
   } else
     clock = 0;
-  if (combatEnabled && in.hit(Action::Attack))
+  bool attack = in.hit(Action::Attack) && riding.empty();
+  if (combatEnabled && attack)
     playerAttack();
   updateActors(dt);
   if (combatEnabled && health == 0)
@@ -669,9 +684,9 @@ void StudioGame::update(const Input &incoming, float dt) {
   if (combatEnabled && health == 0)
     return;
   auto s = liveScene(scene);
-  if (in.hit(Action::Attack))
+  if (attack)
     cue("attack");
-  if (in.hit(Action::Attack) && attackClock < 0)
+  if (attack && attackClock < 0)
     for (auto &c : clips)
       if (c.state == "attack" && c.direction == direction)
         attackClock = 0;
@@ -687,16 +702,28 @@ void StudioGame::update(const Input &incoming, float dt) {
       }
   }
   auto factor = in.down(Action::Run) ? runMultiplier : 1;
-  int tx = std::clamp(int(feet.x / 16), 0, s.width - 1),
-      ty = std::clamp(int(feet.y / 16), 0, s.height - 1);
-  if (layers.at(scene).water[ty * s.width + tx])
-    factor *= .6f;
-  auto collision = collisionScene(scene, removed, activated);
-  feet = moveBody(project, collision, feet, {d.x * speed * factor * dt, d.y * speed * factor * dt});
+  if (!riding.empty()) {
+    factor *= vehicles.at(riding).speed;
+    feet = ride(feet, {d.x * speed * factor * dt, d.y * speed * factor * dt});
+  } else {
+    int tx = std::clamp(int(feet.x / 16), 0, s.width - 1),
+        ty = std::clamp(int(feet.y / 16), 0, s.height - 1);
+    if (layers.at(scene).water[ty * s.width + tx])
+      factor *= .6f;
+    auto collision = collisionScene(scene, removed, activated);
+    Vec2 before = feet;
+    feet =
+        moveBody(project, collision, feet, {d.x * speed * factor * dt, d.y * speed * factor * dt});
+    updatePush(d, before, dt);
+  }
+  updatePlates();
+  s = liveScene(scene);
   message.clear();
   const Object *nearest = nullptr;
   float nearestDistance = 33;
   for (auto &o : s.objects) {
+    if (!riding.empty())
+      break; // nothing else is in reach from a vehicle
     auto key = scene + ":" + o.id;
     if (std::find(removed.begin(), removed.end(), key) != removed.end())
       continue;
@@ -719,7 +746,8 @@ void StudioGame::update(const Input &incoming, float dt) {
       }
       continue;
     }
-    if ((authored || (o.kind != "decoration" && o.kind != "collectible" &&
+    if ((authored || (o.kind != "decoration" && o.kind != "collectible" && o.kind != "block" &&
+                      o.kind != "plate" &&
                       (o.kind != "enemy" ||
                        actorStates.at(key).health == 0 && !actorStates.at(key).lootClaimed))) &&
         dist < nearestDistance && !(o.kind == "door" && activated.count(key))) {
@@ -734,6 +762,7 @@ void StudioGame::update(const Input &incoming, float dt) {
               : nearest->kind == "chest"               ? "E OPEN CHEST"
               : nearest->kind == "door"                ? "E OPEN DOOR"
               : nearest->kind == "switch"              ? "E USE SWITCH"
+              : nearest->kind == "vehicle"             ? "E BOARD"
                                                        : "E TO READ";
     message.replace(0, 1, controlLabel(Action::Interact));
     if (nearest->kind == "sign" && in.down(Action::Interact))
@@ -744,13 +773,18 @@ void StudioGame::update(const Input &incoming, float dt) {
         questEvent("activate", key);
     }
   }
-  if (!dialogueObject.empty() || scene != s.id)
+  if (!riding.empty()) {
+    message = controlLabel(Action::Interact) + " GET OFF";
+    if (in.hit(Action::Interact))
+      leaveVehicle();
+  }
+  if (!dialogueObject.empty() || scene != s.id || !cutscene.empty())
     return;
   updateTriggers();
   if (!dialogueObject.empty() || scene != s.id)
     return;
   portalCooldown = std::max(0.f, portalCooldown - dt);
-  if (portalCooldown == 0)
+  if (portalCooldown == 0 && riding.empty())
     for (auto &p : s.portals)
       if (overlaps(body(feet), p.bounds)) {
         scene = p.target;
@@ -768,7 +802,7 @@ Canvas StudioGame::draw() const {
   c.clear({31, 47, 42});
   auto s = liveScene(scene);
   auto &l = layers.at(scene);
-  auto camera = cameraFor(s, feet);
+  auto camera = cameraPosition();
   int left = int(camera.x) / 16, top = int(camera.y) / 16;
   for (int y = top; y < std::min(s.height, top + 17); y++)
     for (int x = left; x < std::min(s.width, left + 27); x++) {
@@ -784,7 +818,8 @@ Canvas StudioGame::draw() const {
     }
   std::vector<const Object *> objs;
   for (auto &o : s.objects)
-    if (std::find(removed.begin(), removed.end(), scene + ":" + o.id) == removed.end())
+    if (std::find(removed.begin(), removed.end(), scene + ":" + o.id) == removed.end() &&
+        scene + ":" + o.id != riding)
       objs.push_back(&o);
   std::stable_sort(objs.begin(), objs.end(), [&](auto a, auto b) {
     return a->position.y + project.sprites.at(a->sprite).source.h <
@@ -795,7 +830,18 @@ Canvas StudioGame::draw() const {
     if (combatEnabled && hurtClock > 0 && std::fmod(hurtClock, .12f) < .06f)
       return;
     auto r = pose();
-    c.sprite(r, {feet.x - camera.x - r.w / 2, feet.y - camera.y - r.h});
+    if (riding.empty()) {
+      c.sprite(r, {feet.x - camera.x - r.w / 2, feet.y - camera.y - r.h});
+      return;
+    }
+    // Riding: the player sits in the vehicle, which is drawn facing east and flipped for west.
+    auto &objects = project.scenes.at(scene).objects;
+    auto v = std::find_if(objects.begin(), objects.end(),
+                          [&](auto &o) { return scene + ":" + o.id == riding; });
+    auto source = project.sprites.at(v->sprite).source;
+    c.sprite(r, {feet.x - camera.x - r.w / 2, feet.y - camera.y - r.h - source.h * .35f});
+    c.sprite(source, {feet.x - camera.x - source.w / 2, feet.y - camera.y - source.h + 2},
+             direction == "west");
   };
   for (auto o : objs) {
     auto sp = project.sprites.at(visibleSprite(*o));
@@ -836,21 +882,26 @@ Canvas StudioGame::draw() const {
                std::to_string(int(frameMs)) + " MS",
            12, 36, uiMuted);
   }
-  c.rect({6, 6, 280, 21}, uiPanel);
-  c.text(s.title, 12, 12, uiText);
-  c.rect({330, 6, 64, 21}, uiPanel);
-  c.text("ITEMS " + std::to_string(score), 334, 12, uiAccent);
-  auto display = toastTime > 0 ? toast : message;
-  if (!display.empty() && dialogueObject.empty() && !inventoryOpen && !journalOpen) {
-    c.rect({6, 194, 388, 18}, uiPanel);
-    c.text(display.substr(0, 63), 12, 200, uiText);
+  drawWorld(c, camera);
+  // Cutscenes hide the HUD behind their letterbox bars.
+  if (cutscene.empty()) {
+    c.rect({6, 6, 280, 21}, uiPanel);
+    c.text(s.title, 12, 12, uiText);
+    c.rect({330, 6, 64, 21}, uiPanel);
+    c.text("ITEMS " + std::to_string(score), 334, 12, uiAccent);
+    drawWorldHud(c);
+    auto display = toastTime > 0 ? toast : message;
+    if (!display.empty() && dialogueObject.empty() && !inventoryOpen && !journalOpen) {
+      c.rect({6, 194, 388, 18}, uiPanel);
+      c.text(display.substr(0, 63), 12, 200, uiText);
+    }
+    c.rect({6, 217, 388, 17}, uiPanel);
+    c.text(((combatEnabled && riding.empty() ? controlLabel(Action::Attack) + " ATTACK  " : "") +
+            controlLabel(Action::Interact) + " USE  " + controlLabel(Action::Menu) + " BAG  " +
+            controlLabel(Action::Journal) + " QUESTS  " + controlLabel(Action::Pause) + " MENU")
+               .substr(0, 63),
+           10, 222, uiMuted);
   }
-  c.rect({6, 217, 388, 17}, uiPanel);
-  c.text(((combatEnabled ? controlLabel(Action::Attack) + " ATTACK  " : "") +
-          controlLabel(Action::Interact) + " USE  " + controlLabel(Action::Menu) + " BAG  " +
-          controlLabel(Action::Journal) + " QUESTS  " + controlLabel(Action::Pause) + " MENU")
-             .substr(0, 63),
-         10, 222, uiMuted);
   if (!dialogueObject.empty() && dialogueNode.empty()) {
     c.rect({6, 145, 388, 69}, uiModal);
     drawPortrait(c, 346, 160);
@@ -917,6 +968,7 @@ Canvas StudioGame::draw() const {
   }
   drawNarrative(c);
   drawAdventure(c);
+  drawCutscene(c);
   drawFrontend(c);
   return c;
 }
@@ -928,7 +980,11 @@ bool StudioGame::save(const std::string &path, std::string &error) const {
     error = "Cannot create save file";
     return false;
   }
-  out << "EVE_STUDIO_SAVE " << (hasAdventure() ? 6 : 4) << "\n"
+  out << "EVE_STUDIO_SAVE "
+      << (hasWorld()       ? 7
+          : hasAdventure() ? 6
+                           : 4)
+      << "\n"
       << std::quoted(project.id) << " " << std::quoted(scene) << "\n"
       << std::setprecision(9) << feet.x << " " << feet.y << " " << score << "\n"
       << removed.size() << "\n";
@@ -958,7 +1014,10 @@ bool StudioGame::save(const std::string &path, std::string &error) const {
   out << firedEvents.size() << "\n";
   for (auto &f : firedEvents)
     out << std::quoted(f) << "\n";
-  if (hasAdventure())
+  // Format 7 always has both blocks; the world block comes first so loading knows the level.
+  if (hasWorld())
+    writeWorld(out);
+  if (hasWorld() || hasAdventure())
     writeAdventure(out);
   out.flush();
   bool ok = bool(out);
@@ -1003,6 +1062,8 @@ bool StudioGame::load(const std::string &path, std::string &error) {
     std::set<std::string> nextFired;
     StudioAdventureState nextAdventure;
     nextAdventure.health = maxHealth;
+    StudioWorldState nextWorld;
+    nextWorld.hour = timeSettings.startHour;
     for (auto &a : actors) {
       auto &o = project.scenes.at(a.second.map).objects;
       auto object = std::find_if(o.begin(), o.end(), [&](auto &o) { return o.id == a.second.id; });
@@ -1021,7 +1082,7 @@ bool StudioGame::load(const std::string &path, std::string &error) {
       nextScore = old.score;
       nextRemoved = old.removed;
     } else {
-      require(magic == "EVE_STUDIO_SAVE" && version >= 2 && version <= 6,
+      require(magic == "EVE_STUDIO_SAVE" && version >= 2 && version <= 7,
               "Incompatible progress save");
       std::string projectId;
       input >> std::quoted(projectId) >> std::quoted(nextScene) >> nextFeet.x >> nextFeet.y >>
@@ -1113,7 +1174,11 @@ bool StudioGame::load(const std::string &path, std::string &error) {
                   "Invalid saved event");
         }
       }
-      if (version >= 5)
+      if (version >= 7) {
+        nextWorld = readWorld(input);
+        nextAdventure =
+            readAdventure(input, version, leveling.enabled ? levelFor(nextWorld.xp) : 1);
+      } else if (version >= 5)
         nextAdventure = readAdventure(input, version);
       for (auto &e : nextAdventure.equipped)
         require(nextInventory.count(e.second), "Saved equipment is not in the bag");
@@ -1126,16 +1191,26 @@ bool StudioGame::load(const std::string &path, std::string &error) {
             collision.objects.begin(), collision.objects.end(),
             [&](auto &o) {
               auto key = nextScene + ":" + o.id;
-              return (o.kind == "door" && nextActivated.count(key)) ||
+              return (o.kind == "door" && nextActivated.count(key)) || vehicles.count(key) ||
+                     plates.count(key) ||
                      std::find(nextRemoved.begin(), nextRemoved.end(), key) != nextRemoved.end() ||
                      (nextAdventure.actors.count(key) && nextAdventure.actors.at(key).health == 0);
             }),
         collision.objects.end());
-    for (auto &o : collision.objects)
+    for (auto &o : collision.objects) {
       if (nextAdventure.actors.count(nextScene + ":" + o.id))
         o.position = nextAdventure.actors.at(nextScene + ":" + o.id).position;
-    require(!blocked(project, collision, body(nextFeet)), "Saved position is blocked");
+      if (nextWorld.moved.count(nextScene + ":" + o.id))
+        o.position = nextWorld.moved.at(nextScene + ":" + o.id);
+    }
+    if (nextWorld.riding.empty())
+      require(!blocked(project, collision, body(nextFeet)), "Saved position is blocked");
+    else
+      require(nextWorld.riding.rfind(nextScene + ":", 0) == 0 &&
+                  rideAllowed(collision, nextFeet, vehicles.at(nextWorld.riding)),
+              "Saved vehicle position is invalid");
     restoreAdventure(nextAdventure);
+    restoreWorld(nextWorld);
     scene = nextScene;
     feet = nextFeet;
     score = nextScore;

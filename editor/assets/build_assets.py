@@ -99,6 +99,11 @@ packs = [
         "name": "Pocket treasures",
         "description": "12 item icons for keys, tools and rewards.",
     },
+    {
+        "id": "travel",
+        "name": "Puzzles & travel",
+        "description": "A push block, a pressure plate and its pressed state, a boat and a handcart.",
+    },
 ]
 
 
@@ -779,6 +784,71 @@ for name, title in [
         ellipse(im, (6, 3, 9, 6), 45)
     add(name, title, "items", im)
 # Portable, four-layer stamps use asset IDs.
+# Puzzles & travel (1.2): pushable block, pressure plate and vehicles. Vehicles face east; the
+# engine mirrors them for west.
+im = canvas()
+rect(im, (0, 1, 15, 15), 7)
+rect(im, (1, 2, 14, 13), 8)
+rect(im, (1, 2, 14, 4), 9)
+line(im, [(4, 7), (7, 9), (6, 12)], 16)
+line(im, [(11, 6), (12, 9)], 16)
+rect(im, (0, 14, 15, 15), 16)
+add(
+    "push-block",
+    "Push block",
+    "travel",
+    im,
+    collider={"x": 1, "y": 3, "w": 14, "h": 13},
+    preset={"kind": "block"},
+)
+im = canvas()
+rect(im, (1, 5, 14, 13), 7)
+rect(im, (2, 5, 13, 11), 8)
+rect(im, (2, 5, 13, 6), 9)
+rect(im, (6, 8, 9, 9), 22)
+add(
+    "plate",
+    "Pressure plate",
+    "travel",
+    im,
+    preset={"kind": "plate", "openSprite": "eve-plate-down"},
+)
+im = canvas()
+rect(im, (1, 7, 14, 13), 7)
+rect(im, (2, 8, 13, 12), 16)
+rect(im, (6, 9, 9, 11), 45)
+add("plate-down", "Pressure plate (pressed)", "travel", im)
+im = canvas(32, 16)
+ImageDraw.Draw(im).polygon([(1, 6), (25, 6), (31, 3), (27, 13), (5, 13)], fill=C[32])
+ImageDraw.Draw(im).polygon([(3, 7), (25, 7), (29, 5), (26, 11), (6, 11)], fill=C[15])
+line(im, [(1, 6), (25, 6), (31, 3)], 5)
+line(im, [(5, 13), (27, 13)], 6)
+rect(im, (11, 8, 13, 10), 6)
+rect(im, (19, 8, 21, 10), 6)
+add(
+    "boat",
+    "Rowing boat",
+    "travel",
+    im,
+    preset={"kind": "vehicle", "vehicle": {"speed": 1.6, "terrain": "water"}},
+)
+im = canvas(24, 20)
+rect(im, (5, 3, 22, 12), 6)
+rect(im, (6, 4, 21, 11), 15)
+line(im, [(6, 7), (21, 7)], 6)
+line(im, [(0, 9), (5, 9)], 32)
+ellipse(im, (5, 11, 12, 18), 16)
+ellipse(im, (7, 13, 10, 16), 8)
+ellipse(im, (15, 11, 22, 18), 16)
+ellipse(im, (17, 13, 20, 16), 8)
+add(
+    "cart",
+    "Handcart",
+    "travel",
+    im,
+    preset={"kind": "vehicle", "vehicle": {"speed": 1.4, "terrain": "land"}},
+)
+
 stamps = []
 
 
@@ -899,8 +969,8 @@ for pack in packs:
         )
     sheet.save(root / (pack["id"] + "-sheet.png"))
 (root / "ASSET-NOTES.md").write_text(
-    "# EveNGINE built-in artwork\n\n110 original pixel-art assets (48 tiles and 62 sprites), plus eight four-layer map stamps. Artwork was created for this release; no third-party asset packs are included. Individual transparent PNGs are in `png`; pack contact sheets and the palette-indexed `library.json` are also included.\n\nTiles are 16 × 16; sprite sizes are 16 × 16 through 64 × 64. The pack contact sheets use 64 × 80 slots for browsing, not uniform 16 × 16 tile-sheet import. Use individual PNGs, the built-in editor library or the JSON metadata. Editing imported assets does not change the built-in originals.\n\nThe source generator uses Pillow only for rebuilding the artwork; the editor and game require no Python.\n"
+    "# EveNGINE built-in artwork\n\n115 original pixel-art assets (48 tiles and 67 sprites), plus eight four-layer map stamps. Artwork was created for this release; no third-party asset packs are included. Individual transparent PNGs are in `png`; pack contact sheets and the palette-indexed `library.json` are also included.\n\nTiles are 16 × 16; sprite sizes are 16 × 16 through 64 × 64. The pack contact sheets use 64 × 80 slots for browsing, not uniform 16 × 16 tile-sheet import. Use individual PNGs, the built-in editor library or the JSON metadata. Editing imported assets does not change the built-in originals.\n\nThe source generator uses Pillow only for rebuilding the artwork; the editor and game require no Python.\n"
 )
-assert len(assets) == 110, len(assets)
+assert len(assets) == 115, len(assets)
 assert sum(a["kind"] == "tile" for a in assets) == 48
 print("Built", len(assets), "assets and", len(stamps), "stamps")

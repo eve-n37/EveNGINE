@@ -48,7 +48,7 @@ factions, NPC animations and a timed event.
 | Area                  | Highlights                                                                                           |
 | --------------------- | ---------------------------------------------------------------------------------------------------- |
 | **Maps**              | Terrain and detail layers, collision and water, autotiles, object groups, region copy/paste, stamps, world overview |
-| **Artwork**           | Pixel editor, animation timeline, PNG and sprite-sheet import, 110 original built-in tiles and sprites, NPC and enemy walk/attack animations |
+| **Artwork**           | Pixel editor, animation timeline, PNG and sprite-sheet import, 115 original built-in tiles and sprites, NPC and enemy walk/attack animations |
 | **Story**             | Branching dialogue, quests, items, events (including timed events) and story flags, NPC patrols, shops |
 | **Gameplay**          | Doors, keys, switches, chests, melee and ranged combat, equipment, factions, health and healing, saved progress |
 | **Audio**             | Embedded WAV music and sound effects, per-map music, event cues                                        |

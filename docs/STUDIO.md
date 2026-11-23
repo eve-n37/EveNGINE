@@ -161,8 +161,8 @@ need to keep the original file.
 
 ### Built-in library
 
-**Artwork → Built-in library** has 110 original assets (48 tiles and 62 sprites) in seven packs:
-outdoors, interiors, dungeon, nature, village, characters and items. There are also eight map
+**Artwork → Built-in library** has 115 original assets (48 tiles and 67 sprites) in eight packs:
+outdoors, interiors, dungeon, nature, village, characters, items, and puzzles & travel. There are also eight map
 stamps. Search, filter, and import a single item or everything shown. Imports bring along anything
 they depend on (such as open-door sprites or a stamp's tiles) and undo as one step.
 

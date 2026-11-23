@@ -55,12 +55,14 @@ struct StudioCondition {
   std::string kind, target, state;
   int quantity = 1;
   bool value = true;
+  float from = 0, to = 0; // "time" conditions: hours, wrapping past midnight when from > to
 };
 struct StudioEventAction {
   std::string type, target, text;
   int quantity = 1;
   bool value = true;
   Vec2 arrival;
+  float amount = 0; // setTime: the hour
 };
 struct StudioEvent {
   std::string id, name, trigger, scene, object;
@@ -111,6 +113,44 @@ struct StudioOffer {
 struct StudioShop {
   std::string currency;
   std::vector<StudioOffer> offers;
+};
+// 1.2 world features: time of day, weather, puzzles, leveling, cutscenes and vehicles.
+struct StudioTimeSettings {
+  bool enabled = false, showClock = false;
+  float dayLength = 600, startHour = 8, strength = .55f;
+  Color night{20, 28, 64, 255};
+};
+struct StudioPlate {
+  std::string flag;
+  std::vector<std::string> targets; // doors on the same map
+  bool sticky = false;
+};
+struct StudioVehicle {
+  float speed = 1.5f;
+  bool water = false; // boats move on water only; land vehicles stay out of it
+};
+struct StudioLeveling {
+  bool enabled = false;
+  int maxLevel = 20, firstLevel = 10, health = 2, attack = 1, defense = 0;
+  float growth = 1.5f;
+};
+struct StudioCutsceneStep {
+  std::string type, actor, text, speaker, target, direction;
+  Vec2 point;
+  float seconds = 1, speed = 48;
+  bool dark = true, value = true, reset = false;
+};
+struct StudioCutscene {
+  std::string id, name, scene;
+  std::vector<StudioCutsceneStep> steps;
+};
+struct StudioWorldState {
+  float hour = 8;
+  std::map<std::string, std::string> weather;
+  std::map<std::string, Vec2> moved;
+  std::set<std::string> latched, plateDoors;
+  std::string riding;
+  int xp = 0;
 };
 struct StudioAdventureState {
   int health = 10;
@@ -230,7 +270,7 @@ public:
   void drawAdventure(Canvas &canvas) const;
   void respawnPlayer();
   void writeAdventure(std::ostream &out) const;
-  StudioAdventureState readAdventure(std::istream &input, int version = 6) const;
+  StudioAdventureState readAdventure(std::istream &input, int version = 6, int level = 0) const;
   void restoreAdventure(const StudioAdventureState &state);
   // 1.1 adventure expansion: equipment, ranged combat, factions, actor animations, timers.
   std::map<std::string, StudioEquipment> equipment;
@@ -241,7 +281,7 @@ public:
   void loadExpansion(const Json &project);
   void loadActorExtras(StudioActor &actor, const Json &object);
   int playerMaxHealth() const;
-  int maxHealthWith(const std::map<std::string, std::string> &gear) const;
+  int maxHealthWith(const std::map<std::string, std::string> &gear, int atLevel = 0) const;
   int playerAttackDamage() const;
   int playerDefense() const;
   const StudioEquipment *weapon() const;
@@ -256,6 +296,59 @@ public:
   void damageActor(const std::string &key, int damage, bool byPlayer);
   void updateTimers(float dt);
   bool actorFrame(const std::string &key, Rect &frame) const;
+  // 1.2 world features (engine/src/world.cpp).
+  StudioTimeSettings timeSettings;
+  float hour = 8, ambientClock = 0;
+  std::map<std::string, std::string> mapWeather, weatherOverride;
+  std::set<std::string> indoorMaps;
+  std::set<std::string> blocks;
+  std::map<std::string, StudioPlate> plates;
+  std::map<std::string, StudioVehicle> vehicles;
+  std::map<std::string, Vec2> movedObjects;
+  std::set<std::string> pressedPlates, latchedPlates, plateDoors;
+  std::string riding, pushTarget;
+  float pushClock = 0;
+  StudioLeveling leveling;
+  int xp = 0, level = 1;
+  std::map<std::string, int> enemyXp, questXp;
+  std::map<std::string, StudioCutscene> cutscenes;
+  std::string cutscene;
+  size_t cutsceneStep = 0;
+  float cutsceneClock = 0, fade = 0, fadeFrom = 0;
+  bool cameraOverride = false;
+  Vec2 cameraFrom, cameraTo, cameraNow;
+  bool hasWorld() const;
+  void loadWorld(const Json &project);
+  void loadWorldLate(const Json &project);
+  void resetWorld();
+  void updateClock(float dt);
+  std::string weatherAt(const std::string &map) const;
+  float darkness() const;
+  bool timeBetween(float from, float to) const;
+  Vec2 cameraPosition() const;
+  void drawWorld(Canvas &canvas, Vec2 camera) const;
+  void drawWorldHud(Canvas &canvas) const;
+  bool updatePush(Vec2 attempted, Vec2 before, float dt);
+  bool pushBlock(const std::string &key, Vec2 direction);
+  void updatePlates();
+  void resetPuzzle(const std::string &map);
+  bool board(const std::string &key);
+  bool leaveVehicle();
+  bool rideAllowed(const Scene &collision, Vec2 at, const StudioVehicle &vehicle) const;
+  Vec2 ride(Vec2 from, Vec2 delta);
+  Rect objectBounds(const std::string &map, const Object &object) const;
+  int xpForLevel(int level) const;
+  int levelFor(int experience) const;
+  int levelBonus(int perLevel, int atLevel = 0) const;
+  void gainXp(int amount);
+  void startCutscene(const std::string &id);
+  bool updateCutscene(const Input &input, float dt);
+  void finishCutscene();
+  bool applyCutsceneStep(const StudioCutsceneStep &step, float dt, bool instant);
+  void drawCutscene(Canvas &canvas) const;
+  void writeWorld(std::ostream &out) const;
+  StudioWorldState readWorld(std::istream &in) const;
+  void restoreWorld(const StudioWorldState &state);
   explicit StudioGame(const std::string &path);
   void update(const Input &input, float dt);
   Canvas draw() const;

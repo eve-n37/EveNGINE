@@ -156,8 +156,8 @@ void StudioGame::loadActorExtras(StudioActor &actor, const Json &o) {
   require(any, "Actor animations need frames");
 }
 
-int StudioGame::maxHealthWith(const std::map<std::string, std::string> &gear) const {
-  int total = maxHealth;
+int StudioGame::maxHealthWith(const std::map<std::string, std::string> &gear, int atLevel) const {
+  int total = maxHealth + levelBonus(leveling.health, atLevel);
   for (auto &slot : gear)
     if (equipment.count(slot.second))
       total += equipment.at(slot.second).health;
@@ -167,13 +167,13 @@ int StudioGame::playerMaxHealth() const {
   return maxHealthWith(equipped);
 }
 int StudioGame::playerAttackDamage() const {
-  int total = attackDamage;
+  int total = attackDamage + levelBonus(leveling.attack);
   for (auto &slot : equipped)
     total += equipment.at(slot.second).attack;
   return total;
 }
 int StudioGame::playerDefense() const {
-  int total = 0;
+  int total = levelBonus(leveling.defense);
   for (auto &slot : equipped)
     total += equipment.at(slot.second).defense;
   return total;
@@ -250,8 +250,12 @@ void StudioGame::damageActor(const std::string &key, int damage, bool byPlayer) 
   if (state.health == 0) {
     state.route.clear();
     state.attackClock = -1;
-    if (byPlayer)
+    if (byPlayer) {
       claimLoot(key);
+      auto reward = enemyXp.find(key);
+      if (reward != enemyXp.end())
+        gainXp(reward->second);
+    }
   } else if (byPlayer) {
     toast = "Hit!";
     toastTime = .5f;

@@ -7,11 +7,11 @@ const test = (n, f) => {
   f();
   checks.push(n);
 };
-test('catalog has 48 tiles, 62 sprites and eight stamps', () => {
+test('catalog has 48 tiles, 67 sprites and eight stamps', () => {
   assert.equal(B.assets.filter((a) => a.kind === 'tile').length, 48);
-  assert.equal(B.assets.filter((a) => a.kind === 'sprite').length, 62);
+  assert.equal(B.assets.filter((a) => a.kind === 'sprite').length, 67);
   assert.equal(B.stamps.length, 8);
-  assert.equal(new Set(B.assets.map((a) => a.id)).size, 110);
+  assert.equal(new Set(B.assets.map((a) => a.id)).size, 115);
 });
 test('whole library fits a fresh project and validates', () => {
   let p = M.importBuiltins(
@@ -21,7 +21,7 @@ test('whole library fits a fresh project and validates', () => {
     B.stamps.map((st) => st.id)
   ).project;
   assert.equal(p.tiles.length, 53);
-  assert.equal(p.sprites.length, 80);
+  assert.equal(p.sprites.length, 85);
   assert.deepEqual(M.validate(p), []);
 });
 test('built-in imports preserve exact RGBA pixels', () => {

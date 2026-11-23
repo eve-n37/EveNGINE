@@ -212,7 +212,8 @@ void StudioGame::loadReleaseFeatures(const Json &j) {
         for (auto &c : v["conditions"].array) {
           StudioCondition condition;
           condition.kind = str(c["kind"], 16);
-          condition.target = str(c["target"], 64);
+          if (condition.kind != "time")
+            condition.target = str(c["target"], 64);
           if (condition.kind == "flag") {
             need(flags.count(condition.target), "Unknown condition flag");
             condition.value = toggle(c["value"]);
@@ -225,6 +226,17 @@ void StudioGame::loadReleaseFeatures(const Json &j) {
             need(condition.state == "available" || condition.state == "active" ||
                      condition.state == "ready" || condition.state == "completed",
                  "Unknown quest state");
+          } else if (condition.kind == "time") {
+            need(timeSettings.enabled, "Time conditions need time of day settings");
+            auto hourOf = [&](const Json &h) {
+              need(h.type == Json::Number && std::isfinite(h.number) && h.number >= 0 &&
+                       h.number <= 24,
+                   "Invalid condition hour");
+              return float(h.number);
+            };
+            condition.from = hourOf(c["from"]);
+            condition.to = hourOf(c["to"]);
+            need(condition.from != condition.to, "A time condition needs two different hours");
           } else
             need(false, "Unknown event condition");
           e.conditions.push_back(condition);
@@ -262,7 +274,27 @@ void StudioGame::loadReleaseFeatures(const Json &j) {
           action.text = str(a["text"], 720);
         else if (action.type == "sound")
           need(audioAssets.count(action.target), "Unknown event sound");
-        else
+        else if (action.type == "setTime") {
+          need(timeSettings.enabled, "Setting the time needs time of day settings");
+          auto &h = a["hour"];
+          need(h.type == Json::Number && std::isfinite(h.number) && h.number >= 0 && h.number < 24,
+               "Invalid event hour");
+          action.amount = float(h.number);
+        } else if (action.type == "setWeather") {
+          need(project.scenes.count(action.target), "Unknown weather map");
+          action.text = str(a["weather"], 8);
+          need(action.text == "none" || action.text == "rain" || action.text == "snow" ||
+                   action.text == "fog",
+               "Unknown weather");
+        } else if (action.type == "resetPuzzle")
+          need(project.scenes.count(action.target), "Unknown puzzle map");
+        else if (action.type == "giveXp")
+          action.quantity = number(a["quantity"], 1, 99999);
+        else if (action.type == "cutscene") {
+          need(cutscenes.count(action.target), "Unknown cutscene");
+          need(cutscenes.at(action.target).scene == e.scene,
+               "A cutscene plays on the map of the event that starts it");
+        } else
           need(false, "Unknown event action");
         e.actions.push_back(action);
       }
@@ -335,6 +367,8 @@ bool StudioGame::fireEvent(const StudioEvent &event) {
       if (state != c.state && !(c.state == "active" && state == "ready"))
         return false;
     }
+    if (c.kind == "time" && !timeBetween(c.from, c.to))
+      return false;
   }
   auto simulated = inventory;
   for (auto &a : event.actions)
@@ -376,7 +410,17 @@ bool StudioGame::fireEvent(const StudioEvent &event) {
     } else if (a.type == "sound") {
       if (soundEvents.size() < 32)
         soundEvents.push_back(a.target);
-    } else if (a.type == "dialogue") {
+    } else if (a.type == "setTime")
+      hour = a.amount;
+    else if (a.type == "setWeather")
+      weatherOverride[a.target] = a.text;
+    else if (a.type == "resetPuzzle")
+      resetPuzzle(a.target);
+    else if (a.type == "giveXp")
+      gainXp(a.quantity);
+    else if (a.type == "cutscene")
+      startCutscene(a.target);
+    else if (a.type == "dialogue") {
       inventoryOpen = journalOpen = false;
       auto &data = interactions.at(a.target);
       dialogueObject = a.target;
@@ -517,6 +561,7 @@ void StudioGame::startNewGame() {
   dialogueNode.clear();
   journalOpen = inventoryOpen = false;
   resetAdventure();
+  resetWorld();
   clock = 0;
   attackClock = -1;
   portalCooldown = 0;
@@ -602,6 +647,9 @@ bool StudioGame::updateFrontend(const Input &in) {
   if (!frontendStarted)
     return false;
   if (frontend == "playing") {
+    // During a cutscene, Escape skips it (in update) instead of pausing, and saving waits.
+    if (!cutscene.empty())
+      return false;
     if ((in.hit(Action::Pause) || in.hit(Action::Quit)) && dialogueObject.empty() &&
         shopObject.empty() && !inventoryOpen && !journalOpen) {
       frontend = "pause";
