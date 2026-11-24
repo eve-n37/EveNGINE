@@ -583,16 +583,8 @@ Vec2 StudioGame::ride(Vec2 from, Vec2 delta) {
 }
 void StudioGame::drive(Vec2 direction, float top, float dt) {
   auto &v = vehicles.at(riding);
-  bool going = direction.x != 0 || direction.y != 0;
-  Vec2 target{direction.x * top, direction.y * top};
-  Vec2 gap{target.x - rideVelocity.x, target.y - rideVelocity.y};
-  float seconds = going ? v.acceleration : v.braking, distance = std::hypot(gap.x, gap.y),
-        change = seconds > 0 ? top / seconds * dt : distance;
-  if (distance <= change)
-    rideVelocity = target;
-  else
-    rideVelocity = {rideVelocity.x + gap.x / distance * change,
-                    rideVelocity.y + gap.y / distance * change};
+  rideVelocity = approach(rideVelocity, {direction.x * top, direction.y * top}, top, v.acceleration,
+                          v.braking, dt);
   Vec2 step{rideVelocity.x * dt, rideVelocity.y * dt};
   auto at = ride(feet, step);
   // Running into something stops the vehicle in that direction.

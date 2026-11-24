@@ -146,8 +146,13 @@ function setStyle(s, style) {
     // Ledges, ladders and hazards only exist on sidescroller maps.
     s.collision = s.collision.map((v) => (v === 1 ? 1 : 0));
   } else s.side ||= WM.sideDefaults();
-  if (style !== 'raycast') delete s.raycast;
-  else s.raycast ||= WM.raycastDefaults();
+  if (style !== 'raycast') {
+    delete s.raycast;
+    if (s.movement) delete s.movement.turnSpeed;
+  } else {
+    s.raycast ||= WM.raycastDefaults();
+    if (s.movement) s.movement.turnSpeed ??= 140;
+  }
   if (style !== 'side' && collisionKind !== 1) collisionKind = 1;
 }
 function colourField(title, value, set) {
@@ -186,6 +191,28 @@ function styleFields(s) {
   }
   return fields;
 }
+function movementFields(s) {
+  let fields = [
+    rcCheck('Custom movement on this map', !!s.movement, (v) => {
+      if (v) s.movement = WM.movementDefaults(P(), s);
+      else delete s.movement;
+      render();
+    }),
+  ];
+  if (!s.movement) return fields;
+  let v = { ...WM.movementDefaults(P(), s), ...s.movement },
+    set = (k) => (x) => (s.movement[k] = x);
+  fields.push(
+    rc3Number('Walking speed (pixels a second)', v.speed, set('speed'), 8, 512, 1),
+    rc3Number('Seconds to top speed', v.acceleration, set('acceleration'), 0, 10, 0.05),
+    rc3Number('Seconds to stop', v.braking, set('braking'), 0, 10, 0.05)
+  );
+  if (s.style === 'raycast')
+    fields.push(
+      rc3Number('Turning speed (degrees a second)', v.turnSpeed, set('turnSpeed'), 30, 720, 5)
+    );
+  return fields;
+}
 
 // ---- Inspector ------------------------------------------------------------------------------
 
@@ -196,6 +223,7 @@ inspect = function () {
   if (box.querySelector('#makeStart')) {
     let s = S();
     box.append(worldSection('GAMEPLAY STYLE'), ...styleFields(s));
+    box.append(worldSection('MOVEMENT'), ...movementFields(s));
     box.append(
       worldSection('WEATHER & LIGHT'),
       storySelect('Weather', WM.weathers, s.weather || 'none', (v) => {

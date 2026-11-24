@@ -5,6 +5,7 @@
 - **Gameplay styles**: each map plays top-down, as a sidescroller or in first person, set in the map inspector. One game can mix all three. See the [gameplay styles guide](docs/STYLES.md).
 - **Sidescroller maps**: gravity and jump height per map, jumps that go higher while held, a short grace period for late jumps and early presses, and three new collision kinds painted in Studio: one-way ledges, ladders and hazards that send the player back to safe ground.
 - **First-person maps**: a raycast view with walls textured from the map's tiles, shaded floor and ceiling colours, a view distance, and objects and characters drawn as pictures facing the player. Talking and using things works on whatever is in front of the player.
+- **Movement tuning** per map, in every style: walking speed, seconds to reach it, seconds to stop and, on first-person maps, turning speed. Maps without it keep the game's speed and instant starts and stops.
 - Dialogue, items, chests, doors, quests and events work in every style. Combat, push blocks, pressure plates and vehicles stay top-down, and Studio reports them on other maps.
 - New **Platforms & caves** built-in pack (sky, cave, ground and rock tiles, a ladder, a ledge and spikes), and a cave and a crypt in the `Lantern-Isles.eve` sample.
 - **Day and night**: a clock with a configurable day length, a night colour and an optional HUD clock; indoor maps stay lit. Events get a **Time of day** condition and a **Set the time** action.

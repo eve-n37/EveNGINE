@@ -14391,6 +14391,11 @@
         "gravity": 900,
         "jump": 52
       },
+      "movement": {
+        "speed": 72,
+        "acceleration": 0.15,
+        "braking": 0.1
+      },
       "indoors": true,
       "objects": [
         {
@@ -15248,6 +15253,12 @@
         "floor": "#4a4038",
         "ceiling": "#1c1e2a",
         "viewDistance": 176
+      },
+      "movement": {
+        "speed": 56,
+        "acceleration": 0.2,
+        "braking": 0.15,
+        "turnSpeed": 150
       },
       "indoors": true,
       "objects": [

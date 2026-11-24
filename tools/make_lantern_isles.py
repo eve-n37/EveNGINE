@@ -281,6 +281,7 @@ p["scenes"].append(
         "spawn": {"x": 40, "y": 240},
         "style": "side",
         "side": {"gravity": 900, "jump": 52},
+        "movement": {"speed": 72, "acceleration": 0.15, "braking": 0.1},
         "indoors": True,
         "objects": [
             obj(
@@ -380,6 +381,12 @@ p["scenes"].append(
         "spawn": {"x": 40, "y": 160},
         "style": "raycast",
         "raycast": {"floor": "#4a4038", "ceiling": "#1c1e2a", "viewDistance": 176},
+        "movement": {
+            "speed": 56,
+            "acceleration": 0.2,
+            "braking": 0.15,
+            "turnSpeed": 150,
+        },
         "indoors": True,
         "objects": [
             obj(

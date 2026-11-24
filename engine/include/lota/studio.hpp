@@ -19,6 +19,9 @@ struct StudioLayer {
   // 3 (ladder) and 4 (hazard).
   std::vector<int> base, detail, water, collision;
 };
+// Moves `velocity` towards `target`. From a standstill it reaches `top` in `accelerate` seconds,
+// and from `top` it stops in `brake` seconds; 0 changes speed at once.
+Vec2 approach(Vec2 velocity, Vec2 target, float top, float accelerate, float brake, float dt);
 // How a map plays: top-down (the default), a sidescrolling platformer or a first-person raycast
 // view. See docs/STYLES.md.
 struct StudioMapStyle {
@@ -26,6 +29,9 @@ struct StudioMapStyle {
   float gravity = 900, jump = 48;                         // sidescroller, in pixels
   Color floor{70, 62, 56, 255}, ceiling{30, 32, 44, 255}; // raycast
   float viewDistance = 192;                               // raycast: pixels until walls fade out
+  // Movement, for any style: walking speed (0 uses the game's), seconds to reach it and to stop,
+  // and how fast first-person maps turn (radians a second).
+  float speed = 0, acceleration = 0, braking = 0, turn = 140 * 3.14159265f / 180;
 };
 struct StudioItem {
   std::string name, icon;
@@ -355,7 +361,9 @@ public:
   // Gameplay styles (styles.cpp).
   std::map<std::string, StudioMapStyle> mapStyles;
   std::string styleScene; // the map the style state below belongs to
-  Vec2 sideVelocity{}, safeFeet{};
+  Vec2 sideVelocity{}, safeFeet{}, walkVelocity{};
+  float forwardSpeed = 0;
+  float walkSpeed() const;
   bool grounded = false, climbing = false, jumpHeld = false;
   float coyoteClock = 0, jumpBuffer = 0, viewAngle = 0;
   const StudioMapStyle &styleOf(const std::string &map) const;

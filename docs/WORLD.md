@@ -109,7 +109,7 @@ Set an object's behaviour to **vehicle**, then choose what it **Travels on**:
 
 | Setting                  | What it does                                                                  |
 | ------------------------ | ----------------------------------------------------------------------------- |
-| **Top speed**            | A multiple of walking speed, from 0.25 to 6. The run key still speeds it up. |
+| **Top speed**            | A multiple of the map's walking speed, from 0.25 to 6. The run key still speeds it up. |
 | **Seconds to top speed** | How long it takes to get going, from 0 (instantly) to 10.                     |
 | **Seconds to stop**      | How long it coasts after the player lets go, from 0 (instantly) to 10.        |
 

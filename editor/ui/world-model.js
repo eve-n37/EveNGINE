@@ -41,6 +41,11 @@
   function sideDefaults() {
     return { gravity: 900, jump: 48 };
   }
+  function movementDefaults(p, s) {
+    let m = { speed: p.player?.speed || 64, acceleration: 0, braking: 0 };
+    if (s.style === 'raycast') m.turnSpeed = 140;
+    return m;
+  }
   function raycastDefaults() {
     return { floor: '#463e38', ceiling: '#1e202c', viewDistance: 192 };
   }
@@ -74,6 +79,22 @@
           bad('The ceiling colour must use #RRGGBB.');
         if (v.viewDistance !== undefined && !real(v.viewDistance, 32, 1024))
           bad('View distance must be 32 to 1024 pixels.');
+      }
+    }
+    if (s.movement !== undefined) {
+      let v = s.movement;
+      if (!object(v) || !only(v, ['speed', 'acceleration', 'braking', 'turnSpeed']))
+        bad('Invalid movement settings on ' + s.title + '.');
+      else {
+        if (v.speed !== undefined && !real(v.speed, 8, 512)) bad('Walking speed must be 8 to 512.');
+        if (v.acceleration !== undefined && !real(v.acceleration, 0, 10))
+          bad('Seconds to top speed must be 0 to 10.');
+        if (v.braking !== undefined && !real(v.braking, 0, 10))
+          bad('Seconds to stop must be 0 to 10.');
+        if (v.turnSpeed !== undefined) {
+          if (style !== 'raycast') bad('Only first-person maps have a turning speed.');
+          else if (!real(v.turnSpeed, 30, 720)) bad('Turning speed must be 30 to 720.');
+        }
       }
     }
     if (style === 'topdown') return;
@@ -297,6 +318,7 @@
     collisionKinds,
     sideDefaults,
     raycastDefaults,
+    movementDefaults,
     weathers,
     stepTypes,
     directions,

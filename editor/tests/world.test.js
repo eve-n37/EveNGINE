@@ -141,4 +141,19 @@ reject(
 accept('ledges, ladders and hazards on sidescroller maps', (p) => {
   for (let v = 0; v <= 4; v++) scene(p, 'cave').collision[40 + v] = v;
 });
+reject('walking speed', (p) => (scene(p, 'cave').movement.speed = 2), 'walking speed must');
+reject(
+  'acceleration bounds',
+  (p) => (scene(p, 'crypt').movement.acceleration = 11),
+  'seconds to top speed must'
+);
+reject(
+  'turning only in first person',
+  (p) => (scene(p, 'cave').movement.turnSpeed = 90),
+  'only first-person maps have a turning speed'
+);
+accept(
+  'movement on a top-down map',
+  (p) => (scene(p, 'meadow').movement = { speed: 90, acceleration: 0.3, braking: 0.2 })
+);
 console.log(count + ' world model checks passed');

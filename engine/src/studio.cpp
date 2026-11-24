@@ -167,7 +167,7 @@ StudioGame::StudioGame(const std::string &path) {
     l.collision = grid(m["collision"], n, 0, style.kind == "side" ? 4 : 1);
     for (int v : l.collision)
       s.cells.push_back(v == 1 ? '#' : '.');
-    if (style.kind != "topdown")
+    if (style.kind != "topdown" || m.has("movement"))
       mapStyles[s.id] = style;
     auto point = [&](const Json &p) {
       return Vec2{real(p["x"], 0, s.width * 16 - .001f, "point x"),
@@ -715,7 +715,7 @@ void StudioGame::update(const Input &incoming, float dt) {
   else if (style.kind == "raycast")
     moveRaycast(in, dt);
   else if (!riding.empty()) {
-    drive(d, speed * factor * vehicles.at(riding).speed, dt);
+    drive(d, walkSpeed() * factor * vehicles.at(riding).speed, dt);
   } else {
     int tx = std::clamp(int(feet.x / 16), 0, s.width - 1),
         ty = std::clamp(int(feet.y / 16), 0, s.height - 1);
@@ -723,8 +723,16 @@ void StudioGame::update(const Input &incoming, float dt) {
       factor *= .6f;
     auto collision = collisionScene(scene, removed, activated);
     Vec2 before = feet;
-    feet =
-        moveBody(project, collision, feet, {d.x * speed * factor * dt, d.y * speed * factor * dt});
+    float top = walkSpeed() * factor;
+    walkVelocity =
+        approach(walkVelocity, {d.x * top, d.y * top}, top, style.acceleration, style.braking, dt);
+    Vec2 step{walkVelocity.x * dt, walkVelocity.y * dt};
+    feet = moveBody(project, collision, feet, step);
+    // Walking into something stops the player in that direction.
+    if (std::abs(feet.x - before.x) < std::abs(step.x) * .5f)
+      walkVelocity.x = 0;
+    if (std::abs(feet.y - before.y) < std::abs(step.y) * .5f)
+      walkVelocity.y = 0;
     updatePush(d, before, dt);
   }
   updatePlates();

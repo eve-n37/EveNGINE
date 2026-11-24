@@ -48,10 +48,20 @@ int main(int argc, char **argv) {
     g.feet = {40, 230};
     tick(idle, 20);
     check(g.grounded && g.feet.y == 240, "the player falls onto the cave floor and stands on it");
+    auto &caveStyle = g.styleOf("cave");
+    check(caveStyle.speed == 72 && caveStyle.acceleration == .15f && caveStyle.braking == .1f,
+          "the cave has its own walking speed, acceleration and braking");
     float x = g.feet.x;
-    tick(holding({Action::Right}), 30);
-    check(g.feet.y == 240 && std::abs(g.feet.x - x - g.speed * .5f) < 1,
-          "walking right moves along the floor at walking speed");
+    tick(holding({Action::Right}), 3);
+    check(g.sideVelocity.x > 0 && g.sideVelocity.x < 72, "the player speeds up from a standstill");
+    tick(holding({Action::Right}), 27);
+    check(g.feet.y == 240 && g.sideVelocity.x == 72 &&
+              std::abs(g.feet.x - x - 72 * (.5f - .15f / 2)) < 1.5f,
+          "walking right reaches the map's walking speed");
+    tick(idle);
+    check(g.sideVelocity.x > 0, "letting go, the player slows down");
+    tick(idle, 6);
+    check(g.sideVelocity.x == 0, "and stops within the braking time");
     check(g.direction == "east", "the player faces the way they walk");
 
     // A full jump reaches the jump height; letting go early makes a short hop.
@@ -79,10 +89,10 @@ int main(int argc, char **argv) {
     tick(idle, 90);
 
     // Coyote time: jumping just after walking off a ledge still works.
-    g.feet = {290, 192};
+    g.feet = {292.5f, 192};
     tick(idle, 2);
     check(g.grounded && g.feet.y == 192, "ledges hold the player up");
-    tick(holding({Action::Right}), 4);
+    tick(holding({Action::Right}), 6);
     bool fell = !g.grounded;
     tick(pressing({Action::Attack}));
     tick(holding({Action::Attack}), 6);
@@ -106,7 +116,9 @@ int main(int argc, char **argv) {
     g.feet = {140, 240};
     tick(idle, 2);
     int health = g.health;
-    tick(holding({Action::Right}), 60);
+    for (int i = 0; i < 90 && g.health == health; i++)
+      tick(holding({Action::Right}));
+    tick(idle, 30);
     check(g.health == health - 1 && g.feet.x < 160 && g.feet.y == 240,
           "spikes hurt and put the player back on safe ground");
     g.hurtClock = 0;
@@ -149,6 +161,31 @@ int main(int argc, char **argv) {
     tick(holding({Action::Left}), 40);
     check(g.scene == "isle", "the cave's exit leads back to the isle");
 
+    // ---- Top-down movement tuning --------------------------------------------------------------
+    StudioMapStyle tuned;
+    tuned.speed = 100;
+    tuned.acceleration = .5f;
+    tuned.braking = .25f;
+    g.mapStyles["grove"] = tuned;
+    g.scene = "grove";
+    g.feet = g.project.scenes.at("grove").spawn;
+    tick(idle);
+    tick(holding({Action::Right}), 6);
+    check(g.walkVelocity.x > 0 && g.walkVelocity.x < 100 * .25f,
+          "top-down walking speeds up over the acceleration time");
+    tick(holding({Action::Right}), 30);
+    check(std::abs(g.walkVelocity.x - 100) < .01f, "and reaches the map's walking speed");
+    x = g.feet.x;
+    tick(idle, 3);
+    check(g.feet.x > x && g.walkVelocity.x > 0 && g.walkVelocity.x < 100,
+          "letting go, the player slides to a stop");
+    tick(idle, 15);
+    check(g.walkVelocity.x == 0, "and stops within the braking time");
+    g.mapStyles.erase("grove");
+    g.scene = "isle";
+    g.feet = {304, 256};
+    tick(idle);
+
     // ---- Raycast ------------------------------------------------------------------------------
     check(g.styleOf("crypt").kind == "raycast" && g.styleOf("crypt").viewDistance == 176,
           "the crypt is a first-person map");
@@ -157,15 +194,22 @@ int main(int argc, char **argv) {
     g.direction = "east";
     tick(idle);
     check(std::abs(g.viewAngle) < .001f, "arriving facing east looks east");
+    check(std::abs(g.styleOf("crypt").turn - 150 * 3.14159265f / 180) < .001f,
+          "the crypt has its own turning speed");
     tick(holding({Action::Right}), 39);
-    check(std::abs(g.viewAngle - 1.56f) < .02f && g.direction == "south",
-          "left and right turn the view");
+    check(std::abs(g.viewAngle - g.styleOf("crypt").turn * 39 * Tick) < .01f &&
+              g.direction == "south",
+          "left and right turn the view at the turning speed");
     tick(holding({Action::Left}), 39);
     x = g.feet.x;
-    tick(holding({Action::Up}), 15);
-    check(g.feet.x > x + 10 && std::abs(g.feet.y - 160) < .5f, "up walks forward");
+    tick(holding({Action::Up}), 3);
+    check(g.forwardSpeed > 0 && g.forwardSpeed < 56, "walking forward speeds up");
+    tick(holding({Action::Up}), 12);
+    check(g.feet.x > x + 8 && std::abs(g.feet.y - 160) < .5f && g.forwardSpeed == 56,
+          "up walks forward at the map's walking speed");
     tick(holding({Action::Up}), 120);
-    check(g.feet.x < 80 - 6, "walls stop the player before their nose touches them");
+    check(g.feet.x < 80 - 6 && g.forwardSpeed == 0,
+          "walls stop the player before their nose touches them");
     x = g.feet.x;
     tick(holding({Action::Down}), 10);
     check(g.feet.x < x, "down walks backward");

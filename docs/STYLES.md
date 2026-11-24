@@ -15,6 +15,23 @@ crypt.
 
 Choose a map's style in the map inspector under **Gameplay style → Plays as**.
 
+## Movement
+
+Every map, whatever its style, can tune how the player moves. Tick **Movement → Custom movement on
+this map** to set:
+
+| Setting                              | What it does                                                          |
+| ------------------------------------ | --------------------------------------------------------------------- |
+| **Walking speed (pixels a second)**  | From 8 to 512. Starts at the game's speed from **Game → Setup**.      |
+| **Seconds to top speed**             | How long it takes to get going, from 0 (instantly) to 10.             |
+| **Seconds to stop**                  | How long the player slides after letting go, from 0 (instantly) to 10. |
+| **Turning speed (degrees a second)** | First-person maps only, from 30 to 720. The default is 140.           |
+
+A little acceleration (0.1 to 0.2 seconds) makes a platformer feel weighty, and a long stop makes
+an icy floor. Running into a wall stops the player in that direction. The run key still multiplies
+the walking speed, and vehicles' top speeds are multiples of the map's walking speed. Maps without
+custom movement use the game's speed and start and stop instantly, as before.
+
 ## What works where
 
 | Feature                                     | Top-down | Sidescroller | First person |
@@ -43,7 +60,7 @@ land.
 | **Gravity**             | How quickly the player falls, from 100 to 4000. 900 feels natural.   |
 | **Jump height (tiles)** | How high a full jump goes, from a quarter of a tile to 10 tiles.     |
 
-The player walks at the speed set in **Game → Setup**, and the run key still works.
+The player walks at the map's walking speed (see [Movement](#movement)), and the run key still works.
 
 ### Painting collision
 
@@ -68,7 +85,8 @@ whatever you paint is the side view.
 
 ## First person (raycast)
 
-Up and Down walk forward and back, and Left and Right turn. The player can talk to people and use
+Up and Down walk forward and back, and Left and Right turn at the map's turning speed (see
+[Movement](#movement)). The player can talk to people and use
 things that are in front of them and close by.
 
 Every **Solid** collision cell becomes a wall one tile high, covered with the cell's tile (its

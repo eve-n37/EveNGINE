@@ -302,4 +302,32 @@ accept(
     ),
 )
 
+# Movement tuning
+reject(
+    "slow walking",
+    lambda p: scene(p, "cave")["movement"].update(speed=2),
+    "walking speed",
+)
+reject(
+    "slow acceleration",
+    lambda p: scene(p, "crypt")["movement"].update(acceleration=11),
+    "walking acceleration",
+)
+reject(
+    "turning off first-person maps",
+    lambda p: scene(p, "cave")["movement"].update(turnSpeed=90),
+    "turning speed",
+)
+reject(
+    "unknown movement settings",
+    lambda p: scene(p, "cave")["movement"].update(jumpy=True),
+    "unknown movement setting",
+)
+accept(
+    "movement on a top-down map",
+    lambda p: scene(p, "meadow").update(
+        movement={"speed": 90, "acceleration": 0.3, "braking": 0.2}
+    ),
+)
+
 print(checks, "world loader checks passed")

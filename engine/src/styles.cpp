@@ -58,6 +58,19 @@ std::string directionFor(float angle) {
   return quarter == 0 ? "east" : quarter == 1 ? "south" : quarter == 2 ? "west" : "north";
 }
 } // namespace
+Vec2 approach(Vec2 velocity, Vec2 target, float top, float accelerate, float brake, float dt) {
+  bool going = target.x != 0 || target.y != 0;
+  Vec2 gap{target.x - velocity.x, target.y - velocity.y};
+  float seconds = going ? accelerate : brake, distance = std::hypot(gap.x, gap.y),
+        change = seconds > 0 ? top / seconds * dt : distance;
+  if (distance <= change)
+    return target;
+  return {velocity.x + gap.x / distance * change, velocity.y + gap.y / distance * change};
+}
+float StudioGame::walkSpeed() const {
+  auto &style = styleOf(scene);
+  return style.speed > 0 ? style.speed : speed;
+}
 
 // ---- Loading --------------------------------------------------------------------------------
 
@@ -88,6 +101,20 @@ StudioMapStyle StudioGame::loadMapStyle(const Json &m) const {
     if (v.has("viewDistance"))
       style.viewDistance = real(v["viewDistance"], 32, 1024, "view distance");
   }
+  if (m.has("movement")) {
+    auto &v = m["movement"];
+    onlyKeys(v, {"speed", "acceleration", "braking", "turnSpeed"}, "movement");
+    if (v.has("speed"))
+      style.speed = real(v["speed"], 8, 512, "walking speed");
+    if (v.has("acceleration"))
+      style.acceleration = real(v["acceleration"], 0, 10, "walking acceleration");
+    if (v.has("braking"))
+      style.braking = real(v["braking"], 0, 10, "walking braking");
+    if (v.has("turnSpeed")) {
+      require(style.kind == "raycast", "Only first-person maps have a turning speed");
+      style.turn = real(v["turnSpeed"], 30, 720, "turning speed") * Pi / 180;
+    }
+  }
   return style;
 }
 // Combat, puzzles and vehicles are top-down only for now, and patrols need the top-down view.
@@ -116,7 +143,8 @@ void StudioGame::enterStyle() {
   if (styleScene == scene)
     return;
   styleScene = scene;
-  sideVelocity = {};
+  sideVelocity = walkVelocity = {};
+  forwardSpeed = 0;
   grounded = climbing = jumpHeld = false;
   coyoteClock = jumpBuffer = 0;
   safeFeet = feet;
@@ -190,9 +218,12 @@ void StudioGame::moveSide(const Input &in, float dt) {
   if (sideVelocity.y >= 0)
     jumpHeld = false;
   if (climbing) {
-    sideVelocity = {across * speed * .6f, upDown * speed * .9f};
+    sideVelocity = {across * walkSpeed() * .6f, upDown * walkSpeed() * .9f};
   } else {
-    sideVelocity.x = across * speed * run;
+    float top = walkSpeed() * run;
+    sideVelocity.x =
+        approach({sideVelocity.x, 0}, {across * top, 0}, top, style.acceleration, style.braking, dt)
+            .x;
     sideVelocity.y = std::min(sideVelocity.y + style.gravity * dt, 420.f);
   }
   clock = across != 0 && (grounded || climbing) ? clock + dt * run : 0;
@@ -205,6 +236,8 @@ void StudioGame::moveSide(const Input &in, float dt) {
     Vec2 next{feet.x + move.x / steps, feet.y};
     if (!blocked(project, collision, sideBody(next)))
       feet = next;
+    else
+      sideVelocity.x = 0; // running into a wall stops the player
     next = {feet.x, feet.y + move.y / steps};
     if (blocked(project, collision, sideBody(next))) {
       // Close the gap to whatever was hit, so the player stands exactly on the ground.
@@ -263,10 +296,15 @@ void StudioGame::moveRaycast(const Input &in, float dt) {
   float run = in.down(Action::Run) ? runMultiplier : 1,
         turn = float(in.down(Action::Right)) - float(in.down(Action::Left)),
         forward = float(in.down(Action::Up)) - float(in.down(Action::Down));
-  viewAngle = std::remainder(viewAngle + turn * 2.4f * dt, 2 * Pi);
+  auto &style = styleOf(scene);
+  viewAngle = std::remainder(viewAngle + turn * style.turn * dt, 2 * Pi);
   direction = directionFor(viewAngle);
-  float step = forward * speed * run * dt;
+  float top = walkSpeed() * run;
+  forwardSpeed =
+      approach({forwardSpeed, 0}, {forward * top, 0}, top, style.acceleration, style.braking, dt).x;
+  float step = forwardSpeed * dt;
   if (step != 0) {
+    Vec2 start = feet;
     // A wider body than top-down keeps the camera from pressing its nose against walls.
     auto collision = collisionScene(scene, removed, activated);
     auto room = [&](Vec2 at) {
@@ -283,6 +321,9 @@ void StudioGame::moveRaycast(const Input &in, float dt) {
       if (room(next))
         feet = next;
     }
+    // Walking into a wall head-on stops the player.
+    if (std::hypot(feet.x - start.x, feet.y - start.y) < std::abs(step) * .25f)
+      forwardSpeed = 0;
     progressDirty = true;
   }
   clock = forward != 0 ? clock + dt * run : 0;

@@ -137,7 +137,59 @@ with sync_playwright() as pw:
         "the floor colour edits the project",
         project(crypt + ".raycast.floor === '#205030'"),
     )
+    check("the crypt shows its walking speed", shown("Walking speed", "56"))
+    check("the crypt shows its turning speed", shown("Turning speed", "150"))
+    change(field("Turning speed (degrees a second)"), 200)
+    check(
+        "turning speed edits the project",
+        project(crypt + ".movement.turnSpeed === 200"),
+    )
+    change(field("Seconds to stop"), 0.5)
+    check("braking edits the project", project(crypt + ".movement.braking === 0.5"))
     page.screenshot(path=str(output / "styles-crypt.png"))
+
+    # Movement tuning works on top-down maps too, without a turning speed.
+    page.evaluate("studioTest.selectMap('meadow')")
+    meadow = "p.scenes.find(s => s.id === 'meadow')"
+    page.locator(
+        "#inspector label:has-text('Custom movement on this map') input"
+    ).check()
+    check(
+        "custom movement starts from the game's speed",
+        project(
+            meadow
+            + ".movement.speed === p.player.speed && "
+            + meadow
+            + ".movement.acceleration === 0 && !('turnSpeed' in "
+            + meadow
+            + ".movement)"
+        ),
+    )
+    check(
+        "top-down maps have no turning speed",
+        "![...document.querySelectorAll('#inspector label')].some(l => l.textContent.startsWith('Turning speed'))",
+    )
+    change(field("Seconds to top speed"), 0.4)
+    check(
+        "acceleration edits the project",
+        project(meadow + ".movement.acceleration === 0.4"),
+    )
+    check(
+        "a tuned top-down map validates",
+        "LotaModel.validate(studioTest.project()).length === 0",
+    )
+    page.locator(
+        "#inspector label:has-text('Custom movement on this map') input"
+    ).uncheck()
+    check(
+        "movement can go back to the game's", project("!('movement' in " + meadow + ")")
+    )
+    check(
+        "the cave lost its turning speed when it stopped being first person",
+        project(
+            "!('turnSpeed' in (p.scenes.find(s => s.id === 'cave').movement || {}))"
+        ),
+    )
 
     # Top-down-only features are reported on other styles.
     check(
