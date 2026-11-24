@@ -719,6 +719,8 @@ void StudioGame::update(const Input &incoming, float dt) {
   updatePlates();
   s = liveScene(scene);
   message.clear();
+  // Boarding and getting off use the same key, so only one of them may happen per press.
+  bool wasRiding = !riding.empty();
   const Object *nearest = nullptr;
   float nearestDistance = 33;
   for (auto &o : s.objects) {
@@ -773,7 +775,7 @@ void StudioGame::update(const Input &incoming, float dt) {
         questEvent("activate", key);
     }
   }
-  if (!riding.empty()) {
+  if (wasRiding) {
     message = controlLabel(Action::Interact) + " GET OFF";
     if (in.hit(Action::Interact))
       leaveVehicle();

@@ -143,7 +143,11 @@ int main(int argc, char **argv) {
     // Vehicles: row across the lake to the island.
     g.feet = {264, 150};
     tick(Input{});
-    check(g.board("isle:boat") && g.riding == "isle:boat", "the player gets in the boat");
+    check(g.message.find("BOARD") != std::string::npos, "standing by the boat offers to board");
+    press(Action::Interact);
+    check(g.riding == "isle:boat", "pressing E gets in the boat and stays in");
+    tick(Input{}, 5);
+    check(g.riding == "isle:boat", "the player stays in the boat afterwards");
     auto collision = g.collisionScene("isle", g.removed, g.activated);
     check(g.rideAllowed(collision, g.feet, g.vehicles.at("isle:boat")),
           "the boat sits on open water");
@@ -197,13 +201,32 @@ int main(int argc, char **argv) {
     check(cart.rideAllowed(courtyard, {188, 114}, cart.vehicles.at("meadow:cart")) &&
               !cart.rideAllowed(courtyard, {96, 72}, cart.vehicles.at("meadow:cart")),
           "carts roll on land but not into the pond");
-    cart.feet = {196, 110};
-    check(cart.board("meadow:cart"), "the player climbs onto the cart");
+    Input idle, use, skip, right;
+    use.set(Action::Interact, true);
+    skip.set(Action::Quit, true);
+    right.held[size_t(Action::Right)] = true;
+    cart.update(idle, Tick); // entering the courtyard starts the opening cutscene
+    cart.update(skip, Tick);
+    cart.feet = {196, 128};
+    cart.update(idle, Tick);
+    check(cart.message.find("BOARD") != std::string::npos, "standing by the cart offers to board");
+    cart.update(use, Tick);
+    check(cart.riding == "meadow:cart", "pressing E climbs onto the cart");
+    float start = cart.feet.x;
+    for (int i = 0; i < 30; i++)
+      cart.update(right, Tick);
+    check(cart.riding == "meadow:cart" && cart.feet.x > start + 20, "the cart rolls east");
+    cart.update(use, Tick);
+    check(cart.riding.empty() && cart.movedObjects.count("meadow:cart"),
+          "pressing E again gets off, leaving the cart where it stopped");
+    cart.update(idle, Tick);
+    check(cart.message.find("BOARD") != std::string::npos, "and it can be boarded again");
+    cart.update(use, Tick);
     cart.feet = {24, 120};
-    Input idle;
     cart.update(idle, Tick);
     cart.update(idle, Tick);
-    check(cart.scene == "meadow", "exits wait until the player gets off");
+    check(cart.riding == "meadow:cart" && cart.scene == "meadow",
+          "exits wait until the player gets off");
 
     // Projects without world features keep their old save format.
     StudioGame plain(argv[2]);
