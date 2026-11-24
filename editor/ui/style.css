@@ -82,23 +82,11 @@ header {
   background: #17212b;
 }
 .brand {
-  display: flex;
-  gap: 12px;
-  align-items: center;
   min-width: 192px;
-  font-size: 19px;
-}
-.mark {
-  display: grid;
-  place-items: center;
-  font:
-    28px Georgia,
-    serif;
-  background: #b8d6ac;
-  color: #233d2d;
-  width: 36px;
-  height: 39px;
-  border-radius: 4px 2px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--muted);
 }
 .project {
   padding: 0 16px;
@@ -324,10 +312,6 @@ footer {
   height: 5px;
   border-radius: 50%;
   background: var(--accent);
-}
-.version {
-  margin-left: 8px;
-  color: #627988;
 }
 .field {
   display: block;
