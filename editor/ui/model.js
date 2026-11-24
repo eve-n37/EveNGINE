@@ -274,7 +274,13 @@
         b = Math.floor((y - 0.001) / 16);
       for (let yy = t; yy <= b; yy++)
         for (let xx = l; xx <= r; xx++)
-          if (xx < 0 || yy < 0 || xx >= s.width || yy >= s.height || s.collision[yy * s.width + xx])
+          if (
+            xx < 0 ||
+            yy < 0 ||
+            xx >= s.width ||
+            yy >= s.height ||
+            s.collision[yy * s.width + xx] === 1
+          )
             return true;
       for (let o of s.objects || []) {
         let a = p.sprites.find((a) => a.id === o.sprite),
@@ -317,7 +323,7 @@
                 ? v < 0 || v >= p.tiles.length
                 : k === 'detail'
                   ? v < -1 || v >= p.tiles.length
-                  : v < 0 || v > 1)
+                  : v < 0 || v > (k === 'collision' && s.style === 'side' ? 4 : 1))
           )
         )
           bad('Invalid ' + k + ' layer in ' + s.title);
@@ -702,7 +708,8 @@
       for (let y = 0; y < r.h; y++)
         for (let x = 0; x < r.w; x++) {
           let v = s[k][(y + r.y) * s.width + x + r.x];
-          a.push(k === 'base' || k === 'detail' ? (v < 0 ? null : p.tiles[v].id) : v);
+          // Stamps keep plain collision: ladders, ledges and hazards are sidescroller-only.
+          a.push(k === 'base' || k === 'detail' ? (v < 0 ? null : p.tiles[v].id) : v === 1 ? 1 : 0);
         }
       st.layers[k] = a;
     }

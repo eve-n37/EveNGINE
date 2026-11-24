@@ -7,11 +7,11 @@ const test = (n, f) => {
   f();
   checks.push(n);
 };
-test('catalog has 48 tiles, 67 sprites and eight stamps', () => {
-  assert.equal(B.assets.filter((a) => a.kind === 'tile').length, 48);
+test('catalog has 55 tiles, 67 sprites and eight stamps', () => {
+  assert.equal(B.assets.filter((a) => a.kind === 'tile').length, 55);
   assert.equal(B.assets.filter((a) => a.kind === 'sprite').length, 67);
   assert.equal(B.stamps.length, 8);
-  assert.equal(new Set(B.assets.map((a) => a.id)).size, 115);
+  assert.equal(new Set(B.assets.map((a) => a.id)).size, 122);
 });
 test('whole library fits a fresh project and validates', () => {
   let p = M.importBuiltins(
@@ -20,7 +20,7 @@ test('whole library fits a fresh project and validates', () => {
     B.assets.map((a) => a.id),
     B.stamps.map((st) => st.id)
   ).project;
-  assert.equal(p.tiles.length, 53);
+  assert.equal(p.tiles.length, 60);
   assert.equal(p.sprites.length, 85);
   assert.deepEqual(M.validate(p), []);
 });

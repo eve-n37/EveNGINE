@@ -27,6 +27,74 @@
       typeof v === 'string' && v.length <= max && (empty || v.length > 0),
     only = (v, keys) => Object.keys(v).every((k) => keys.includes(k));
 
+  const styles = [
+      ['topdown', 'Top-down'],
+      ['side', 'Sidescroller'],
+      ['raycast', 'First person (raycast)'],
+    ],
+    collisionKinds = [
+      [1, 'Solid'],
+      [2, 'Ledge'],
+      [3, 'Ladder'],
+      [4, 'Hazard'],
+    ];
+  function sideDefaults() {
+    return { gravity: 900, jump: 48 };
+  }
+  function raycastDefaults() {
+    return { floor: '#463e38', ceiling: '#1e202c', viewDistance: 192 };
+  }
+  function validateStyle(p, s, report) {
+    const bad = (m) => report(m, { view: 'map', scene: s.id }),
+      colour = (v) => typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v),
+      style = s.style ?? 'topdown';
+    if (!styles.some(([k]) => k === style)) {
+      bad('Unknown gameplay style on ' + s.title + '.');
+      return;
+    }
+    if (s.side !== undefined) {
+      let v = s.side;
+      if (style !== 'side') bad('Only sidescroller maps have sidescroller settings.');
+      else if (!object(v) || !only(v, ['gravity', 'jump'])) bad('Invalid sidescroller settings.');
+      else {
+        if (v.gravity !== undefined && !real(v.gravity, 100, 4000))
+          bad('Gravity must be 100 to 4000.');
+        if (v.jump !== undefined && !real(v.jump, 4, 160))
+          bad('Jump height must be 4 to 160 pixels.');
+      }
+    }
+    if (s.raycast !== undefined) {
+      let v = s.raycast;
+      if (style !== 'raycast') bad('Only raycast maps have raycast settings.');
+      else if (!object(v) || !only(v, ['floor', 'ceiling', 'viewDistance']))
+        bad('Invalid raycast settings.');
+      else {
+        if (v.floor !== undefined && !colour(v.floor)) bad('The floor colour must use #RRGGBB.');
+        if (v.ceiling !== undefined && !colour(v.ceiling))
+          bad('The ceiling colour must use #RRGGBB.');
+        if (v.viewDistance !== undefined && !real(v.viewDistance, 32, 1024))
+          bad('View distance must be 32 to 1024 pixels.');
+      }
+    }
+    if (style === 'topdown') return;
+    for (let o of s.objects || []) {
+      if (['enemy', 'block', 'plate', 'vehicle'].includes(o.kind))
+        report(
+          'Enemies, push blocks, pressure plates and vehicles only work on top-down maps (' +
+            o.id +
+            ' on ' +
+            s.title +
+            ').',
+          { view: 'map', scene: s.id, object: o.id }
+        );
+      if (style === 'side' && o.movement)
+        report("NPCs can't patrol on sidescroller maps (" + o.id + ' on ' + s.title + ').', {
+          view: 'map',
+          scene: s.id,
+          object: o.id,
+        });
+    }
+  }
   function xpForLevel(leveling, level) {
     let total = 0;
     for (let k = 1; k < level; k++)
@@ -79,6 +147,7 @@
       }
     }
     for (let s of p.scenes) {
+      validateStyle(p, s, report);
       if (s.weather !== undefined && !weathers.some(([w]) => w === s.weather))
         report('Unknown weather on ' + s.title + '.', { view: 'map', scene: s.id });
       if (s.indoors !== undefined && typeof s.indoors !== 'boolean')
@@ -224,6 +293,10 @@
     }
   }
   const api = {
+    styles,
+    collisionKinds,
+    sideDefaults,
+    raycastDefaults,
     weathers,
     stepTypes,
     directions,

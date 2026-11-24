@@ -226,4 +226,80 @@ reject(
     "cutscene",
 )
 
+
+# Gameplay styles
+def moved(p, name, to):
+    """Moves an object from the courtyard onto another map."""
+    o = obj(p, name)
+    scene(p, "meadow")["objects"].remove(o)
+    scene(p, to)["objects"].append(o)
+
+
+reject("unknown style", lambda p: scene(p, "cave").update(style="iso"), "top-down")
+reject(
+    "sidescroller settings on a top-down map",
+    lambda p: scene(p, "meadow").update(side={"jump": 40}),
+    "only sidescroller maps",
+)
+reject(
+    "raycast settings on a sidescroller map",
+    lambda p: scene(p, "cave").update(raycast={}),
+    "only raycast maps",
+)
+reject("weak gravity", lambda p: scene(p, "cave")["side"].update(gravity=10), "gravity")
+reject("huge jumps", lambda p: scene(p, "cave")["side"].update(jump=500), "jump height")
+reject(
+    "unknown sidescroller settings",
+    lambda p: scene(p, "cave")["side"].update(wallJump=True),
+    "unknown sidescroller setting",
+)
+reject(
+    "floor colours",
+    lambda p: scene(p, "crypt")["raycast"].update(floor="red"),
+    "floor colour",
+)
+reject(
+    "short view distance",
+    lambda p: scene(p, "crypt")["raycast"].update(viewDistance=2),
+    "view distance",
+)
+reject(
+    "ladders on a top-down map",
+    lambda p: scene(p, "meadow")["collision"].__setitem__(40, 3),
+    "layer cell",
+)
+reject(
+    "unknown collision kinds",
+    lambda p: scene(p, "cave")["collision"].__setitem__(40, 5),
+    "layer cell",
+)
+reject(
+    "enemies on a sidescroller map",
+    lambda p: moved(p, "thorn-raider", "cave"),
+    "only work on top-down maps",
+)
+reject(
+    "vehicles in first person",
+    lambda p: moved(p, "cart", "crypt"),
+    "only work on top-down maps",
+)
+reject(
+    "patrols on a sidescroller map",
+    lambda p: scene(p, "cave")["objects"].append(
+        {
+            k: v
+            for k, v in {**copy.deepcopy(obj(p, "keeper")), "id": "cave-keeper"}.items()
+            if k != "dialogue"
+        }
+    ),
+    "can't patrol",
+)
+accept(
+    "a map can be switched back to top-down",
+    lambda p: [scene(p, "cave").pop(k) for k in ["style", "side"]]
+    and scene(p, "cave").update(
+        collision=[min(c, 1) for c in scene(p, "cave")["collision"]]
+    ),
+)
+
 print(checks, "world loader checks passed")

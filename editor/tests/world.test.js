@@ -108,4 +108,37 @@ reject(
 accept('new steps of every type validate', (p) => {
   for (let [type] of W.stepTypes) p.cutscenes[0].steps.push(W.freshStep(type, p, 'meadow'));
 });
+// Gameplay styles.
+reject('unknown style', (p) => (scene(p, 'cave').style = 'iso'), 'unknown gameplay style');
+reject(
+  'sidescroller settings elsewhere',
+  (p) => (scene(p, 'meadow').side = { jump: 40 }),
+  'only sidescroller maps'
+);
+reject('gravity bounds', (p) => (scene(p, 'cave').side.gravity = 10), 'gravity must');
+reject('jump bounds', (p) => (scene(p, 'cave').side.jump = 500), 'jump height must');
+reject('floor colours', (p) => (scene(p, 'crypt').raycast.floor = 'red'), 'floor colour');
+reject('view distance', (p) => (scene(p, 'crypt').raycast.viewDistance = 2), 'view distance');
+reject(
+  'ladders off sidescroller maps',
+  (p) => (scene(p, 'meadow').collision[40] = 3),
+  'invalid collision layer'
+);
+reject(
+  'vehicles in first person',
+  (p) => {
+    let cart = obj(p, 'cart');
+    scene(p, 'meadow').objects.splice(scene(p, 'meadow').objects.indexOf(cart), 1);
+    scene(p, 'crypt').objects.push(cart);
+  },
+  'only work on top-down maps'
+);
+reject(
+  'patrols on sidescroller maps',
+  (p) => scene(p, 'cave').objects.push({ ...obj(p, 'cave-sign'), id: 'walker', movement: {} }),
+  "can't patrol"
+);
+accept('ledges, ladders and hazards on sidescroller maps', (p) => {
+  for (let v = 0; v <= 4; v++) scene(p, 'cave').collision[40 + v] = v;
+});
 console.log(count + ' world model checks passed');

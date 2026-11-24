@@ -29,7 +29,9 @@ let history = new M.History(M.createProject()),
   images = new Map(),
   dragging = false,
   stroke = false,
-  mapDrag = null;
+  mapDrag = null,
+  collisionKind = 1; // sidescroller maps: 1 solid, 2 ledge, 3 ladder, 4 hazard
+const collisionColours = { 1: '#f1777b', 2: '#e8c45a', 3: '#7fd08e', 4: '#c77de0' };
 const P = () => history.project,
   S = () => P().scenes.find((s) => s.id === sceneId) || P().scenes[0],
   A = () =>
@@ -177,7 +179,7 @@ function render() {
       ['detail', 'Detail', '#dbc88a'],
       ['collision', 'Collision', '#e38787'],
       ['water', 'Water', '#77bed2'],
-    ].map(([id, n, c]) => {
+    ].flatMap(([id, n, c]) => {
       let b = document.createElement('button');
       b.className = 'layerRow' + (layer === id ? ' selected' : '');
       b.innerHTML = '<i class="swatch" style="background:' + c + '"></i>' + n;
@@ -187,7 +189,24 @@ function render() {
         selected = null;
         render();
       };
-      return b;
+      // Sidescroller maps paint four kinds of collision.
+      if (id !== 'collision' || layer !== 'collision' || S().style !== 'side') return [b];
+      let kinds = document.createElement('div');
+      kinds.id = 'collisionKinds';
+      kinds.className = 'kindRow';
+      for (let [v, name] of EveWorldModel.collisionKinds) {
+        let k = document.createElement('button');
+        k.className = v === collisionKind ? 'selected' : '';
+        k.dataset.kind = v;
+        k.innerHTML =
+          '<i class="swatch" style="background:' + collisionColours[v] + '"></i>' + name;
+        k.onclick = () => {
+          collisionKind = v;
+          render();
+        };
+        kinds.append(k);
+      }
+      return [b, kinds];
     })
   );
   $('tiles').replaceChildren(
@@ -268,9 +287,14 @@ function drawMap() {
         ctx.drawImage(assetImage(P().tiles[v]), (i % s.width) * 16, Math.floor(i / s.width) * 16);
     });
   if (layer === 'collision' || layer === 'water') {
-    ctx.fillStyle = layer === 'collision' ? '#f1777b88' : '#73c6de88';
     s[layer].forEach((v, i) => {
-      if (v) ctx.fillRect((i % s.width) * 16, Math.floor(i / s.width) * 16, 16, 16);
+      if (!v) return;
+      ctx.fillStyle = layer === 'collision' ? collisionColours[v] + '88' : '#73c6de88';
+      let x = (i % s.width) * 16,
+        y = Math.floor(i / s.width) * 16;
+      // Ledges are only solid on top, so only their top edge is shaded.
+      if (layer === 'collision' && v === 2) ctx.fillRect(x, y, 16, 5);
+      else ctx.fillRect(x, y, 16, 16);
     });
   }
   let objects = s.objects
@@ -355,9 +379,13 @@ function mapPaint(ev) {
         ? layer === 'detail'
           ? -1
           : 0
-        : ['collision', 'water'].includes(layer)
-          ? 1
-          : tile;
+        : layer === 'collision'
+          ? S().style === 'side'
+            ? collisionKind
+            : 1
+          : layer === 'water'
+            ? 1
+            : tile;
   if (['paint', 'erase', 'fill'].includes(tool))
     M.paintTerrain(P(), s, layer, x, y, tool, v, $('autoFlags').checked);
   else return;

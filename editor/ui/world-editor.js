@@ -136,6 +136,57 @@ function renderWorldSettings() {
   lv.append(worldNote(table.join(' · ')));
 }
 
+// ---- Gameplay styles ------------------------------------------------------------------------
+
+function setStyle(s, style) {
+  if (style === 'topdown') delete s.style;
+  else s.style = style;
+  if (style !== 'side') {
+    delete s.side;
+    // Ledges, ladders and hazards only exist on sidescroller maps.
+    s.collision = s.collision.map((v) => (v === 1 ? 1 : 0));
+  } else s.side ||= WM.sideDefaults();
+  if (style !== 'raycast') delete s.raycast;
+  else s.raycast ||= WM.raycastDefaults();
+  if (style !== 'side' && collisionKind !== 1) collisionKind = 1;
+}
+function colourField(title, value, set) {
+  let field = storyText(title, value, set, 7);
+  field.querySelector('input').type = 'color';
+  return field;
+}
+function styleFields(s) {
+  let fields = [
+    storySelect('Plays as', WM.styles, s.style || 'topdown', (v) => {
+      setStyle(s, v);
+      render();
+    }),
+  ];
+  if (s.style === 'side') {
+    let v = { ...WM.sideDefaults(), ...s.side };
+    fields.push(
+      rc3Number('Gravity', v.gravity, (x) => (s.side.gravity = x), 100, 4000, 50),
+      rc3Number('Jump height (tiles)', v.jump / 16, (x) => (s.side.jump = x * 16), 0.25, 10, 0.25)
+    );
+  }
+  if (s.style === 'raycast') {
+    let v = { ...WM.raycastDefaults(), ...s.raycast };
+    fields.push(
+      colourField('Floor colour', v.floor, (x) => (s.raycast.floor = x)),
+      colourField('Ceiling colour', v.ceiling, (x) => (s.raycast.ceiling = x)),
+      rc3Number(
+        'View distance (tiles)',
+        v.viewDistance / 16,
+        (x) => (s.raycast.viewDistance = x * 16),
+        2,
+        64,
+        0.5
+      )
+    );
+  }
+  return fields;
+}
+
 // ---- Inspector ------------------------------------------------------------------------------
 
 const worldInspect = inspect;
@@ -144,6 +195,7 @@ inspect = function () {
   let box = $('inspector');
   if (box.querySelector('#makeStart')) {
     let s = S();
+    box.append(worldSection('GAMEPLAY STYLE'), ...styleFields(s));
     box.append(
       worldSection('WEATHER & LIGHT'),
       storySelect('Weather', WM.weathers, s.weather || 'none', (v) => {

@@ -265,6 +265,7 @@ jobs:
         run: |
           python editor/tests/expansion_ui_test.py
           python editor/tests/world_ui_test.py
+          python editor/tests/styles_ui_test.py
         env:
           LOTA_TEST_OUTPUT: ${{ runner.temp }}/ui-tests
       - name: Keep UI screenshots

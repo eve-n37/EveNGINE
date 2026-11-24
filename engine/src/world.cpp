@@ -303,6 +303,7 @@ bool StudioGame::hasWorld() const {
 }
 
 void StudioGame::resetWorld() {
+  styleScene.clear();
   hour = timeSettings.startHour;
   ambientClock = 0;
   weatherOverride.clear();

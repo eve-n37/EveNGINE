@@ -19,9 +19,9 @@ p["export"] = {"appName": "Lantern Isles", "version": "1.0.0"}
 p["menus"]["title"] = "Lantern Isles"
 
 
-def import_sprite(asset_id):
-    """Copies a built-in sprite, remapping its colours onto the project palette."""
-    if any(s["id"] == asset_id for s in p["sprites"]):
+def import_sprite(asset_id, into="sprites"):
+    """Copies a built-in sprite or tile, remapping its colours onto the project palette."""
+    if any(s["id"] == asset_id for s in p[into]):
         return
     asset = next(a for a in library["assets"] if a["id"] == asset_id)
     pixels = ""
@@ -34,11 +34,23 @@ def import_sprite(asset_id):
         k: asset[k] for k in ["id", "name", "group", "width", "height", "collider"]
     }
     sprite["pixels"] = pixels
-    p["sprites"].append(sprite)
+    if into == "tiles":
+        del sprite["group"]
+    p[into].append(sprite)
 
 
 for name in ["push-block", "plate", "plate-down", "boat", "cart"]:
     import_sprite("eve-" + name)
+for name in [
+    "sky",
+    "cave-back",
+    "ground-top",
+    "rock-block",
+    "ladder",
+    "ledge",
+    "spikes",
+]:
+    import_sprite("eve-" + name, "tiles")
 
 tile = {t["id"]: i for i, t in enumerate(p["tiles"])}
 W, H = 32, 20
@@ -206,6 +218,240 @@ meadow["objects"].append(
 )
 grove = next(s for s in p["scenes"] if s["id"] == "grove")
 grove["weather"] = "rain"
+
+
+# Gameplay styles. A sidescrolling cave off the isle's west shore, and a first-person crypt below
+# the vault.
+def grid_map(rows, legend):
+    """Builds map layers from rows of characters; legend maps a character to
+    (base tile, detail tile or None, collision value)."""
+    h, w = len(rows), len(rows[0])
+    layers = {"base": [], "detail": [], "collision": [], "water": [0] * (w * h)}
+    for row in rows:
+        assert len(row) == w, row
+        for ch in row:
+            b, d, c = legend[ch]
+            layers["base"].append(tile[b])
+            layers["detail"].append(tile[d] if d else -1)
+            layers["collision"].append(c)
+    return w, h, layers
+
+
+tile = {t["id"]: i for i, t in enumerate(p["tiles"])}
+# Two rows of rock above and three below keep the play area clear of the HUD bars.
+cave_rows = [
+    "########################################",
+    "########################################",
+    "########################################",
+    "#......................................#",
+    "#......................................#",
+    "#.............................H........#",
+    "#.............................H=======.#",
+    "#.............................H........#",
+    "#.............................H........#",
+    "#..................====.......H........#",
+    "#.............................H........#",
+    "#.............................H........#",
+    "#.............====............H........#",
+    "#.............................H........#",
+    "#.............................H........#",
+    "gggggggggg^^gggggggggggg^^gggggggggggggg",
+    "########################################",
+    "########################################",
+    "########################################",
+]
+cw, ch, cave_layers = grid_map(
+    cave_rows,
+    {
+        "#": ("eve-rock-block", None, 1),
+        "g": ("eve-ground-top", None, 1),
+        ".": ("eve-cave-back", None, 0),
+        "=": ("eve-cave-back", "eve-ledge", 2),
+        "H": ("eve-cave-back", "eve-ladder", 3),
+        "^": ("eve-cave-back", "eve-spikes", 4),
+    },
+)
+p["scenes"].append(
+    {
+        "id": "cave",
+        "title": "Lantern Cave",
+        "width": cw,
+        "height": ch,
+        **cave_layers,
+        "spawn": {"x": 40, "y": 240},
+        "style": "side",
+        "side": {"gravity": 900, "jump": 52},
+        "indoors": True,
+        "objects": [
+            obj(
+                "cave-sign",
+                "sign",
+                "eve-sign",
+                56,
+                216,
+                text="Jump over the spikes, and climb the ladder to the high shelf.",
+            ),
+            obj(
+                "cave-coin-1",
+                "collectible",
+                "eve-coin",
+                248,
+                176,
+                item="gold-coin",
+                quantity=1,
+            ),
+            obj(
+                "cave-coin-2",
+                "collectible",
+                "eve-coin",
+                328,
+                128,
+                item="gold-coin",
+                quantity=1,
+            ),
+            obj(
+                "cave-coin-3",
+                "collectible",
+                "eve-coin",
+                392,
+                224,
+                item="gold-coin",
+                quantity=1,
+            ),
+            obj(
+                "cave-chest",
+                "chest",
+                "eve-chest",
+                576,
+                72,
+                item="gold-coin",
+                quantity=15,
+                openSprite="eve-chest-open",
+                text="Fifteen gold coins, hidden on the high shelf.",
+            ),
+        ],
+        "portals": [
+            {
+                "id": "cave-out",
+                "x": 16,
+                "y": 208,
+                "w": 8,
+                "h": 32,
+                "target": "isle",
+                "arrival": {"x": 264, "y": 256},
+            }
+        ],
+    }
+)
+crypt_rows = [
+    "################",
+    "#....#.........#",
+    "#.##.#.#######.#",
+    "#.#..#.......#.#",
+    "#.#.####.###.#.#",
+    "#.#......#...#.#",
+    "#.######.#.###.#",
+    "#........#.....#",
+    "####.#####.###.#",
+    "#....#.....#...#",
+    "#....#.........#",
+    "################",
+]
+rw, rh, crypt_layers = grid_map(
+    crypt_rows,
+    {
+        "#": ("eve-dungeon-wall", None, 1),
+        ".": ("eve-flagstone", None, 0),
+    },
+)
+# Vary the walls: moss low down and torches here and there.
+for i, c in enumerate(crypt_layers["collision"]):
+    if c and (i * 7) % 11 == 0:
+        crypt_layers["base"][i] = tile["eve-moss-wall"]
+    elif c and (i * 5) % 13 == 0:
+        crypt_layers["base"][i] = tile["eve-torch-wall"]
+p["scenes"].append(
+    {
+        "id": "crypt",
+        "title": "Lantern Crypt",
+        "width": rw,
+        "height": rh,
+        **crypt_layers,
+        "spawn": {"x": 40, "y": 160},
+        "style": "raycast",
+        "raycast": {"floor": "#4a4038", "ceiling": "#1c1e2a", "viewDistance": 176},
+        "indoors": True,
+        "objects": [
+            obj(
+                "crypt-sign",
+                "sign",
+                "eve-sign",
+                16,
+                136,
+                text="The stairs back up to the vault are behind you.",
+            ),
+            obj("crypt-lamp", "decoration", "eve-lamp", 20, 84),
+            obj(
+                "crypt-ghost",
+                "npc",
+                "eve-traveller",
+                152,
+                136,
+                speaker="Old lamplighter",
+                pages=[
+                    "You found my crypt! I used to light every lantern on the isle.",
+                    "My lamp oil is in the chest at the far end. Take what you need.",
+                ],
+            ),
+            obj(
+                "crypt-chest",
+                "chest",
+                "eve-chest",
+                216,
+                144,
+                item="trail-bread",
+                quantity=2,
+                openSprite="eve-chest-open",
+                text="Two loaves of trail bread, still fresh somehow.",
+            ),
+        ],
+        "portals": [
+            {
+                "id": "crypt-out",
+                "x": 16,
+                "y": 160,
+                "w": 16,
+                "h": 16,
+                "target": "isle",
+                "arrival": {"x": 456, "y": 224},
+            }
+        ],
+    }
+)
+p["worldLayout"]["cave"] = {"x": 560, "y": 360}
+p["worldLayout"]["crypt"] = {"x": 560, "y": 0}
+isle["portals"] += [
+    {
+        "id": "to-cave",
+        "x": 256,
+        "y": 272,
+        "w": 16,
+        "h": 16,
+        "target": "cave",
+        "arrival": {"x": 40, "y": 240},
+    },
+    {
+        "id": "to-crypt",
+        "x": 464,
+        "y": 256,
+        "w": 16,
+        "h": 16,
+        "target": "crypt",
+        "arrival": {"x": 40, "y": 160},
+    },
+]
+for x, y in [(16, 17), (29, 16)]:
+    isle["detail"][y * W + x] = tile["eve-stairs-down"]
 
 p["time"] = {
     "dayLength": 480,

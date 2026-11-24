@@ -104,6 +104,11 @@ packs = [
         "name": "Puzzles & travel",
         "description": "A push block, a pressure plate and its pressed state, a boat and a handcart.",
     },
+    {
+        "id": "platform",
+        "name": "Platforms & caves",
+        "description": "Sky, cave, ground and rock tiles, plus a ladder, a ledge and spikes to lay over them.",
+    },
 ]
 
 
@@ -849,6 +854,45 @@ add(
     preset={"kind": "vehicle", "vehicle": {"speed": 1.4, "terrain": "land"}},
 )
 
+# Platforms & caves: tiles for sidescroller maps. The ladder, ledge and spikes are see-through, so
+# they go on the detail layer over sky or cave tiles.
+im = texture(22, 10, 21, 3)
+add("sky", "Open sky", "platform", im, "tile")
+im = texture(26, 23, 16, 4)
+add("cave-back", "Cave backdrop", "platform", im, "tile")
+im = texture(4, 5, 6, 5)
+rect(im, (0, 0, 15, 3), 2)
+rect(im, (0, 0, 15, 0), 28)
+for x in [1, 5, 8, 12]:
+    rect(im, (x, 4, x + 1, 4), 2)
+add("ground-top", "Grassy ground", "platform", im, "tile", solid=True)
+im = texture(8, 9, 7, 6)
+for y in [0, 8]:
+    line(im, [(0, y), (15, y)], 7)
+for x, y in [(5, 0), (12, 8)]:
+    line(im, [(x, y), (x, y + 7)], 7)
+add("rock-block", "Rock block", "platform", im, "tile", solid=True)
+im = canvas()
+rect(im, (2, 0, 3, 15), 15)
+rect(im, (12, 0, 13, 15), 15)
+for y in [2, 7, 12]:
+    rect(im, (4, y, 11, y + 1), 6)
+    line(im, [(4, y), (11, y)], 15)
+add("ladder", "Ladder", "platform", im, "tile")
+im = canvas()
+rect(im, (0, 0, 15, 4), 15)
+line(im, [(0, 0), (15, 0)], 5)
+line(im, [(0, 4), (15, 4)], 6)
+for x in [3, 11]:
+    rect(im, (x, 5, x + 1, 7), 6)
+add("ledge", "Wooden ledge", "platform", im, "tile")
+im = canvas()
+for x in range(0, 16, 4):
+    ImageDraw.Draw(im).polygon([(x, 15), (x + 1, 7), (x + 3, 15)], fill=C[9])
+    line(im, [(x + 1, 8), (x + 1, 15)], 10)
+rect(im, (0, 15, 15, 15), 7)
+add("spikes", "Spikes", "platform", im, "tile")
+
 stamps = []
 
 
@@ -969,8 +1013,9 @@ for pack in packs:
         )
     sheet.save(root / (pack["id"] + "-sheet.png"))
 (root / "ASSET-NOTES.md").write_text(
-    "# EveNGINE built-in artwork\n\n115 original pixel-art assets (48 tiles and 67 sprites), plus eight four-layer map stamps. Artwork was created for this release; no third-party asset packs are included. Individual transparent PNGs are in `png`; pack contact sheets and the palette-indexed `library.json` are also included.\n\nTiles are 16 × 16; sprite sizes are 16 × 16 through 64 × 64. The pack contact sheets use 64 × 80 slots for browsing, not uniform 16 × 16 tile-sheet import. Use individual PNGs, the built-in editor library or the JSON metadata. Editing imported assets does not change the built-in originals.\n\nThe source generator uses Pillow only for rebuilding the artwork; the editor and game require no Python.\n"
+    "# EveNGINE built-in artwork\n\n122 original pixel-art assets (55 tiles and 67 sprites), plus eight four-layer map stamps. Artwork was created for this release; no third-party asset packs are included. Individual transparent PNGs are in `png`; pack contact sheets and the palette-indexed `library.json` are also included.\n\nTiles are 16 × 16; sprite sizes are 16 × 16 through 64 × 64. The pack contact sheets use 64 × 80 slots for browsing, not uniform 16 × 16 tile-sheet import. Use individual PNGs, the built-in editor library or the JSON metadata. Editing imported assets does not change the built-in originals.\n\nThe source generator uses Pillow only for rebuilding the artwork; the editor and game require no Python.\n"
 )
-assert len(assets) == 115, len(assets)
-assert sum(a["kind"] == "tile" for a in assets) == 48
+assert len(assets) == 122, len(assets)
+assert len({a["id"] for a in assets}) == len(assets), "duplicate asset IDs"
+assert sum(a["kind"] == "tile" for a in assets) == 55
 print("Built", len(assets), "assets and", len(stamps), "stamps")

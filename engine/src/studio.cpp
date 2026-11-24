@@ -162,9 +162,13 @@ StudioGame::StudioGame(const std::string &path) {
     l.base = grid(m["base"], n, 0, int(tileSources.size()) - 1);
     l.detail = grid(m["detail"], n, -1, int(tileSources.size()) - 1);
     l.water = grid(m["water"], n, 0, 1);
-    auto collision = grid(m["collision"], n, 0, 1);
-    for (int v : collision)
-      s.cells.push_back(v ? '#' : '.');
+    auto style = loadMapStyle(m);
+    // Sidescroller maps also mark one-way platforms (2), ladders (3) and hazards (4).
+    l.collision = grid(m["collision"], n, 0, style.kind == "side" ? 4 : 1);
+    for (int v : l.collision)
+      s.cells.push_back(v == 1 ? '#' : '.');
+    if (style.kind != "topdown")
+      mapStyles[s.id] = style;
     auto point = [&](const Json &p) {
       return Vec2{real(p["x"], 0, s.width * 16 - .001f, "point x"),
                   real(p["y"], 0, s.height * 16 - .001f, "point y")};
@@ -367,6 +371,7 @@ StudioGame::StudioGame(const std::string &path) {
   loadReleaseFeatures(j);
   loadAdventure(j);
   loadWorldLate(j);
+  checkStyles();
   scene = project.start;
   feet = project.scenes.at(scene).spawn;
 }
@@ -666,7 +671,9 @@ void StudioGame::update(const Input &incoming, float dt) {
   hurtClock = std::max(0.f, hurtClock - dt);
   auto d = normalized({float(in.down(Action::Right)) - float(in.down(Action::Left)),
                        float(in.down(Action::Down)) - float(in.down(Action::Up))});
-  bool moving = d.x != 0 || d.y != 0;
+  enterStyle();
+  auto &style = styleOf(scene);
+  bool moving = (d.x != 0 || d.y != 0) && style.kind == "topdown";
   if (moving) {
     progressDirty = true;
     if (attackClock < 0)
@@ -675,7 +682,7 @@ void StudioGame::update(const Input &incoming, float dt) {
     clock += dt * (in.down(Action::Run) ? runMultiplier : 1);
   } else
     clock = 0;
-  bool attack = in.hit(Action::Attack) && riding.empty();
+  bool attack = in.hit(Action::Attack) && riding.empty() && style.kind == "topdown";
   if (combatEnabled && attack)
     playerAttack();
   updateActors(dt);
@@ -703,7 +710,11 @@ void StudioGame::update(const Input &incoming, float dt) {
       }
   }
   auto factor = in.down(Action::Run) ? runMultiplier : 1;
-  if (!riding.empty()) {
+  if (style.kind == "side")
+    moveSide(in, dt);
+  else if (style.kind == "raycast")
+    moveRaycast(in, dt);
+  else if (!riding.empty()) {
     drive(d, speed * factor * vehicles.at(riding).speed, dt);
   } else {
     int tx = std::clamp(int(feet.x / 16), 0, s.width - 1),
@@ -730,7 +741,11 @@ void StudioGame::update(const Input &incoming, float dt) {
     if (std::find(removed.begin(), removed.end(), key) != removed.end())
       continue;
     auto r = project.sprites.at(o.sprite).source;
-    float dist = std::hypot(feet.x - (o.position.x + r.w / 2), feet.y - (o.position.y + r.h / 2));
+    Vec2 middle{o.position.x + r.w / 2, o.position.y + r.h / 2};
+    float dist = std::hypot(feet.x - middle.x, feet.y - middle.y);
+    // In first person, only what's in front of the player is in reach.
+    if (style.kind == "raycast" && o.kind != "collectible" && !inView(middle, 36))
+      continue;
     bool authored = std::any_of(events.begin(), events.end(), [&](auto &e) {
       return e.trigger == "interact" && e.scene + ":" + e.object == key;
     });
@@ -796,6 +811,7 @@ void StudioGame::update(const Input &incoming, float dt) {
         clock = 0;
         toastTime = 0;
         questEvent("visit", scene);
+        enterStyle();
         break;
       }
 }
@@ -805,72 +821,77 @@ Canvas StudioGame::draw() const {
   auto s = liveScene(scene);
   auto &l = layers.at(scene);
   auto camera = cameraPosition();
+  bool firstPerson = styleOf(scene).kind == "raycast";
+  if (firstPerson)
+    drawRaycast(c);
   int left = int(camera.x) / 16, top = int(camera.y) / 16;
-  for (int y = top; y < std::min(s.height, top + 17); y++)
-    for (int x = left; x < std::min(s.width, left + 27); x++) {
-      int i = y * s.width + x;
-      Vec2 pos{float(x * 16) - camera.x, float(y * 16) - camera.y};
-      c.sprite(tileSources[l.base[i]], pos);
-      if (l.detail[i] >= 0)
-        c.sprite(tileSources[l.detail[i]], pos);
-      if (debug && s.at(x, y) == '#')
-        c.rect({pos.x, pos.y, 16, 16}, {255, 100, 100, 100});
-      if (debug && l.water[i])
-        c.rect({pos.x, pos.y, 16, 16}, {80, 190, 255, 70});
+  if (!firstPerson) {
+    for (int y = top; y < std::min(s.height, top + 17); y++)
+      for (int x = left; x < std::min(s.width, left + 27); x++) {
+        int i = y * s.width + x;
+        Vec2 pos{float(x * 16) - camera.x, float(y * 16) - camera.y};
+        c.sprite(tileSources[l.base[i]], pos);
+        if (l.detail[i] >= 0)
+          c.sprite(tileSources[l.detail[i]], pos);
+        if (debug && s.at(x, y) == '#')
+          c.rect({pos.x, pos.y, 16, 16}, {255, 100, 100, 100});
+        if (debug && l.water[i])
+          c.rect({pos.x, pos.y, 16, 16}, {80, 190, 255, 70});
+      }
+    std::vector<const Object *> objs;
+    for (auto &o : s.objects)
+      if (std::find(removed.begin(), removed.end(), scene + ":" + o.id) == removed.end() &&
+          scene + ":" + o.id != riding)
+        objs.push_back(&o);
+    std::stable_sort(objs.begin(), objs.end(), [&](auto a, auto b) {
+      return a->position.y + project.sprites.at(a->sprite).source.h <
+             b->position.y + project.sprites.at(b->sprite).source.h;
+    });
+    bool drawn = false;
+    auto player = [&]() {
+      if (combatEnabled && hurtClock > 0 && std::fmod(hurtClock, .12f) < .06f)
+        return;
+      auto r = pose();
+      if (riding.empty()) {
+        c.sprite(r, {feet.x - camera.x - r.w / 2, feet.y - camera.y - r.h});
+        return;
+      }
+      // Riding: the player sits in the vehicle, which is drawn facing east and flipped for west.
+      auto &objects = project.scenes.at(scene).objects;
+      auto v = std::find_if(objects.begin(), objects.end(),
+                            [&](auto &o) { return scene + ":" + o.id == riding; });
+      auto source = project.sprites.at(v->sprite).source;
+      c.sprite(r, {feet.x - camera.x - r.w / 2, feet.y - camera.y - r.h - source.h * .35f});
+      c.sprite(source, {feet.x - camera.x - source.w / 2, feet.y - camera.y - source.h + 2},
+               direction == "west");
+    };
+    for (auto o : objs) {
+      auto sp = project.sprites.at(visibleSprite(*o));
+      if (!drawn && o->position.y + sp.source.h > feet.y) {
+        player();
+        drawn = true;
+      }
+      auto key = scene + ":" + o->id;
+      auto state = actorStates.find(key);
+      Rect frame;
+      if (state != actorStates.end() && state->second.flash > 0 &&
+          std::fmod(state->second.flash, .1f) < .05f) {
+      } else if (actorFrame(key, frame))
+        c.sprite(frame, {o->position.x + sp.source.w / 2 - frame.w / 2 - camera.x,
+                         o->position.y + sp.source.h - frame.h - camera.y});
+      else
+        c.sprite(sp.source, {o->position.x - camera.x, o->position.y - camera.y});
+      auto collisionSprite = project.sprites.at(o->sprite);
+      if (debug && collisionSprite.collider.w > 0 &&
+          !(o->kind == "door" && activated.count(scene + ":" + o->id)))
+        c.rect({o->position.x + collisionSprite.collider.x - camera.x,
+                o->position.y + collisionSprite.collider.y - camera.y, collisionSprite.collider.w,
+                collisionSprite.collider.h},
+               {255, 100, 100, 100});
     }
-  std::vector<const Object *> objs;
-  for (auto &o : s.objects)
-    if (std::find(removed.begin(), removed.end(), scene + ":" + o.id) == removed.end() &&
-        scene + ":" + o.id != riding)
-      objs.push_back(&o);
-  std::stable_sort(objs.begin(), objs.end(), [&](auto a, auto b) {
-    return a->position.y + project.sprites.at(a->sprite).source.h <
-           b->position.y + project.sprites.at(b->sprite).source.h;
-  });
-  bool drawn = false;
-  auto player = [&]() {
-    if (combatEnabled && hurtClock > 0 && std::fmod(hurtClock, .12f) < .06f)
-      return;
-    auto r = pose();
-    if (riding.empty()) {
-      c.sprite(r, {feet.x - camera.x - r.w / 2, feet.y - camera.y - r.h});
-      return;
-    }
-    // Riding: the player sits in the vehicle, which is drawn facing east and flipped for west.
-    auto &objects = project.scenes.at(scene).objects;
-    auto v = std::find_if(objects.begin(), objects.end(),
-                          [&](auto &o) { return scene + ":" + o.id == riding; });
-    auto source = project.sprites.at(v->sprite).source;
-    c.sprite(r, {feet.x - camera.x - r.w / 2, feet.y - camera.y - r.h - source.h * .35f});
-    c.sprite(source, {feet.x - camera.x - source.w / 2, feet.y - camera.y - source.h + 2},
-             direction == "west");
-  };
-  for (auto o : objs) {
-    auto sp = project.sprites.at(visibleSprite(*o));
-    if (!drawn && o->position.y + sp.source.h > feet.y) {
+    if (!drawn)
       player();
-      drawn = true;
-    }
-    auto key = scene + ":" + o->id;
-    auto state = actorStates.find(key);
-    Rect frame;
-    if (state != actorStates.end() && state->second.flash > 0 &&
-        std::fmod(state->second.flash, .1f) < .05f) {
-    } else if (actorFrame(key, frame))
-      c.sprite(frame, {o->position.x + sp.source.w / 2 - frame.w / 2 - camera.x,
-                       o->position.y + sp.source.h - frame.h - camera.y});
-    else
-      c.sprite(sp.source, {o->position.x - camera.x, o->position.y - camera.y});
-    auto collisionSprite = project.sprites.at(o->sprite);
-    if (debug && collisionSprite.collider.w > 0 &&
-        !(o->kind == "door" && activated.count(scene + ":" + o->id)))
-      c.rect({o->position.x + collisionSprite.collider.x - camera.x,
-              o->position.y + collisionSprite.collider.y - camera.y, collisionSprite.collider.w,
-              collisionSprite.collider.h},
-             {255, 100, 100, 100});
   }
-  if (!drawn)
-    player();
   if (debug) {
     auto r = body(feet);
     c.rect({r.x - camera.x, r.y - camera.y, r.w, r.h}, {170, 255, 150, 130});
@@ -898,12 +919,14 @@ Canvas StudioGame::draw() const {
       c.text(clipText(display, 63), 12, 200, uiText);
     }
     c.rect({6, 217, 388, 17}, uiPanel);
-    c.text(clipText(
-               (combatEnabled && riding.empty() ? controlLabel(Action::Attack) + " ATTACK  " : "") +
-                   controlLabel(Action::Interact) + " USE  " + controlLabel(Action::Menu) +
-                   " BAG  " + controlLabel(Action::Journal) + " QUESTS  " +
-                   controlLabel(Action::Pause) + " MENU",
-               63),
+    c.text(clipText((styleOf(scene).kind == "side" ? controlLabel(Action::Attack) + " JUMP  "
+                     : combatEnabled && riding.empty() && !firstPerson
+                         ? controlLabel(Action::Attack) + " ATTACK  "
+                         : "") +
+                        controlLabel(Action::Interact) + " USE  " + controlLabel(Action::Menu) +
+                        " BAG  " + controlLabel(Action::Journal) + " QUESTS  " +
+                        controlLabel(Action::Pause) + " MENU",
+                    63),
            10, 222, uiMuted);
   }
   if (!dialogueObject.empty() && dialogueNode.empty()) {
@@ -1193,6 +1216,7 @@ bool StudioGame::load(const std::string &path, std::string &error) {
               "Saved vehicle position is invalid");
     restoreAdventure(nextAdventure);
     restoreWorld(nextWorld);
+    styleScene.clear();
     scene = nextScene;
     feet = nextFeet;
     score = nextScore;

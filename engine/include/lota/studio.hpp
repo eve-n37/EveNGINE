@@ -15,7 +15,17 @@ struct StudioClip {
   std::vector<StudioFrame> frames;
 };
 struct StudioLayer {
-  std::vector<int> base, detail, water;
+  // collision is 0 (open) or 1 (solid); sidescroller maps also use 2 (one-way platform),
+  // 3 (ladder) and 4 (hazard).
+  std::vector<int> base, detail, water, collision;
+};
+// How a map plays: top-down (the default), a sidescrolling platformer or a first-person raycast
+// view. See docs/STYLES.md.
+struct StudioMapStyle {
+  std::string kind = "topdown";
+  float gravity = 900, jump = 48;                         // sidescroller, in pixels
+  Color floor{70, 62, 56, 255}, ceiling{30, 32, 44, 255}; // raycast
+  float viewDistance = 192;                               // raycast: pixels until walls fade out
 };
 struct StudioItem {
   std::string name, icon;
@@ -342,6 +352,23 @@ public:
   // Speeds up or slows the vehicle towards `direction` at `top` pixels a second, then moves it.
   void drive(Vec2 direction, float top, float dt);
   Rect objectBounds(const std::string &map, const Object &object) const;
+  // Gameplay styles (styles.cpp).
+  std::map<std::string, StudioMapStyle> mapStyles;
+  std::string styleScene; // the map the style state below belongs to
+  Vec2 sideVelocity{}, safeFeet{};
+  bool grounded = false, climbing = false, jumpHeld = false;
+  float coyoteClock = 0, jumpBuffer = 0, viewAngle = 0;
+  const StudioMapStyle &styleOf(const std::string &map) const;
+  StudioMapStyle loadMapStyle(const Json &map) const;
+  void checkStyles() const;
+  void enterStyle();
+  int sideCell(int x, int y) const;
+  Rect sideBody(Vec2 at) const;
+  bool sideStanding(const Scene &collision, Vec2 at) const;
+  void moveSide(const Input &input, float dt);
+  void moveRaycast(const Input &input, float dt);
+  bool inView(Vec2 point, float range) const;
+  void drawRaycast(Canvas &canvas) const;
   int xpForLevel(int level) const;
   int levelFor(int experience) const;
   int levelBonus(int perLevel, int atLevel = 0) const;
