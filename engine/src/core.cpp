@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <fstream>
 #include <iomanip>
+#include <iterator>
 #include <limits>
 #include <set>
 #include <sstream>
@@ -291,17 +292,90 @@ void Canvas::image(Rect source, Rect destination, bool flip, Color tint) {
 void Canvas::sprite(Rect source, Vec2 pos, bool flip, Color tint) {
   image(source, {std::floor(pos.x), std::floor(pos.y), source.w, source.h}, flip, tint);
 }
+namespace {
+// Reads one UTF-8 character starting at `i` and moves `i` past it. Broken sequences read as '?'.
+char32_t nextCodepoint(const std::string &s, size_t &i) {
+  unsigned char c = s[i++];
+  int extra = c < 0x80             ? 0
+              : (c & 0xE0) == 0xC0 ? 1
+              : (c & 0xF0) == 0xE0 ? 2
+              : (c & 0xF8) == 0xF0 ? 3
+                                   : -1;
+  if (extra < 0)
+    return '?';
+  char32_t code = extra == 0 ? c : c & (0x3F >> extra);
+  for (int k = 0; k < extra; ++k) {
+    if (i >= s.size() || (static_cast<unsigned char>(s[i]) & 0xC0) != 0x80)
+      return '?';
+    code = code << 6 | (static_cast<unsigned char>(s[i++]) & 0x3F);
+  }
+  return code;
+}
+// Cells after Latin-1, in the order tools/make_font.py draws them.
+const char32_t fontSymbols[] = {
+    U'\u2018', U'\u2019', U'\u201C', U'\u201D', U'\u201A', U'\u201E', U'\u2013', U'\u2014',
+    U'\u2026', U'\u2022', U'\u20AC', U'\u2122', U'\u0152', U'\u0153', U'\u0160', U'\u0161',
+    U'\u017D', U'\u017E', U'\u0178', U'\u0141', U'\u0142', U'\u2190', U'\u2191', U'\u2192',
+    U'\u2193', U'\u2665', U'\u2661', U'\u2605', U'\u2606', U'\u266A', U'\u266B', U'\u2713',
+    U'\u2717', U'\u2666', U'\u2660', U'\u2663', U'\u25CF', U'\u25CB', U'\u25A0', U'\u25A1',
+    U'\u25B2', U'\u25BC', U'\u25C0', U'\u25B6', U'\u2600', U'\u263E', U'\u2601', U'\u2602',
+    U'\u2744', U'\u26A1', U'\u2694', U'\u2642', U'\u2640', U'\u221E', U'\u2248', U'\u2260',
+    U'\u2264', U'\u2265', U'\u2039', U'\u203A', U'\u2020'};
+} // namespace
+int glyphCell(char32_t c) {
+  if (c >= 32 && c <= 126)
+    return int(c - 32);
+  if (c >= 0xA0 && c <= 0xFF)
+    return int(96 + c - 0xA0);
+  for (size_t k = 0; k < std::size(fontSymbols); ++k)
+    if (fontSymbols[k] == c)
+      return int(192 + k);
+  return '?' - 32;
+}
+size_t textLength(const std::string &value) {
+  size_t count = 0;
+  for (size_t i = 0; i < value.size(); ++count)
+    nextCodepoint(value, i);
+  return count;
+}
+std::string clipText(const std::string &value, size_t count) {
+  size_t i = 0;
+  for (size_t n = 0; n < count && i < value.size(); ++n)
+    nextCodepoint(value, i);
+  return value.substr(0, i);
+}
+std::vector<std::string> wrapText(const std::string &value, size_t width) {
+  std::vector<std::string> lines;
+  std::string line, word;
+  std::istringstream in(value);
+  while (in >> word) {
+    while (textLength(word) > width) {
+      if (!line.empty())
+        lines.push_back(line), line.clear();
+      auto head = clipText(word, width);
+      lines.push_back(head);
+      word.erase(0, head.size());
+    }
+    if (!line.empty() && textLength(line) + textLength(word) + 1 > width)
+      lines.push_back(line), line.clear();
+    if (!line.empty())
+      line += ' ';
+    line += word;
+  }
+  if (!line.empty())
+    lines.push_back(line);
+  return lines;
+}
 void Canvas::text(const std::string &value, int x, int y, Color color, int scale) {
   int cursor = x;
-  for (unsigned char c : value) {
+  for (size_t at = 0; at < value.size();) {
+    char32_t c = nextCodepoint(value, at);
     if (c == '\n') {
       cursor = x;
       y += 9 * scale;
       continue;
     }
-    if (c < 32 || c > 126)
-      c = '?';
-    int i = c - 32;
+    int i = glyphCell(c);
     Rect s{float((i % 32) * 6), float(128 + (i / 32) * 8), 6, 8};
     Rect d{float(cursor), float(y), float(6 * scale), float(8 * scale)};
     image(s, d, false, color);

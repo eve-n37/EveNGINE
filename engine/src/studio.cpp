@@ -35,7 +35,7 @@ std::string id(const Json &v) {
   return s;
 }
 std::string text(const Json &v, size_t max) {
-  require(v.type == Json::String && v.string.size() <= max, "Invalid text");
+  require(v.type == Json::String && textLength(v.string) <= max, "Invalid text");
   return v.string;
 }
 int hex(char c) {
@@ -125,15 +125,16 @@ StudioGame::StudioGame(const std::string &path) {
   }
   for (auto &s : j["sprites"].array)
     pack(s, false);
-  // Font is a fixed 192 x 24 RGBA strip bundled with the executable's resources.
+  // The font is a 192 x 64 RGBA strip (tools/make_font.py) bundled with the executable's
+  // resources. Older 192 x 24 strips hold ASCII only.
   // The caller loads it below through a sibling PAM; absent font leaves HUD blank.
   auto pos = path.find_last_of("/\\");
   auto fontPath = (pos == std::string::npos ? "" : path.substr(0, pos + 1)) + "font.pam";
   std::ifstream ff(fontPath);
   if (ff) {
     auto font = Atlas::load(fontPath);
-    require(font.width == 192 && font.height == 24, "Invalid font strip");
-    for (int y = 0; y < 24; y++)
+    require(font.width == 192 && (font.height == 24 || font.height == 64), "Invalid font strip");
+    for (int y = 0; y < font.height; y++)
       for (int x = 0; x < 192; x++)
         atlas.pixels[size_t(128 + y) * atlas.width + x] = font.pixels[size_t(y) * 192 + x];
   }
@@ -703,8 +704,7 @@ void StudioGame::update(const Input &incoming, float dt) {
   }
   auto factor = in.down(Action::Run) ? runMultiplier : 1;
   if (!riding.empty()) {
-    factor *= vehicles.at(riding).speed;
-    feet = ride(feet, {d.x * speed * factor * dt, d.y * speed * factor * dt});
+    drive(d, speed * factor * vehicles.at(riding).speed, dt);
   } else {
     int tx = std::clamp(int(feet.x / 16), 0, s.width - 1),
         ty = std::clamp(int(feet.y / 16), 0, s.height - 1);
@@ -895,44 +895,24 @@ Canvas StudioGame::draw() const {
     auto display = toastTime > 0 ? toast : message;
     if (!display.empty() && dialogueObject.empty() && !inventoryOpen && !journalOpen) {
       c.rect({6, 194, 388, 18}, uiPanel);
-      c.text(display.substr(0, 63), 12, 200, uiText);
+      c.text(clipText(display, 63), 12, 200, uiText);
     }
     c.rect({6, 217, 388, 17}, uiPanel);
-    c.text(((combatEnabled && riding.empty() ? controlLabel(Action::Attack) + " ATTACK  " : "") +
-            controlLabel(Action::Interact) + " USE  " + controlLabel(Action::Menu) + " BAG  " +
-            controlLabel(Action::Journal) + " QUESTS  " + controlLabel(Action::Pause) + " MENU")
-               .substr(0, 63),
+    c.text(clipText(
+               (combatEnabled && riding.empty() ? controlLabel(Action::Attack) + " ATTACK  " : "") +
+                   controlLabel(Action::Interact) + " USE  " + controlLabel(Action::Menu) +
+                   " BAG  " + controlLabel(Action::Journal) + " QUESTS  " +
+                   controlLabel(Action::Pause) + " MENU",
+               63),
            10, 222, uiMuted);
   }
   if (!dialogueObject.empty() && dialogueNode.empty()) {
     c.rect({6, 145, 388, 69}, uiModal);
     drawPortrait(c, 346, 160);
-    c.text(dialogueSpeaker.substr(0, 50), 12, 151, speakerTint());
+    c.text(clipText(dialogueSpeaker, 50), 12, 151, speakerTint());
     auto &pages = interactions.at(dialogueObject).pages;
     auto value = revealText(pages.at(dialoguePage));
-    std::vector<std::string> lines;
-    std::string line;
-    std::istringstream words(value);
-    std::string word;
-    while (words >> word) {
-      while (word.size() > 53) {
-        if (!line.empty()) {
-          lines.push_back(line);
-          line.clear();
-        }
-        lines.push_back(word.substr(0, 53));
-        word.erase(0, 53);
-      }
-      if (!line.empty() && line.size() + word.size() + 1 > 53) {
-        lines.push_back(line);
-        line.clear();
-      }
-      if (!line.empty())
-        line += ' ';
-      line += word;
-    }
-    if (!line.empty())
-      lines.push_back(line);
+    auto lines = wrapText(value, 53);
     for (size_t i = 0; i < std::min(size_t(4), lines.size()); i++)
       c.text(lines[i], 12, 164 + int(i) * 9, uiText);
     c.text(controlLabel(Action::Interact) + " NEXT  " + controlLabel(Action::Attack) + " CLOSE  " +
@@ -954,7 +934,7 @@ Canvas StudioGame::draw() const {
       auto source = project.sprites.at(item.icon).source;
       float scale = std::min(12.f / source.w, 12.f / source.h);
       c.image(source, {52, float(67 + row * 16), source.w * scale, source.h * scale});
-      c.text(item.name.substr(0, 28), 70, 69 + row * 16, uiText);
+      c.text(clipText(item.name, 28), 70, 69 + row * 16, uiText);
       if (std::any_of(equipped.begin(), equipped.end(),
                       [&](auto &e) { return e.second == entry.first; }))
         c.text("EQUIPPED", 250, 69 + row * 16, uiAccent);

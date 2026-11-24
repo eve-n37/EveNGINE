@@ -67,7 +67,13 @@ reject('plates use known flags', (p) => (obj(p, 'plate').plate.flag = 'nope'), '
 reject('plate settings only on plates', (p) => (obj(p, 'stone').plate = {}), 'only pressure');
 reject('vehicles need settings', (p) => delete obj(p, 'boat').vehicle, 'vehicle settings');
 reject('vehicle terrain', (p) => (obj(p, 'boat').vehicle.terrain = 'air'), 'land or water');
-reject('vehicle speed', (p) => (obj(p, 'cart').vehicle.speed = 5), 'vehicle speed');
+reject('vehicle speed', (p) => (obj(p, 'cart').vehicle.speed = 7), 'speed must');
+reject(
+  'vehicle acceleration',
+  (p) => (obj(p, 'cart').vehicle.acceleration = 11),
+  'acceleration must'
+);
+reject('vehicle braking', (p) => (obj(p, 'boat').vehicle.braking = -1), 'braking must');
 reject('leveling top level', (p) => (p.leveling.maxLevel = 1), 'top level');
 reject('leveling needs combat', (p) => delete p.combat, 'leveling needs player combat');
 reject('enemy XP needs leveling', (p) => delete p.leveling, 'enemy xp needs leveling');

@@ -45,7 +45,7 @@ function worldKindDefaults(o) {
     if (!o.openSprite && P().sprites.some((s) => s.id === 'eve-plate-down'))
       o.openSprite = 'eve-plate-down';
   }
-  if (o.kind === 'vehicle') o.vehicle ||= { speed: 1.5, terrain: 'land' };
+  if (o.kind === 'vehicle') o.vehicle ||= WM.vehicleDefaults();
 }
 
 // ---- Game → Setup ---------------------------------------------------------------------------
@@ -214,7 +214,7 @@ inspect = function () {
       );
   }
   if (o.kind === 'vehicle') {
-    let v = (o.vehicle ||= { speed: 1.5, terrain: 'land' });
+    let v = (o.vehicle ||= WM.vehicleDefaults());
     box.append(
       worldSection('VEHICLE'),
       storySelect(
@@ -226,7 +226,16 @@ inspect = function () {
         v.terrain || 'land',
         (x) => (v.terrain = x)
       ),
-      rc3Number('Speed (× walking)', v.speed ?? 1.5, (x) => (v.speed = x), 0.5, 3, 0.1)
+      rc3Number('Top speed (× walking)', v.speed ?? 1.5, (x) => (v.speed = x), 0.25, 6, 0.05),
+      rc3Number(
+        'Seconds to top speed',
+        v.acceleration ?? 0,
+        (x) => (v.acceleration = x),
+        0,
+        10,
+        0.1
+      ),
+      rc3Number('Seconds to stop', v.braking ?? 0, (x) => (v.braking = x), 0, 10, 0.1)
     );
   }
   if (o.kind === 'enemy' && P().leveling && o.combat)

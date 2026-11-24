@@ -102,6 +102,14 @@ struct Draw {
   bool clipped = false;
   Rect clip{};
 };
+// Text is UTF-8. The font covers ASCII, Latin-1 and the symbols listed in tools/make_font.py;
+// anything else draws as a question mark.
+int glyphCell(char32_t codepoint);
+// Number of characters (not bytes) in UTF-8 text, and its first `count` characters.
+size_t textLength(const std::string &value);
+std::string clipText(const std::string &value, size_t count);
+// Splits text into lines of at most `width` characters, breaking at spaces where it can.
+std::vector<std::string> wrapText(const std::string &value, size_t width);
 class Canvas {
 public:
   std::vector<Draw> draws;

@@ -36,6 +36,9 @@
   function levelingDefaults() {
     return { maxLevel: 20, firstLevel: 10, growth: 1.5, health: 2, attack: 1, defense: 0 };
   }
+  function vehicleDefaults() {
+    return { speed: 1.5, terrain: 'land', acceleration: 0.5, braking: 0.4 };
+  }
   function timeDefaults() {
     return { dayLength: 600, start: 8, night: '#141c40', strength: 0.55, clock: true };
   }
@@ -111,11 +114,15 @@
         } else if (o.plate !== undefined) bad('Only pressure plates have plate settings.');
         if (o.kind === 'vehicle') {
           let v = o.vehicle;
-          if (!object(v) || !only(v, ['speed', 'terrain']))
+          if (!object(v) || !only(v, ['speed', 'terrain', 'acceleration', 'braking']))
             bad('Vehicle ' + o.id + ' needs vehicle settings.');
           else {
-            if (v.speed !== undefined && !real(v.speed, 0.5, 3))
-              bad('Vehicle speed must be 0.5 to 3.');
+            if (v.speed !== undefined && !real(v.speed, 0.25, 6))
+              bad('Vehicle speed must be 0.25 to 6.');
+            if (v.acceleration !== undefined && !real(v.acceleration, 0, 10))
+              bad('Vehicle acceleration must be 0 to 10 seconds.');
+            if (v.braking !== undefined && !real(v.braking, 0, 10))
+              bad('Vehicle braking must be 0 to 10 seconds.');
             if (v.terrain !== undefined && !['land', 'water'].includes(v.terrain))
               bad('Vehicles travel on land or water.');
           }
@@ -223,6 +230,7 @@
     xpForLevel,
     levelingDefaults,
     timeDefaults,
+    vehicleDefaults,
     freshStep,
     validate,
   };

@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <map>
 using namespace evengine;
 int main(int argc, char **argv) {
   try {
@@ -287,6 +288,52 @@ int main(int argc, char **argv) {
     percent.text("100%", 0, 0);
     check(percent.draws.back().source.x == 30 && percent.draws.back().source.y == 128,
           "percent text uses its own font cell");
+    // The full font: ASCII, Latin-1 and symbols each get their own drawing.
+    auto cellPixels = [&](int i) {
+      std::string bits;
+      for (int y = 0; y < 8; y++)
+        for (int x = 0; x < 6; x++)
+          bits +=
+              g.atlas.pixels[size_t(128 + (i / 32) * 8 + y) * g.atlas.width + (i % 32) * 6 + x].a >
+                      0
+                  ? '#'
+                  : '.';
+      return bits;
+    };
+    std::map<std::string, int> drawings;
+    std::string fontProblem;
+    int glyphs = 0;
+    for (int i = 0; i < 256; i++) {
+      if (i == 0 || i == 95 || i == 96 || i >= 192 + 61) // space, DEL, no-break space, unused
+        continue;
+      ++glyphs;
+      auto first = drawings.emplace(cellPixels(i), i);
+      if (cellPixels(i).find('#') == std::string::npos)
+        fontProblem += " cell " + std::to_string(i) + " is blank;";
+      else if (!first.second && i != 96 + 0xAD - 0xA0) // the soft hyphen looks like a hyphen
+        fontProblem +=
+            " cell " + std::to_string(i) + " repeats " + std::to_string(first.first->second) + ";";
+    }
+    check(fontProblem.empty(), ("every glyph has its own drawing" + fontProblem).c_str());
+    check(glyphs > 240, "the font has over 240 glyphs");
+    check(cellPixels(glyphCell('a')) != cellPixels(glyphCell('A')),
+          "lowercase has its own letters");
+    check(glyphCell(U'\u00E9') == 96 + 0xE9 - 0xA0 && glyphCell(U'\u2665') > 191 &&
+              glyphCell(U'\u4E2D') == glyphCell('?'),
+          "accents, symbols and unknown characters map to cells");
+    Canvas accents;
+    accents.text("Caf\xC3\xA9 \xE2\x99\xA5\xFF!", 0, 0);
+    check(accents.draws.size() == 8 &&
+              accents.draws[3].source.x == float((glyphCell(U'\u00E9') % 32) * 6) &&
+              accents.draws[6].source.x == float((glyphCell('?') % 32) * 6) &&
+              accents.draws[7].destination.x == 42,
+          "text reads UTF-8 one character per cell, and broken bytes draw as ?");
+    check(textLength("na\xC3\xAFve \xE2\x86\x92") == 7 &&
+              clipText("\xC3\xA9t\xC3\xA9", 2) == "\xC3\xA9t",
+          "lengths and clipping count characters, not bytes");
+    auto wrapped = wrapText("\xC3\xA9\xC3\xA9\xC3\xA9 \xC3\xA9\xC3\xA9", 5);
+    check(wrapped.size() == 2 && wrapped[0] == "\xC3\xA9\xC3\xA9\xC3\xA9",
+          "wrapping counts characters");
     for (auto state : {"title", "pause", "settings", "controls", "confirm", "playing"}) {
       g.frontend = state;
       auto canvas = g.draw();

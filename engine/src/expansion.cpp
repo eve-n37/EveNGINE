@@ -44,7 +44,7 @@ void StudioGame::loadExpansion(const Json &j) {
       auto name = ident(f["id"], "faction ID");
       StudioFaction faction;
       require(f["name"].type == Json::String && !f["name"].string.empty() &&
-                  f["name"].string.size() <= 160,
+                  textLength(f["name"].string) <= 160,
               "Invalid faction name");
       faction.name = f["name"].string;
       if (f.has("player")) {

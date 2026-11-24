@@ -5011,7 +5011,9 @@
           "text": "",
           "vehicle": {
             "speed": 1.4,
-            "terrain": "land"
+            "terrain": "land",
+            "acceleration": 0.6,
+            "braking": 0.3
           }
         }
       ],
@@ -11113,7 +11115,9 @@
           "text": "",
           "vehicle": {
             "speed": 1.6,
-            "terrain": "water"
+            "terrain": "water",
+            "acceleration": 1.2,
+            "braking": 1.5
           }
         },
         {

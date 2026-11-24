@@ -122,6 +122,37 @@ with sync_playwright() as pw:
             "p.scenes.find(s => s.id === 'isle').objects.find(o => o.id === 'stone').vehicle.terrain === 'water'"
         ),
     )
+    stone = "p.scenes.find(s => s.id === 'isle').objects.find(o => o.id === 'stone').vehicle"
+    check(
+        "new vehicles speed up and slow down",
+        project(stone + ".acceleration === 0.5 && " + stone + ".braking === 0.4"),
+    )
+    change(
+        page.locator(
+            "#inspector label:has(span:text-is('Top speed (× walking)')) input"
+        ),
+        4.5,
+    )
+    change(
+        page.locator(
+            "#inspector label:has(span:text-is('Seconds to top speed')) input"
+        ),
+        2,
+    )
+    change(
+        page.locator("#inspector label:has(span:text-is('Seconds to stop')) input"), 0
+    )
+    check(
+        "top speed, acceleration and braking are adjustable",
+        project(
+            stone
+            + ".speed === 4.5 && "
+            + stone
+            + ".acceleration === 2 && "
+            + stone
+            + ".braking === 0"
+        ),
+    )
     page.locator("#inspector [data-field=kind]").select_option("block")
     check(
         "leaving vehicle behaviour removes its settings",

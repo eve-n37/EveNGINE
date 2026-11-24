@@ -38,7 +38,7 @@ bool toggle(const Json &j, const std::string &what) {
   return j.boolean();
 }
 std::string words(const Json &j, size_t max, bool empty, const std::string &what) {
-  require(j.type == Json::String && j.string.size() <= max && (empty || !j.string.empty()),
+  require(j.type == Json::String && textLength(j.string) <= max && (empty || !j.string.empty()),
           "Invalid " + what);
   return j.string;
 }
@@ -93,27 +93,6 @@ const Object *findObject(const Scene &s, const std::string &id) {
     if (o.id == id)
       return &o;
   return nullptr;
-}
-std::vector<std::string> wrapText(const std::string &text, size_t width) {
-  std::vector<std::string> lines;
-  std::string line, word;
-  std::istringstream in(text);
-  while (in >> word) {
-    while (word.size() > width) {
-      if (!line.empty())
-        lines.push_back(line), line.clear();
-      lines.push_back(word.substr(0, width));
-      word.erase(0, width);
-    }
-    if (!line.empty() && line.size() + word.size() + 1 > width)
-      lines.push_back(line), line.clear();
-    if (!line.empty())
-      line += ' ';
-    line += word;
-  }
-  if (!line.empty())
-    lines.push_back(line);
-  return lines;
 }
 } // namespace
 
@@ -187,10 +166,14 @@ void StudioGame::loadWorld(const Json &j) {
       if (kind == "vehicle") {
         auto &v = o["vehicle"];
         require(v.type == Json::Object, "Vehicles need vehicle settings");
-        onlyKeys(v, {"speed", "terrain"}, "vehicle");
+        onlyKeys(v, {"speed", "terrain", "acceleration", "braking"}, "vehicle");
         StudioVehicle vehicle;
         if (v.has("speed"))
-          vehicle.speed = real(v["speed"], .5f, 3, "vehicle speed");
+          vehicle.speed = real(v["speed"], .25f, 6, "vehicle speed");
+        if (v.has("acceleration"))
+          vehicle.acceleration = real(v["acceleration"], 0, 10, "vehicle acceleration");
+        if (v.has("braking"))
+          vehicle.braking = real(v["braking"], 0, 10, "vehicle braking");
         auto terrain = v.has("terrain") ? v["terrain"].text() : "land";
         require(terrain == "land" || terrain == "water", "Vehicles travel on land or water");
         vehicle.water = terrain == "water";
@@ -328,6 +311,7 @@ void StudioGame::resetWorld() {
   latchedPlates.clear();
   plateDoors.clear();
   riding.clear();
+  rideVelocity = {};
   pushTarget.clear();
   pushClock = 0;
   xp = 0;
@@ -596,6 +580,27 @@ Vec2 StudioGame::ride(Vec2 from, Vec2 delta) {
   }
   return at;
 }
+void StudioGame::drive(Vec2 direction, float top, float dt) {
+  auto &v = vehicles.at(riding);
+  bool going = direction.x != 0 || direction.y != 0;
+  Vec2 target{direction.x * top, direction.y * top};
+  Vec2 gap{target.x - rideVelocity.x, target.y - rideVelocity.y};
+  float seconds = going ? v.acceleration : v.braking, distance = std::hypot(gap.x, gap.y),
+        change = seconds > 0 ? top / seconds * dt : distance;
+  if (distance <= change)
+    rideVelocity = target;
+  else
+    rideVelocity = {rideVelocity.x + gap.x / distance * change,
+                    rideVelocity.y + gap.y / distance * change};
+  Vec2 step{rideVelocity.x * dt, rideVelocity.y * dt};
+  auto at = ride(feet, step);
+  // Running into something stops the vehicle in that direction.
+  if (std::abs(at.x - feet.x) < std::abs(step.x) * .5f)
+    rideVelocity.x = 0;
+  if (std::abs(at.y - feet.y) < std::abs(step.y) * .5f)
+    rideVelocity.y = 0;
+  feet = at;
+}
 bool StudioGame::board(const std::string &key) {
   if (!riding.empty() || !vehicles.count(key) || mapOf(key) != scene)
     return false;
@@ -610,6 +615,7 @@ bool StudioGame::board(const std::string &key) {
                     Vec2{o->position.x + source.w / 2, o->position.y + source.h / 2 + 4}})
     if (rideAllowed(collision, seat, v)) {
       riding = key;
+      rideVelocity = {};
       feet = seat;
       movedObjects.erase(key);
       clock = 0;
@@ -655,6 +661,7 @@ bool StudioGame::leaveVehicle() {
           std::clamp(feet.x - source.w / 2, 0.f, float(s.width * 16) - source.w),
           std::clamp(feet.y - source.h + 2, 0.f, float(s.height * 16) - source.h)};
       riding.clear();
+      rideVelocity = {};
       feet = spot;
       clock = 0;
       progressDirty = true;
@@ -867,7 +874,7 @@ void StudioGame::drawCutscene(Canvas &c) const {
     c.rect({6, 148, 388, 72}, uiModal);
     int y = 155;
     if (!step.speaker.empty()) {
-      c.text(step.speaker.substr(0, 50), 12, y, uiAccent);
+      c.text(clipText(step.speaker, 50), 12, y, uiAccent);
       y += 12;
     }
     auto lines = wrapText(step.text, 60);
@@ -954,6 +961,7 @@ void StudioGame::restoreWorld(const StudioWorldState &w) {
   latchedPlates = w.latched;
   plateDoors = w.plateDoors;
   riding = w.riding;
+  rideVelocity = {};
   xp = w.xp;
   level = leveling.enabled ? levelFor(xp) : 1;
   pressedPlates.clear();

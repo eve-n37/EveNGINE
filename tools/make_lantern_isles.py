@@ -103,7 +103,12 @@ isle = {
             "eve-boat",
             224,
             136,
-            vehicle={"speed": 1.6, "terrain": "water"},
+            vehicle={
+                "speed": 1.6,
+                "terrain": "water",
+                "acceleration": 1.2,
+                "braking": 1.5,
+            },
         ),
         obj(
             "island-chest",
@@ -191,7 +196,12 @@ meadow["objects"].append(
         "eve-cart",
         176,
         96,
-        vehicle={"speed": 1.4, "terrain": "land"},
+        vehicle={
+            "speed": 1.4,
+            "terrain": "land",
+            "acceleration": 0.6,
+            "braking": 0.3,
+        },
     )
 )
 grove = next(s for s in p["scenes"] if s["id"] == "grove")

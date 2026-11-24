@@ -108,8 +108,10 @@ Audio from a Studio project is covered in the [audio API guide](AUDIO-API.md).
 
 `Atlas::load` reads binary P6 PPM or P7 RGBA PAM files, so it doesn't need an image library. In PPM
 files, magenta (`255,0,255`) is transparent. PAM files support partial transparency. Atlases can be
-up to 4096 pixels on each side. `Canvas::text` expects a 6 × 8 ASCII font strip in the atlas; the
-starter's atlas includes one. `tools/pack_atlas.py` can pack PNG sprites into an atlas.
+up to 4096 pixels on each side. `Canvas::text` draws UTF-8 text from a font strip of 6 × 8 cells at
+y = 128 in the atlas; the starter's atlas includes one. `tools/make_font.py` builds the font (ASCII,
+Latin-1 and a set of symbols) and lists its layout. `textLength`, `clipText` and `wrapText` count
+characters rather than bytes. `tools/pack_atlas.py` can pack PNG sprites into an atlas.
 
 ## Older names
 

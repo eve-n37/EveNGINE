@@ -156,7 +156,8 @@ int main(int argc, char **argv) {
     float before = g.feet.x;
     hold(Action::Left, 120);
     check(g.feet.x < before - 50 && g.feet.x >= 160, "the boat rows west and stops at the island");
-    check(g.message.find("GET OFF") != std::string::npos, "the prompt offers getting off");
+    check(g.message.find("GET OFF") != std::string::npos && g.rideVelocity.x == 0,
+          "running aground stops the boat, and the prompt offers getting off");
     press(Action::Interact);
     check(g.riding.empty() && g.feet.x < 160 && g.movedObjects.count("isle:boat"),
           "the player steps onto the island, leaving the boat at its shore");
@@ -201,10 +202,10 @@ int main(int argc, char **argv) {
     check(cart.rideAllowed(courtyard, {188, 114}, cart.vehicles.at("meadow:cart")) &&
               !cart.rideAllowed(courtyard, {96, 72}, cart.vehicles.at("meadow:cart")),
           "carts roll on land but not into the pond");
-    Input idle, use, skip, right;
+    Input idle, use, skip, left;
     use.set(Action::Interact, true);
     skip.set(Action::Quit, true);
-    right.held[size_t(Action::Right)] = true;
+    left.held[size_t(Action::Left)] = true;
     cart.update(idle, Tick); // entering the courtyard starts the opening cutscene
     cart.update(skip, Tick);
     cart.feet = {196, 128};
@@ -212,16 +213,36 @@ int main(int argc, char **argv) {
     check(cart.message.find("BOARD") != std::string::npos, "standing by the cart offers to board");
     cart.update(use, Tick);
     check(cart.riding == "meadow:cart", "pressing E climbs onto the cart");
-    float start = cart.feet.x;
-    for (int i = 0; i < 30; i++)
-      cart.update(right, Tick);
-    check(cart.riding == "meadow:cart" && cart.feet.x > start + 20, "the cart rolls east");
+    float start = cart.feet.x, cartTop = cart.speed * 1.4f;
+    cart.update(left, Tick);
+    check(cart.feet.x < start && start - cart.feet.x < cartTop * Tick * .2f,
+          "the cart starts slowly");
+    for (int i = 0; i < 59; i++)
+      cart.update(left, Tick);
+    check(cart.riding == "meadow:cart" && cart.feet.x < start - 30 &&
+              std::abs(cart.rideVelocity.x + cartTop) < .01f,
+          "the cart rolls west and reaches its top speed");
+    float rolling = cart.feet.x;
+    cart.update(idle, Tick);
+    check(cart.feet.x < rolling && cart.rideVelocity.x < 0 && cart.rideVelocity.x > -cartTop,
+          "letting go, it coasts");
+    for (int i = 0; i < 20; i++)
+      cart.update(idle, Tick);
+    check(cart.rideVelocity.x == 0, "and stops within its braking time");
     cart.update(use, Tick);
     check(cart.riding.empty() && cart.movedObjects.count("meadow:cart"),
           "pressing E again gets off, leaving the cart where it stopped");
     cart.update(idle, Tick);
     check(cart.message.find("BOARD") != std::string::npos, "and it can be boarded again");
     cart.update(use, Tick);
+    cart.vehicles.at("meadow:cart").acceleration = cart.vehicles.at("meadow:cart").braking = 0;
+    start = cart.feet.x;
+    cart.update(left, Tick);
+    check(std::abs(start - cart.feet.x - cartTop * Tick) < .01f,
+          "with no acceleration it's at top speed at once");
+    start = cart.feet.x;
+    cart.update(idle, Tick);
+    check(cart.feet.x == start, "and with no braking it stops at once");
     cart.feet = {24, 120};
     cart.update(idle, Tick);
     cart.update(idle, Tick);

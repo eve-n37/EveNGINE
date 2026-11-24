@@ -128,8 +128,18 @@ reject(
 )
 reject(
     "vehicle speed",
-    lambda p: obj(p, "cart")["vehicle"].update(speed=5),
+    lambda p: obj(p, "cart")["vehicle"].update(speed=7),
     "vehicle speed",
+)
+reject(
+    "vehicle acceleration",
+    lambda p: obj(p, "cart")["vehicle"].update(acceleration=11),
+    "vehicle acceleration",
+)
+reject(
+    "vehicle braking",
+    lambda p: obj(p, "boat")["vehicle"].update(braking=-1),
+    "vehicle braking",
 )
 
 # Leveling
@@ -203,6 +213,17 @@ reject(
     "duplicate cutscenes",
     lambda p: p["cutscenes"].append(copy.deepcopy(cut(p))),
     "duplicate cutscene",
+)
+
+# Text limits count characters, so accented and symbol text gets the full length.
+accept(
+    "a full-length line of accented text",
+    lambda p: cut(p)["steps"][3].update(text="é" * 719 + "♥"),
+)
+reject(
+    "one character too many",
+    lambda p: cut(p)["steps"][3].update(text="é" * 721),
+    "cutscene",
 )
 
 print(checks, "world loader checks passed")

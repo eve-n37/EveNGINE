@@ -11,6 +11,9 @@ p.add_argument("--font", type=Path, required=True)
 p.add_argument("--output", type=Path, required=True)
 a = p.parse_args()
 entries = json.loads(a.sprites.read_text())
+font = Image.open(a.font).convert("RGBA")
+if font.size not in [(192, 32), (192, 64)]:
+    raise ValueError("Font strip must be 192x32 or 192x64 (tools/make_font.py)")
 images = {}
 for name, entry in entries.items():
     if not name or not isinstance(entry, dict):
@@ -24,7 +27,7 @@ for name, entry in entries.items():
     images[name] = img
 width = 512
 x = 0
-y = 160
+y = 128 + font.height
 row = 0
 catalog = {}
 if any(img.width > width for img in images.values()):
@@ -44,9 +47,6 @@ height = max(256, 2 ** math.ceil(math.log2(y + row + 1)))
 if height > 4096:
     raise ValueError("Atlas exceeds the engine limit")
 atlas = Image.new("RGBA", (width, height))
-font = Image.open(a.font).convert("RGBA")
-if font.size != (192, 32):
-    raise ValueError("Font strip must be 192x32")
 atlas.paste(font, (0, 128))
 for name, img in images.items():
     atlas.paste(img, tuple(catalog[name]["source"][:2]))

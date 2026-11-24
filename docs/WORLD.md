@@ -107,10 +107,18 @@ Set an object's behaviour to **vehicle**, then choose what it **Travels on**:
 - **Water**: boats. They can only move on water, including water that's painted as a wall to keep
   walkers out. That's the usual way to make a lake: paint water, and mark it as collision.
 
-**Speed** multiplies walking speed (from 0.5 to 3). The player presses E next to a vehicle to get
-in, and E again to get out; a boat has to be next to dry land. Vehicles stay where the player
-leaves them, and exits only work once the player has got off. Vehicle artwork should face east;
-it's mirrored when travelling west.
+| Setting                  | What it does                                                                  |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| **Top speed**            | A multiple of walking speed, from 0.25 to 6. The run key still speeds it up. |
+| **Seconds to top speed** | How long it takes to get going, from 0 (instantly) to 10.                     |
+| **Seconds to stop**      | How long it coasts after the player lets go, from 0 (instantly) to 10.        |
+
+A heavy boat might take a second or two each way, and a horse half a second. Running into a wall
+or a shore stops a vehicle in that direction.
+
+The player presses E next to a vehicle to get in, and E again to get out; a boat has to be next to
+dry land. Vehicles stay where the player leaves them, and exits only work once the player has got
+off. Vehicle artwork should face east; it's mirrored when travelling west.
 
 The **Puzzles & travel** built-in pack has a rowing boat and a handcart.
 

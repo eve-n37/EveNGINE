@@ -127,6 +127,8 @@ struct StudioPlate {
 };
 struct StudioVehicle {
   float speed = 1.5f;
+  // Seconds to reach top speed from a standstill, and to stop again. 0 is instant.
+  float acceleration = 0, braking = 0;
   bool water = false; // boats move on water only; land vehicles stay out of it
 };
 struct StudioLeveling {
@@ -307,6 +309,7 @@ public:
   std::map<std::string, Vec2> movedObjects;
   std::set<std::string> pressedPlates, latchedPlates, plateDoors;
   std::string riding, pushTarget;
+  Vec2 rideVelocity{};
   float pushClock = 0;
   StudioLeveling leveling;
   int xp = 0, level = 1;
@@ -336,6 +339,8 @@ public:
   bool leaveVehicle();
   bool rideAllowed(const Scene &collision, Vec2 at, const StudioVehicle &vehicle) const;
   Vec2 ride(Vec2 from, Vec2 delta);
+  // Speeds up or slows the vehicle towards `direction` at `top` pixels a second, then moves it.
+  void drive(Vec2 direction, float top, float dt);
   Rect objectBounds(const std::string &map, const Object &object) const;
   int xpForLevel(int level) const;
   int levelFor(int experience) const;

@@ -71,6 +71,18 @@ In **Story → Dialogue**, give an NPC a portrait (any sprite) and an optional c
 Set how quickly text appears in **Game → Setup**; 0 shows it instantly. While text is appearing,
 pressing confirm shows it all at once. Choices appear once the text is complete.
 
+### Accents and symbols
+
+Game text can use any of these characters as well as the usual letters, numbers and punctuation:
+
+- accented letters from Western European languages, such as `é ñ ü ß å ø æ œ ç`, and `Š š Ž ž Ł ł`,
+- curly quotes `‘ ’ “ ”`, dashes `– —`, an ellipsis `…`, `« » ‹ ›`, `¿ ¡`, `•` and `†`,
+- money and signs: `€ £ ¥ ¢ © ® ™ ° ± × ÷ ½ ¼ ¾ § ¶`,
+- game symbols: `♥ ♡ ★ ☆ ← ↑ → ↓ ♪ ♫ ✓ ✗ ♦ ♠ ♣ ● ○ ■ □ ▲ ▼ ◀ ▶ ☀ ☾ ☁ ☂ ❄ ⚡ ⚔ ♂ ♀ ∞ ≈ ≠ ≤ ≥`.
+
+Anything else shows as `?` in the game. Limits such as 180 characters count each character once,
+however it's written.
+
 ## Quests
 
 Open **Story → Quests** and click **New quest**. Give it a name, a description, one to eight

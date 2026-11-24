@@ -10,7 +10,7 @@ void need(bool ok, const std::string &message) {
     throw std::runtime_error(message);
 }
 std::string str(const Json &v, size_t max, bool empty = false) {
-  need(v.type == Json::String && v.string.size() <= max && (empty || !v.string.empty()),
+  need(v.type == Json::String && textLength(v.string) <= max && (empty || !v.string.empty()),
        "Invalid release-feature text");
   return v.string;
 }
@@ -485,15 +485,12 @@ std::string StudioGame::dialogueText() const {
   return dialogueNode.empty() ? d.pages.at(dialoguePage) : d.nodes.at(dialogueNode).text;
 }
 bool StudioGame::dialogueRevealed() const {
-  return typewriterSpeed <= 0 || dialogueTime * typewriterSpeed >= dialogueText().size();
+  return typewriterSpeed <= 0 || dialogueTime * typewriterSpeed >= textLength(dialogueText());
 }
 std::string StudioGame::revealText(const std::string &value) const {
   if (typewriterSpeed <= 0)
     return value;
-  auto count = std::min(value.size(), size_t(dialogueTime * typewriterSpeed));
-  while (count < value.size() && count > 0 && (uint8_t(value[count]) & 0xc0) == 0x80)
-    --count;
-  return value.substr(0, count);
+  return clipText(value, size_t(dialogueTime * typewriterSpeed));
 }
 Color StudioGame::speakerTint() const {
   auto i = interactions.find(dialogueObject);
@@ -887,9 +884,9 @@ void StudioGame::drawFrontend(Canvas &c) const {
                         : frontend == "controls" ? "CONTROLS"
                         : frontend == "defeat"   ? "YOU WERE DEFEATED"
                                                  : "UNSAVED PROGRESS";
-  c.text(heading.substr(0, 55), 26, 38, uiAccent);
+  c.text(clipText(heading, 55), 26, 38, uiAccent);
   if (frontend == "title" && !subtitle.empty())
-    c.text(subtitle.substr(0, 55), 26, 52, uiMuted);
+    c.text(clipText(subtitle, 55), 26, 52, uiMuted);
   if (frontend == "confirm")
     c.text(confirmAction == "load" ? "Load and discard unsaved changes?"
            : (confirmAction == "quit" || confirmAction == "windowquit")
@@ -904,7 +901,7 @@ void StudioGame::drawFrontend(Canvas &c) const {
     std::string label = options[i];
     if (frontend == "settings" && i < 2)
       label += " " + std::to_string(int(std::round((i ? userEffects : userMusic) * 100))) + "%";
-    c.text(label.substr(0, 56), 26, y, i == menuIndex ? uiAccent : uiText);
+    c.text(clipText(label, 56), 26, y, i == menuIndex ? uiAccent : uiText);
   }
   if (!pendingBinding.empty())
     c.text("Press a new key. Escape cancels.", 26, 205, uiAccent);
@@ -914,6 +911,6 @@ void StudioGame::drawFrontend(Canvas &c) const {
     c.text(controlLabel(Action::Interact) + " SELECT  " + controlLabel(Action::Pause) + " BACK", 26,
            205, uiMuted);
   if (toastTime > 0)
-    c.text(toast.substr(0, 60), 20, 222, uiAccent);
+    c.text(clipText(toast, 60), 20, 222, uiAccent);
 }
 } // namespace lota

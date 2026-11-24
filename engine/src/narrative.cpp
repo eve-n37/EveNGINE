@@ -18,7 +18,7 @@ std::string identifier(const Json &v) {
   return s;
 }
 std::string label(const Json &v, size_t limit, bool empty = false) {
-  need(v.type == Json::String && v.string.size() <= limit && (empty || !v.string.empty()),
+  need(v.type == Json::String && textLength(v.string) <= limit && (empty || !v.string.empty()),
        "Invalid story text");
   return v.string;
 }
@@ -30,31 +30,6 @@ int quantity(const Json &v) {
 }
 void list(const Json &v, size_t lo, size_t hi) {
   need(v.type == Json::Array && v.array.size() >= lo && v.array.size() <= hi, "Invalid story list");
-}
-std::vector<std::string> wrap(const std::string &value, size_t width) {
-  std::istringstream words(value);
-  std::string word, line;
-  std::vector<std::string> lines;
-  while (words >> word) {
-    while (word.size() > width) {
-      if (!line.empty()) {
-        lines.push_back(line);
-        line.clear();
-      }
-      lines.push_back(word.substr(0, width));
-      word.erase(0, width);
-    }
-    if (!line.empty() && line.size() + word.size() + 1 > width) {
-      lines.push_back(line);
-      line.clear();
-    }
-    if (!line.empty())
-      line += ' ';
-    line += word;
-  }
-  if (!line.empty())
-    lines.push_back(line);
-  return lines;
 }
 } // namespace
 
@@ -291,13 +266,13 @@ void StudioGame::drawNarrative(Canvas &c) const {
   if (!dialogueObject.empty() && !dialogueNode.empty()) {
     if (toastTime > 0) {
       c.rect({6, 68, 388, 20}, uiModal);
-      c.text(toast.substr(0, 60), 12, 74, uiAccent);
+      c.text(clipText(toast, 60), 12, 74, uiAccent);
     }
     c.rect({6, 96, 388, 118}, uiModal);
     drawPortrait(c, 346, 110);
-    c.text(dialogueSpeaker.substr(0, 40), 12, 102, speakerTint());
+    c.text(clipText(dialogueSpeaker, 40), 12, 102, speakerTint());
     auto &node = interactions.at(dialogueObject).nodes.at(dialogueNode);
-    auto lines = wrap(revealText(node.text), 53);
+    auto lines = wrapText(revealText(node.text), 53);
     for (size_t i = 0; i < std::min(size_t(4), lines.size()); i++)
       c.text(lines[i], 12, 116 + int(i) * 9, uiText);
     auto choices = dialogueRevealed() ? availableChoices() : std::vector<size_t>{};
@@ -305,7 +280,7 @@ void StudioGame::drawNarrative(Canvas &c) const {
       auto &ch = node.choices[choices[i]];
       if (int(i) == dialogueChoice)
         c.rect({10, float(147 + int(i) * 14), 376, 13}, uiSelection);
-      c.text(std::to_string(i + 1) + ". " + ch.text.substr(0, 40), 12, 150 + int(i) * 14,
+      c.text(std::to_string(i + 1) + ". " + clipText(ch.text, 40), 12, 150 + int(i) * 14,
              int(i) == dialogueChoice ? uiAccent : uiText);
     }
     c.text(controlLabel(Action::Interact) + " SELECT  " + controlLabel(Action::Attack) + " CLOSE",
@@ -322,12 +297,12 @@ void StudioGame::drawNarrative(Canvas &c) const {
     auto p = questProgress.begin();
     std::advance(p, std::clamp(journalPage, 0, int(questProgress.size()) - 1));
     auto &q = quests.at(p->first);
-    c.text(q.name.substr(0, 50), 22, 60, uiText);
+    c.text(clipText(q.name, 50), 22, 60, uiText);
     c.text(questState(p->first) == "ready" ? "READY TO TURN IN"
            : p->second.completed           ? "COMPLETED"
                                            : "IN PROGRESS",
            22, 73, uiAccent);
-    auto lines = wrap(q.description, 55);
+    auto lines = wrapText(q.description, 55);
     for (size_t i = 0; i < std::min(size_t(2), lines.size()); i++)
       c.text(lines[i], 22, 86 + int(i) * 9, uiMuted);
     for (size_t i = 0; i < q.objectives.size(); i++) {
@@ -346,7 +321,7 @@ void StudioGame::drawNarrative(Canvas &c) const {
                   : o.type == "visit" ? "VISIT "
                                       : "USE ";
       c.text(std::string(objectiveDone(p->first, i) ? "DONE: " : "TODO: ") + verb +
-                 name.substr(0, 38),
+                 clipText(name, 38),
              22, 111 + int(i) * 10, uiText);
     }
     c.text(controlLabel(Action::Left) + "/" + controlLabel(Action::Right) + " PAGE  " +

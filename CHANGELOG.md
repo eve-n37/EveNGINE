@@ -7,7 +7,8 @@
 - **Puzzles**: push blocks that move a tile at a time, and pressure plates that set a flag and open doors while pressed (or for good). **Reset push blocks** puts a map's blocks back.
 - **Leveling**: XP from enemies, quests and the **Give XP** action raises the level, adding health, attack and defence per level.
 - **Cutscenes**: Story → Cutscenes builds sequences of lines, moves, turns, camera pans, fades, waits, sounds and flags, played by the **Play cutscene** action and skippable with the pause key.
-- **Vehicles**: boats (water only) and carts (land only) with their own speed. E gets in and out.
+- **Vehicles**: boats (water only) and carts (land only) with a top speed (0.25 to 6 times walking), time to reach it and time to coast to a stop. E gets in and out.
+- **A bigger font**: real lowercase letters, every ASCII symbol (`" # $ & * + ; < > @ [ \ ] ^ _ { | } ~` used to show as `?`), accented letters, curly quotes and dashes, and game symbols such as `♥ ★ → ♪ ✓`. Game text is read as UTF-8, and text limits, wrapping and the typewriter reveal count characters rather than bytes. `tools/make_font.py` builds the font.
 - New **Puzzles & travel** built-in pack (push block, pressure plate, boat, handcart), the `Lantern-Isles.eve` sample and the [World guide](docs/WORLD.md).
 - Save format 7 for projects that use these features. Other projects keep writing formats 4 and 6, and all earlier saves load.
 - **Export settings** in Game → Setup → Export: app name, bundle ID, version, window size, start fullscreen and Mac architecture (universal, Apple Silicon only or Intel only). They're saved in the project as an optional `export` block. Projects without one export as before, except the default app version is now `1.0.0` instead of the engine version.

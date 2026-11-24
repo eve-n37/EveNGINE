@@ -563,7 +563,7 @@ void StudioGame::drawAdventure(Canvas &c) const {
     return;
   auto &shop = shops.at(shopObject);
   c.rect({12, 36, 376, 178}, uiModal);
-  c.text((selling ? "SELL - " : "BUY - ") + interactions.at(shopObject).speaker.substr(0, 35), 22,
+  c.text((selling ? "SELL - " : "BUY - ") + clipText(interactions.at(shopObject).speaker, 35), 22,
          44, uiAccent);
   auto money = inventory.find(shop.currency);
   c.text(items.at(shop.currency).name + ": " +
@@ -577,21 +577,22 @@ void StudioGame::drawAdventure(Canvas &c) const {
       c.rect({18, float(y - 3), 364, 14}, uiSelection);
     int stock = shopStock.at(shopObject).at(size_t(i));
     std::string line =
-        items.at(o.item).name.substr(0, 25) + "  " + std::to_string(selling ? o.sell : o.buy) +
+        clipText(items.at(o.item).name, 25) + "  " + std::to_string(selling ? o.sell : o.buy) +
         "  " +
         (selling     ? std::to_string(inventory.count(o.item) ? inventory.at(o.item) : 0) + " OWNED"
          : stock < 0 ? "IN STOCK"
                      : std::to_string(stock) + " LEFT");
-    c.text(line.substr(0, 57), 22, y, i == shopRow ? uiAccent : uiText);
+    c.text(clipText(line, 57), 22, y, i == shopRow ? uiAccent : uiText);
   }
   if (toastTime > 0)
-    c.text(toast.substr(0, 55), 22, 186, uiAccent);
+    c.text(clipText(toast, 55), 22, 186, uiAccent);
   c.text("LEFT/RIGHT BUY/SELL  " + controlLabel(Action::Interact) + " TRADE  " +
              controlLabel(Action::Attack) + " CLOSE",
          22, 201, uiMuted);
 }
 void StudioGame::respawnPlayer() {
   riding.clear();
+  rideVelocity = {};
   scene = project.start;
   feet = project.scenes.at(scene).spawn;
   auto collision = collisionScene(scene, removed, activated);
